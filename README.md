@@ -42,7 +42,7 @@ sudo ldconfig
 
 ## 2. Download and configure
 
-### 2.1 Download this repository in a suitable catkin workspace
+### 2.1 Download the repo in a suitable catkin workspace
 
 ```
 cd /your_ws/src
@@ -76,7 +76,7 @@ install(FILES ${HEADERS}
 )
 ```
 
-#### 2.2.2 Modify `lib/local/FaceAnalyser/CMakeLists.txt`
+#### 2.2.3 Modify `lib/local/FaceAnalyser/CMakeLists.txt`
 
 Replace the two `install` directives of the file `lib/local/FaceAnalyser/CMakeLists.txt` with the following:
 
@@ -93,7 +93,7 @@ install(FILES ${HEADERS}
 )
 ```
 
-## 5. Compilation and Installation
+## 3. Compilation and Installation
 
 If everything is ok , simply `cd` in the catkin workspace, and type:
 
@@ -102,7 +102,7 @@ catkin_make
 rospack profile
 ```
 
-## 5. Usage
+## 4. Usage
 
 The default usage is pretty simple. Just be sure that there is a `roscore` instance in your local network, and then launch the node with `roslaunch`:
 

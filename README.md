@@ -60,8 +60,9 @@ rospack profile
 
 ## 3. Usage
 
-The default usage is pretty simple. Just be sure that there is a `roscore` instance in your local network, and then launch the node with `roslaunch`:
+The default usage is pretty simple. Just be sure that there is a `roscore` instance in your local network, and then launch the node with `roslaunch`, provided that a `roscore` instance is already running:
 
-| Terminal 1 | Terminal 2                                           |
-|`roscore`   | ` roslaunch clm_ros_wrapper clm_ros_wrapper.launch ` |
+ Terminal 1 | Terminal 2                                           
+------------|-------------------------------------------------------
+ `roscore`  | ` roslaunch clm_ros_wrapper clm_ros_wrapper.launch ` 
 

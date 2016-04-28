@@ -49,51 +49,7 @@ cd /your_ws/src
 git clone https://github.com/sociallyassistiverobotics/clm_ros_wrapper.git
 ```
 
-### 2.2 Add some CLM code manually to the repository
-
-This repository needs a couple libraries from the original CLM repo it is branching from. It would be nice to use `git submodule` routine, but considering that the CLM repo is more than `1GB` (not because of the repo itself, but because of its history that has been not managed over the time), it is better to directly download the minimum viable set of libraries.
-
-#### 2.2.1 Download the code
-
-The code is available [here](https://github.com/TadasBaltrusaitis/CLM-framework/tree/master/lib). You should copy `3rdParty/dlib` into `lib/3rdParty`. Then copy `local/CLM` and `local/FaceAnalyser` in `lib/local`.
-
-#### 2.2.2 Modify `lib/local/CLM/CMakeLists.txt`
-
-Replace the two `install` directives of the file `lib/local/CLM/CMakeLists.txt` with the following:
-
-```
-target_link_libraries(CLM opencv_calib3d opencv_objdetect)
-
-## Mark library for installation
-install(TARGETS CLM
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-## Mark cpp header files for installation
-install(FILES ${HEADERS} 
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-```
-
-#### 2.2.3 Modify `lib/local/FaceAnalyser/CMakeLists.txt`
-
-Replace the two `install` directives of the file `lib/local/FaceAnalyser/CMakeLists.txt` with the following:
-
-```
-## Mark library for installation
-install(TARGETS FaceAnalyser
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-)
-
-## Mark cpp header files for installation
-install(FILES ${HEADERS} 
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-```
-
-## 3. Compilation and Installation
+## 2.2 Compilation and Installation
 
 If everything is ok , simply `cd` in the catkin workspace, and type:
 
@@ -102,10 +58,10 @@ catkin_make
 rospack profile
 ```
 
-## 4. Usage
+## 3. Usage
 
 The default usage is pretty simple. Just be sure that there is a `roscore` instance in your local network, and then launch the node with `roslaunch`:
 
-```
-roslaunch clm_ros_wrapper clm_ros_wrapper.launch
-```
+| Terminal 1 | Terminal 2                                           |
+|`roscore`   | ` roslaunch clm_ros_wrapper clm_ros_wrapper.launch ` |
+

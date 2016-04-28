@@ -54,6 +54,7 @@ git clone https://github.com/sociallyassistiverobotics/clm_ros_wrapper.git
 If everything is ok , simply `cd` in the catkin workspace, and type:
 
 ```
+cd /your_ws/
 catkin_make
 rospack profile
 ```

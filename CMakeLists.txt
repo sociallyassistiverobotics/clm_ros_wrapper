@@ -158,7 +158,6 @@ add_executable(clm_ros_wrapper src/clm_ros_wrapper.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(clm_ros_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 ## Specify libraries to link a library or executable target against
 target_link_libraries(clm_ros_wrapper ${catkin_LIBRARIES}
                                  CLM #links current build with this library
@@ -166,6 +165,10 @@ target_link_libraries(clm_ros_wrapper ${catkin_LIBRARIES}
                                  dlib
                                  opencv_videoio opencv_objdetect
                                  ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+
+add_executable(subscriber src/subscriber.cpp)
+target_link_libraries(subscriber ${catkin_LIBRARIES})
+add_dependencies(subscriber ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_custom_command(TARGET clm_ros_wrapper POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory  ${PROJECT_SOURCE_DIR}/lib/local/CLM/model ${CATKIN_DEVEL_PREFIX}/lib/clm_ros_wrapper/model

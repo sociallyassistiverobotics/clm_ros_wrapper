@@ -78,8 +78,6 @@
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 
-#include "std_msgs/String.h"
-
 using namespace std;
 using namespace cv;
 
@@ -473,10 +471,6 @@ int main (int argc, char **argv)
 
 	ros::Publisher clm_heads_pub = nh.advertise<ClmHeadsMsg>("heads", 10);
 
-  ros::NodeHandle n;
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
-	vector<string> arguments = get_arguments(argc, argv);
-
 	// Some initial parameters that can be overriden from command line	
 	vector<string> files, depth_directories, pose_output_files, tracked_videos_output, landmark_output_files, landmark_3D_output_files;
 	
@@ -668,15 +662,6 @@ int main (int argc, char **argv)
 
 	while(!done) // this is not a for loop as we might also be reading from a webcam
 	{
-
-    std_msgs::String msg;
-
-    std::stringstream ss;
-    ss << "hello world ";
-    msg.data = ss.str();
-
-    chatter_pub.publish(msg);
-		
 		string current_file;
 
 		bool use_depth = !depth_directories.empty();	
@@ -1140,7 +1125,6 @@ int main (int argc, char **argv)
 			});
 
 			clm_heads_pub.publish( ros_heads_msg );
-      printf("publishing a message\n");
 			ros::spinOnce();
 
 			// Go through every model and visualise the results

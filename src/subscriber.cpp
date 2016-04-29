@@ -1,4 +1,4 @@
-// delete a lot of these includes later - we don't need all of these
+// this file is just a test subscriber to clm_ros_wrapper
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
@@ -6,22 +6,15 @@
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
-//void chatterCallback(clm_ros_wrapper::ClmHeads ros_heads_msg)
-//{
-//  //ROS_INFO("I heard: [%s]", msg->data.c_str());
-//  ROS_INFO("I heard something\n");
-//  printf("heard something\n");
-//}
-
-void chatter2Callback(const std_msgs::String::ConstPtr& msg)
+void chatterCallback(clm_ros_wrapper::ClmHeads ros_heads_msg)
 {
-  ROS_INFO("I heard: [%s]", msg->data.c_str());
+  //ROS_INFO("I heard: [%s]", msg->data.c_str());
+  ROS_INFO("I heard something\n");
 }
 
 int main(int argc, char **argv)
 {
 	typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
-  printf("executing stuff\n");
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
    * any ROS arguments and name remapping that were provided at the command line.
@@ -56,8 +49,7 @@ int main(int argc, char **argv)
    * is the number of messages that will be buffered up before beginning to throw
    * away the oldest ones.
    */
-  //ros::Subscriber sub = n.subscribe("heads", 10, chatterCallback);
-  ros::Subscriber sub2 = n.subscribe("chatter", 1000, chatter2Callback);
+  ros::Subscriber sub = n.subscribe("/clm_ros_wrapper/heads", 10, chatterCallback);
 
   /**
    * ros::spin() will enter a loop, pumping callbacks.  With this version, all

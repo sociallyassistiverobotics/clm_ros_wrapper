@@ -8,6 +8,15 @@
 
    <!-- type="int"/> -->
 
+  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+    <param name="video_device" value="/dev/video0" />
+    <param name="image_width" value="960" />
+    <param name="image_height" value="720" />
+    <param name="pixel_format" value="yuyv" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+  </node>
+
   <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper">
 	param name ="device_test" type ="int" value="0"/> 
   </node>

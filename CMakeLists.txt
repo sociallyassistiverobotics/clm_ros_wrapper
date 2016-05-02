@@ -11,7 +11,7 @@ find_package(catkin REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp std_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation roscpp std_msgs cv_bridge)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR};${CMAKE_MODULE_PATH}")
 find_package( TBB REQUIRED)

@@ -17,7 +17,7 @@
     <param name="io_method" value="mmap"/>
   </node>
 
-  <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper">
+  <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen">
 	param name ="device_test" type ="int" value="0"/> 
   </node>
 

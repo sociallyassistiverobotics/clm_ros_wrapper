@@ -2,11 +2,23 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
+#include <opencv2/videoio/videoio.hpp>  // Video write
+#include <opencv2/videoio/videoio_c.h>  // Video write
+
+//#include <Face_utils.h>
+//#include <FaceAnalyser.h>
+//#include <GazeEstimation.h>
+
 #include <clm_ros_wrapper/ClmHeads.h>
+
+using namespace std;
+using namespace cv;
+
 /**
  * This tutorial demonstrates simple receipt of messages over the ROS system.
  */
-void chatterCallback(clm_ros_wrapper::ClmHeads ros_heads_msg)
+//void chatterCallback(clm_ros_wrapper::ClmHeads ros_heads_msg)
+void chatterCallback(const std_msgs::String::ConstPtr& msg)
 {
   //ROS_INFO("I heard: [%s]", msg->data.c_str());
   ROS_INFO("I heard something\n");
@@ -14,6 +26,7 @@ void chatterCallback(clm_ros_wrapper::ClmHeads ros_heads_msg)
 
 int main(int argc, char **argv)
 {
+  ROS_INFO("hi\n");
 	typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
   /**
    * The ros::init() function needs to see argc and argv so that it can perform
@@ -49,7 +62,7 @@ int main(int argc, char **argv)
    * is the number of messages that will be buffered up before beginning to throw
    * away the oldest ones.
    */
-  ros::Subscriber sub = n.subscribe("/clm_ros_wrapper/heads", 10, chatterCallback);
+  ros::Subscriber sub = n.subscribe("/heads", 10, chatterCallback);
 
   /**
    * ros::spin() will enter a loop, pumping callbacks.  With this version, all

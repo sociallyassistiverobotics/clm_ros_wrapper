@@ -407,78 +407,29 @@ void output_HOG_frame(std::ofstream* hog_file, bool good_frame, const Mat_<doubl
 double fps_tracker = -1.0;
 int64 t0 = 0;
 
-// Visualising the results
-// void visualise_tracking(Mat& captured_image, const CLMTracker::CLM& clm_model, const CLMTracker::CLMParameters& clm_params, Point3f gazeDirection0, Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy)
-// {
-
-// 	// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
-// 	double detection_certainty = clm_model.detection_certainty;
-// 	bool detection_success = clm_model.detection_success;
-
-// 	double visualisation_boundary = 0.2;
-
-// 	// Only draw if the reliability is reasonable, the value is slightly ad-hoc
-// 	if (detection_certainty < visualisation_boundary)
-// 	{
-// 		CLMTracker::Draw(captured_image, clm_model);
-
-// 		double vis_certainty = detection_certainty;
-// 		if (vis_certainty > 1)
-// 			vis_certainty = 1;
-// 		if (vis_certainty < -1)
-// 			vis_certainty = -1;
-
-// 		vis_certainty = (vis_certainty + 1) / (visualisation_boundary + 1);
-
-// 		// A rough heuristic for box around the face width
-// 		int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
-
-// 		Vec6d pose_estimate_to_draw = CLMTracker::GetCorrectedPoseWorld(clm_model, fx, fy, cx, cy);
-
-// 		// Draw it in reddish if uncertain, blueish if certain
-// 		CLMTracker::DrawBox(captured_image, pose_estimate_to_draw, Scalar((1 - vis_certainty)*255.0, 0, vis_certainty * 255), thickness, fx, fy, cx, cy);
-
-// 		if (clm_params.track_gaze && detection_success)
-// 		{
-// 			FaceAnalysis::DrawGaze(captured_image, clm_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
-// 		}
-// 	}
-
-// 	// Work out the framerate
-// 	if (frame_count % 10 == 0)
-// 	{
-// 		double t1 = cv::getTickCount();
-// 		fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-// 		t0 = t1;
-// 	}
-
-// 	// Write out the framerate on the image before displaying it
-// 	char fpsC[255];
-// 	std::sprintf(fpsC, "%d", (int)fps_tracker);
-// 	string fpsSt("FPS:");
-// 	fpsSt += fpsC;
-// 	cv::putText(captured_image, fpsSt, cv::Point(10, 20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255, 0, 0));
-
-// 	if (!clm_params.quiet_mode)
-// 	{
-// 		namedWindow("tracking_result", 1);
-// 		imshow("tracking_result", captured_image);
-// 	}
-// }
-
 class ClmWrapper
 {
  private:
   ros::NodeHandle nodeHandle;
   ros::Publisher clm_heads_pub;
-  ros::Subscriber usb_cam_sub;
+
+  image_transport::ImageTransport imageTransport;
+  image_transport::Subscriber usb_cam_sub;
 
   cv::Mat img_in;
+
+  int64_t frame_count;
+  int64_t fraction_processed_frames;
 
   // callback function for subscriber to usb_cam. populates 
   void usb_cam_callback(const sensor_msgs::ImageConstPtr& msgIn)
   {
     ROS_INFO("triggered callback\n");
+    ++frame_count;
+    if (frame_count % fraction_processed_frames != 0) {
+      return;
+    }
+
     // Let's convert the ROS image to OpenCV image format
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -502,30 +453,224 @@ class ClmWrapper
     // just publish a hello world for now
     clm_heads_pub.publish( msg );
     ros::spinOnce();
-
-
   }
 
  public:
-  ClmWrapper(ros::NodeHandle& nh)
+  ClmWrapper() : imageTransport(nodeHandle)
   {
     ROS_INFO("initializing\n");
-    nodeHandle = nh;
 
 	  clm_heads_pub = nodeHandle.advertise<std_msgs::String>("heads", 10);
-    usb_cam_sub = nodeHandle.subscribe("/usb_cam/image_raw", 10, &ClmWrapper::usb_cam_callback, this);
+    usb_cam_sub = imageTransport.subscribe("/usb_cam/image_raw", 1, &ClmWrapper::usb_cam_callback, this);
+
+    frame_count = 0;
+    fraction_processed_frames = 4;
+
+    //cv::namedWindow("output",cv::WINDOW_NORMAL);
+    //cv::startWindowThread();
+    //cv::moveWindow("output",1050,50);
+
+
+    // ERICNOTE: initial parameters seem useless, commenting out
+
+    // code taken from original clm_ros_wrapper.cpp
+    //vector<string> arguments = get_arguments(argc, argv);
+
+  	// Some initial parameters that can be overriden from command line	
+  	//vector<string> files, depth_directories, pose_output_files, tracked_videos_output, landmark_output_files, landmark_3D_output_files;
+  
+  	//CLMTracker::CLMParameters clm_params(arguments);
+  	//clm_params.use_face_template = true;    
+  	//clm_params.reinit_video_every = -1;		// This is to avoid the model to try re-initialising itself
+  	//clm_params.curr_face_detector = CLMTracker::CLMParameters::HOG_SVM_DETECTOR;
+  
+  	//// TODO a command line argument
+  	//clm_params.track_gaze = false;
+  
+  	//vector<CLMTracker::CLMParameters> clm_parameters;
+  	//clm_parameters.push_back(clm_params);    
+  
+  	// Get the input output file parameters
+  	
+    // ERICNOTE: don't think we need any input params
+  	// Indicates that rotation should be with respect to camera plane or with respect to camera
+  	//bool use_camera_plane_pose;
+  	//CLMTracker::get_video_input_output_params(files, depth_directories, pose_output_files, tracked_videos_output, landmark_output_files, landmark_3D_output_files, use_camera_plane_pose, arguments);
+  
+  	//bool video_input = true;
+  	//bool verbose = true;
+  	//bool images_as_video = false;
+  	//bool webcam = false;
+  
+
+    // ERICNOTE: no image files, commenting out
+  	vector<vector<string> > input_image_files;
+  
+  	// Adding image support for reading in the files
+  	//if(files.empty())
+  	//{
+  	//	vector<string> d_files;
+  	//	vector<string> o_img;
+  	//	vector<Rect_<double>> bboxes;
+  	//	get_image_input_output_params_feats(input_image_files, images_as_video, arguments);	
+  
+  	//	if(!input_image_files.empty())
+  	//	{
+  	//		video_input = false;
+  	//	}
+  
+  	//}
+  
+
+    // ERICNOTE: might need to get parameters of camera later
+  	// Grab camera parameters, if they are not defined (approximate values will be used)
+  	//float fx = 0, fy = 0, cx = 0, cy = 0;
+  	//// Get camera parameters
+  	//CLMTracker::get_camera_params(device, fx, fy, cx, cy, arguments);    
+  	//
+  	//// If cx (optical axis centre) is undefined will use the image size/2 as an estimate
+  	//bool cx_undefined = false;
+  	//bool fx_undefined = false;
+  	//if (cx == 0 || cy == 0)
+  	//{
+  	//	cx_undefined = true;
+  	//}
+  	//if (fx == 0 || fy == 0)
+  	//{
+  	//	fx_undefined = true;
+  	//}
+  
+  	//// The modules that are being used for tracking
+  	////CLMTracker::CLM clm_model(clm_params.model_location);	
+  
+  	//vector<string> output_similarity_align;
+  	//vector<string> output_au_files;
+  	//vector<string> output_hog_align_files;
+  	//vector<string> params_output_files;
+  	//vector<string> gaze_output_files;
+  
+  	//double sim_scale = 0.7;
+  	//int sim_size = 112;
+  	//bool grayscale = false;	
+  	//bool video_output = false;
+  	//bool rigid = false;	
+  	//int num_hog_rows;
+  	//int num_hog_cols;
+  
+  	//get_output_feature_params(output_similarity_align, video_output, gaze_output_files,
+  	//						  output_hog_align_files, params_output_files, output_au_files,
+  	//						  sim_scale, sim_size, grayscale, rigid, verbose, arguments);
+  	//
+  	//// Used for image masking
+  
+  	//Mat_<int> triangulation;
+  	//string tri_loc  = "";
+  	//string tri_name = "model/tris_68_full.txt";
+  
+  	//if(boost::filesystem::exists(path(tri_name.c_str())))
+  	//{
+  	//	std::ifstream triangulation_file(tri_name.c_str());
+  	//	CLMTracker::ReadMat(triangulation_file, triangulation);
+  	//	tri_loc = tri_name.c_str();
+  	//}
+  	//else
+  	//{
+  	//	path loc = path(arguments[0]).parent_path() / tri_name.c_str();
+  	//	tri_loc = loc.string();
+  
+  	//	if(exists(loc))
+  	//	{
+  	//		std::ifstream triangulation_file(loc.string());
+  	//		CLMTracker::ReadMat(triangulation_file, triangulation);
+  	//	}
+  	//	else
+  	//	{
+  	//		ROS_ERROR("Could not find triangulation files (i.e. %s), exiting.", tri_name.c_str());
+  	//		return 0;
+  	//	}
+  	//}	
+  
+  
+  	//// If multiple video files are tracked, use this to indicate if we are done
+  	//bool done = false;	
+  	//int f_n = -1;
+  	//int curr_img = -1;
+  	//string au_loc  = "";
+  	//string au_name = "AU_predictors/AU_all_best.txt";
+  
+  	//if(boost::filesystem::exists(path(au_name.c_str())))
+  	//{
+  	//	au_loc = au_name;
+  	//}
+  	//else
+  	//{
+  	//	path loc = path(arguments[0]).parent_path() / au_name.c_str();
+  
+  	//	if(exists(loc))
+  	//	{
+  	//		au_loc = loc.string();
+  	//	}
+  	//	else
+  	//	{
+  	//		ROS_ERROR("Could not find AU prediction files (i.e. %s), exiting.", au_name.c_str());
+  	//		return 0;
+  	//	}
+  	//}	
+  
+  	//// Creating a  face analyser that will be used for AU extraction
+  	//FaceAnalysis::FaceAnalyser face_analyser(vector<Vec3d>(), 0.7, 112, 112, au_loc, tri_loc);
+  
+    // // The modules that are being used for tracking
+    //  vector<CLMTracker::CLM> clm_models;
+    //  vector<bool> active_models;
+    //  vector<FaceAnalysis::FaceAnalyser> face_analysers;
+  
+    //  int num_faces_max = 4;
+  
+    //  CLMTracker::CLM clm_model(clm_parameters[0].model_location);
+    //  clm_model.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
+    //  clm_model.face_detector_location = clm_parameters[0].face_detector_location;
+    //  
+    // 	// Will warp to scaled mean shape
+  	//Mat_<double> similarity_normalised_shape = clm_model.pdm.mean_shape * sim_scale;
+  	//// Discard the z component
+  	//similarity_normalised_shape = similarity_normalised_shape(Rect(0, 0, 1, 2*similarity_normalised_shape.rows/3)).clone();
+  
+    //  clm_models.reserve(num_faces_max);
+  
+    //  clm_models.push_back(clm_model);
+    //  active_models.push_back(false);
+  	//face_analysers.push_back(face_analyser);
+  
+    //  for (int i = 1; i < num_faces_max; ++i)
+    //  {
+    //      clm_models.push_back(clm_model);
+    //      active_models.push_back(false);
+    //      clm_parameters.push_back(clm_params);
+  	//	face_analysers.push_back(face_analyser);
+    //  }
+
+
+
   };
 };
 
 int main (int argc, char **argv)
 {
+	typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
+	typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
+	typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
+	typedef clm_ros_wrapper::ClmFacialActionUnit ClmFacialActionUnitMsg;
+
   ROS_WARN("Starting\n");
   std::string name = "clm_ros_wrapper";
   ros::init(argc, argv, name.c_str());
 
+  ROS_INFO("size of argc %d\n", argc);
+
   ros::NodeHandle nh;
 
-  ClmWrapper clm_wrapper(nh);
+  ClmWrapper clm_wrapper();
   ros::spin();
 
   return 0;

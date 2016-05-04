@@ -8,8 +8,8 @@
 
    <!-- type="int"/> -->
 
-  <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper">
-	param name ="device_test" type ="int" value="0"/> 
+  <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen">
+	  <param name ="device_test" type ="int" value="0"/> 
   </node>
 
 

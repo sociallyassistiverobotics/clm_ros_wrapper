@@ -197,6 +197,9 @@ private:
 
     cv::Mat img_in;
 
+    int64_t t_initial;
+    double time_stamp;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(string output_path)
     {
@@ -434,9 +437,9 @@ private:
         cv_bridge::CvImageConstPtr cv_ptr;
         try
         {
-            printf("asdfiojafad\n");
+            // removed encoding due to bug
+            // cv_ptr = cv_bridge::toCvShare(msgIn, sensor_msgs::image_encodings::BGR8);
             cv_ptr = cv_bridge::toCvShare(msgIn);
-            printf("asdfiojafad\n");
         }
         catch (cv_bridge::Exception& e)
         {
@@ -446,6 +449,9 @@ private:
 
         img_in = cv_ptr->image.clone();
         cv::Mat img_out = img_in.clone();
+
+        cv::imshow("output", img_out);
+        cv::waitKey(5);
 
         // Grab the timestamp first
         //if (webcam)
@@ -461,6 +467,11 @@ private:
         //{
         //  time_stamp = 0.0;
         //}
+
+        // e: new timestamp code
+        int64 curr_time = cv::getTickCount();
+        time_stamp = (double(curr_time - t_initial) / cv::getTickFrequency());
+       
 
         // Reading the images
         //Mat_<float> depth_image;
@@ -927,6 +938,10 @@ public:
         imageSubscriber = imageTransport.subscribe("/usb_cam/image_raw",1,&ClmWrapper::callback, this);
         headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>("/clm_ros_wrapper/heads",1);
 
+        cv::namedWindow("output", cv::WINDOW_NORMAL);
+        cv::startWindowThread();
+        cv::moveWindow("output", 1050, 50);
+
         typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
         typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
         typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
@@ -943,6 +958,7 @@ public:
 
 
         int device;
+        // e: don't need to access webcam directly
         //nodeHandle.param("device", device, 0);
 
         // ERICNOTE: this stuff doesn't look too useful - don't know what HOG is though
@@ -956,8 +972,6 @@ public:
 
         vector<CLMTracker::CLMParameters> clm_parameters;
         clm_parameters.push_back(clm_params);    
-
-        // ENDNOTE
 
         // Get the input output file parameters
         
@@ -981,7 +995,7 @@ public:
             vector<Rect_<double>> bboxes;
             get_image_input_output_params_feats(input_image_files, images_as_video, arguments); 
 
-            // don't need this stuff
+            // e: don't need this stuff
             //if(!input_image_files.empty())
             //{
             //  video_input = false;
@@ -1085,171 +1099,174 @@ public:
             } 
         } 
 
-        // THIS IS WHERE IT STARTS BREAKINGGGGGG
-
         // Creating a  face analyser that will be used for AU extraction
         FaceAnalysis::FaceAnalyser face_analyser(vector<Vec3d>(), 0.7, 112, 112, au_loc, tri_loc);
 
         // The modules that are being used for tracking
         vector<CLMTracker::CLM> clm_models;
-        //vector<bool> active_models;
-        //vector<FaceAnalysis::FaceAnalyser> face_analysers;
+        vector<bool> active_models;
+        vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
-        //int num_faces_max = 4;
+        int num_faces_max = 4;
 
-        //CLMTracker::CLM clm_model(clm_parameters[0].model_location);
-        //clm_model.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
-        //clm_model.face_detector_location = clm_parameters[0].face_detector_location;
-        //  
-        //  // Will warp to scaled mean shape
-        //Mat_<double> similarity_normalised_shape = clm_model.pdm.mean_shape * sim_scale;
-        //// Discard the z component
-        //similarity_normalised_shape = similarity_normalised_shape(Rect(0, 0, 1, 2*similarity_normalised_shape.rows/3)).clone();
+        CLMTracker::CLM clm_model(clm_parameters[0].model_location);
+        clm_model.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
+        clm_model.face_detector_location = clm_parameters[0].face_detector_location;
+          
+        // Will warp to scaled mean shape
+        Mat_<double> similarity_normalised_shape = clm_model.pdm.mean_shape * sim_scale;
+        // Discard the z component
+        similarity_normalised_shape = similarity_normalised_shape(Rect(0, 0, 1, 2*similarity_normalised_shape.rows/3)).clone();
 
-        //clm_models.reserve(num_faces_max);
+        clm_models.reserve(num_faces_max);
 
-        //clm_models.push_back(clm_model);
-        //active_models.push_back(false);
-        //face_analysers.push_back(face_analyser);
+        clm_models.push_back(clm_model);
+        active_models.push_back(false);
+        face_analysers.push_back(face_analyser);
 
-        //for (int i = 1; i < num_faces_max; ++i)
+        for (int i = 1; i < num_faces_max; ++i)
+        {
+          clm_models.push_back(clm_model);
+          active_models.push_back(false);
+          clm_parameters.push_back(clm_params);
+          face_analysers.push_back(face_analyser);
+        }
+
+        string current_file;
+
+        bool use_depth = !depth_directories.empty();  
+        
+        VideoCapture video_capture;
+        
+        Mat captured_image;
+        int total_frames = -1;
+        int reported_completion = 0;
+
+        double fps_vid_in = -1.0;
+
+        // e: commented this chunk out because we know our video source
+        //if(video_input)
         //{
-        //  clm_models.push_back(clm_model);
-        //  active_models.push_back(false);
-        //  clm_parameters.push_back(clm_params);
-        //  face_analysers.push_back(face_analyser);
+        //    // We might specify multiple video files as arguments
+        //    if(files.size() > 0)
+        //    {
+        //        f_n++;      
+        //        current_file = files[f_n];
+        //    }
+        //    else
+        //        f_n = 0;
+        //    }
+        //    // Do some grabbing
+        //    if( current_file.size() > 0 )
+        //    {
+        //        ROS_INFO_STREAM( "Attempting to read from file: " << current_file );
+        //        video_capture = VideoCapture( current_file );
+        //        total_frames = (int)video_capture.get(CV_CAP_PROP_FRAME_COUNT);
+        //        fps_vid_in = video_capture.get(CV_CAP_PROP_FPS);
+
+        //        // Check if fps is nan or less than 0
+        //        if (fps_vid_in != fps_vid_in || fps_vid_in <= 0)
+        //        {
+        //            ROS_INFO_STREAM("FPS of the video file cannot be determined, assuming 30");
+        //            fps_vid_in = 30;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        ROS_INFO_STREAM( "Attempting to capture from device: " << device );
+        //        video_capture = VideoCapture( device );
+        //        webcam = true;
+
+        //        // Read a first frame often empty in camera
+        //        Mat captured_image;
+        //        video_capture >> captured_image;
+        //    }
+
+        //    if( !video_capture.isOpened() ) ROS_FATAL_STREAM( "Failed to open video source" );
+        //    else ROS_INFO_STREAM( "Device or file opened");
+
+        //    video_capture >> captured_image;  
+        //}
+        //else
+        //{
+        //    f_n++;  
+        //    curr_img++;
+        //    if(!input_image_files[f_n].empty())
+        //    {
+        //        string curr_img_file = input_image_files[f_n][curr_img];
+        //        captured_image = imread(curr_img_file, -1);
+        //    }
+        //    else
+        //    {
+        //        ROS_FATAL_STREAM( "No .jpg or .png images in a specified drectory" );
+        //    }
+
+        //} 
+
+        webcam = true;
+        // video_capture >> captured_image;
+   
+        // If optical centers are not defined just use center of image
+        if(cx_undefined)
+        {
+            cx = captured_image.cols / 2.0f;
+            cy = captured_image.rows / 2.0f;
+        }
+        // Use a rough guess-timate of focal length
+        if (fx_undefined)
+        {
+            fx = 500 * (captured_image.cols / 640.0);
+            fy = 500 * (captured_image.rows / 480.0);
+
+            fx = (fx + fy) / 2.0;
+            fy = fx;
+        }
+  
+        // saving the videos
+        // e: don't need to
+        //VideoWriter output_similarity_aligned_video;
+        //if(!output_similarity_align.empty())
+        //{
+        //    if(video_output)
+        //    {
+        //        ROS_INFO("this stuff");
+        //        double fps = webcam ? 30 : fps_vid_in;
+        //        output_similarity_aligned_video = VideoWriter(output_similarity_align[f_n], CV_FOURCC('H', 'F', 'Y', 'U'), fps, Size(sim_size, sim_size), true);
+        //    }
+        //}
+    
+        // Saving the HOG features
+        // e: don't need to
+        //std::ofstream hog_output_file;
+        //if(!output_hog_align_files.empty())
+        //{
+        //    hog_output_file.open(output_hog_align_files[f_n], ios_base::out | ios_base::binary);
         //}
 
-        //string current_file;
+        // saving the videos
+        // e: don't need to
+        //VideoWriter writerFace;
+        //if(!tracked_videos_output.empty())
+        //{
+        //    double fps = webcam ? 30 : fps_vid_in;
+        //    writerFace = VideoWriter(tracked_videos_output[f_n], CV_FOURCC('D', 'I', 'V', 'X'), fps, captured_image.size(), true);
+        //}
 
-        //bool use_depth = !depth_directories.empty();  
-        //
-        //VideoCapture video_capture;
-        //
-        //Mat captured_image;
-        //int total_frames = -1;
-        //int reported_completion = 0;
+        int frame_count = 0;
+        
+        // This is useful for a second pass run (if want AU predictions)
+        vector<Vec6d> params_global_video;
+        vector<bool> successes_video;
+        vector<Mat_<double>> params_local_video;
+        vector<Mat_<double>> detected_landmarks_video;
+            
+        // Use for timestamping if using a webcam
+        t_initial = cv::getTickCount();
 
-        //double fps_vid_in = -1.0;
+        bool visualise_hog = verbose;
 
-    ////if(video_input)
-    ////{
-    ////  // We might specify multiple video files as arguments
-    ////  if(files.size() > 0)
-    ////  {
-    ////    f_n++;      
-    ////    current_file = files[f_n];
-    ////  }
-    ////  else
-    ////    f_n = 0;
-    ////  }
-    ////  // Do some grabbing
-    ////  if( current_file.size() > 0 )
-    ////  {
-    ////    ROS_INFO_STREAM( "Attempting to read from file: " << current_file );
-    ////    video_capture = VideoCapture( current_file );
-    ////    total_frames = (int)video_capture.get(CV_CAP_PROP_FRAME_COUNT);
-    ////    fps_vid_in = video_capture.get(CV_CAP_PROP_FPS);
-
-    ////    // Check if fps is nan or less than 0
-    ////    if (fps_vid_in != fps_vid_in || fps_vid_in <= 0)
-    ////    {
-    ////      ROS_INFO_STREAM("FPS of the video file cannot be determined, assuming 30");
-    ////      fps_vid_in = 30;
-    ////    }
-    ////  }
-    ////  else
-    ////  {
-    ////    ROS_INFO_STREAM( "Attempting to capture from device: " << device );
-    ////    video_capture = VideoCapture( device );
-    ////    webcam = true;
-
-    ////    // Read a first frame often empty in camera
-    ////    Mat captured_image;
-    ////    video_capture >> captured_image;
-    ////  }
-
-    ////  if( !video_capture.isOpened() ) ROS_FATAL_STREAM( "Failed to open video source" );
-    ////  else ROS_INFO_STREAM( "Device or file opened");
-
-    ////  video_capture >> captured_image;  
-    ////}
-    ////else
-    ////{
-    ////  f_n++;  
-    ////  curr_img++;
-    ////  if(!input_image_files[f_n].empty())
-    ////  {
-    ////    string curr_img_file = input_image_files[f_n][curr_img];
-    ////    captured_image = imread(curr_img_file, -1);
-    ////  }
-    ////  else
-    ////  {
-    ////    ROS_FATAL_STREAM( "No .jpg or .png images in a specified drectory" );
-    ////  }
-
-    ////} 
-
-    //webcam = true;
-    //video_capture >> captured_image;
-   
-    //// If optical centers are not defined just use center of image
-    //if(cx_undefined)
-    //{
-    //  cx = captured_image.cols / 2.0f;
-    //  cy = captured_image.rows / 2.0f;
-    //}
-    //// Use a rough guess-timate of focal length
-    //if (fx_undefined)
-    //{
-    //  fx = 500 * (captured_image.cols / 640.0);
-    //  fy = 500 * (captured_image.rows / 480.0);
-
-    //  fx = (fx + fy) / 2.0;
-    //  fy = fx;
-    //}
-  
-    //// saving the videos
-    //VideoWriter output_similarity_aligned_video;
-    //if(!output_similarity_align.empty())
-    //{
-    //  if(video_output)
-    //  {
-    //    double fps = webcam ? 30 : fps_vid_in;
-    //    output_similarity_aligned_video = VideoWriter(output_similarity_align[f_n], CV_FOURCC('H', 'F', 'Y', 'U'), fps, Size(sim_size, sim_size), true);
-    //  }
-    //}
-    //
-    //// Saving the HOG features
-    //std::ofstream hog_output_file;
-    //if(!output_hog_align_files.empty())
-    //{
-    //  hog_output_file.open(output_hog_align_files[f_n], ios_base::out | ios_base::binary);
-    //}
-
-    //// saving the videos
-    //VideoWriter writerFace;
-    //if(!tracked_videos_output.empty())
-    //{
-    //  double fps = webcam ? 30 : fps_vid_in;
-    //  writerFace = VideoWriter(tracked_videos_output[f_n], CV_FOURCC('D', 'I', 'V', 'X'), fps, captured_image.size(), true);
-    //}
-
-    //int frame_count = 0;
-    //
-    //// This is useful for a second pass run (if want AU predictions)
-    //vector<Vec6d> params_global_video;
-    //vector<bool> successes_video;
-    //vector<Mat_<double>> params_local_video;
-    //vector<Mat_<double>> detected_landmarks_video;
-    //    
-    //// Use for timestamping if using a webcam
-    //int64 t_initial = cv::getTickCount();
-
-    //bool visualise_hog = verbose;
-
-    //// Timestamp in seconds of current processing
-    //double time_stamp = 0;
+        // Timestamp in seconds of current processing
+        time_stamp = 0;
  
   };
 

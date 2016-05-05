@@ -212,7 +212,7 @@ private:
         }
     }
 
-  // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
+    // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
     void get_output_feature_params(vector<string> &output_similarity_aligned, bool &vid_output,
                                    vector<string> &output_gaze_files, vector<string> &output_hog_aligned_files,
                                    vector<string> &output_model_param_files, vector<string> &output_au_files,
@@ -434,7 +434,9 @@ private:
         cv_bridge::CvImageConstPtr cv_ptr;
         try
         {
-            cv_ptr = cv_bridge::toCvShare(msgIn, sensor_msgs::image_encodings::BGR8);
+            printf("asdfiojafad\n");
+            cv_ptr = cv_bridge::toCvShare(msgIn);
+            printf("asdfiojafad\n");
         }
         catch (cv_bridge::Exception& e)
         {

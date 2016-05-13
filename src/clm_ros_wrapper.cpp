@@ -82,7 +82,12 @@ private:
     bool visualise_hog;
     bool verbose;
 
-    float fx, fy, cx, cy;
+    float fx, fy;
+    bool fx_undefined;
+    float cx, cy;
+    bool cx_undefined;
+
+    bool init;
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(string output_path)
@@ -287,6 +292,30 @@ private:
         // cv::imshow("output", captured_image);
         // cv::waitKey(5);
         // return;
+        
+        // Stuff to run on the first frame
+        if (init == true )
+        {
+            // Approximate camera parameters TODO : read them from the parameter server
+            // If cx (optical axis centre) is undefined will use 
+            // the image size/2 as an estimate (i.e. the center of the image)
+            if(cx_undefined)
+            {
+                cx = captured_image.cols / 2.0f;
+                cy = captured_image.rows / 2.0f;
+            }
+            // Use a rough guess-timate of focal length
+            if (fx_undefined)
+            {
+                fx = 500 * (captured_image.cols / 640.0);
+                fy = 500 * (captured_image.rows / 480.0);
+
+                fx = (fx + fy) / 2.0;
+                fy = fx;
+            }
+            
+            init = false;
+        }
 
         typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
         typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
@@ -587,6 +616,10 @@ private:
                 // Draw it in reddish if uncertain, blueish if certain
                 CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
                                                 detection_certainty*255), thickness, fx, fy, cx, cy);
+
+                cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+                 << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
+                 << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
             }
         }
 
@@ -693,6 +726,8 @@ public:
         imageSubscriber = imageTransport.subscribe("/usb_cam/image_raw",1,&ClmWrapper::callback, this);
         headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>("/clm_ros_wrapper/heads",1);
 
+        init = true;
+
         // code to start a window
         //cv::namedWindow("output", cv::WINDOW_NORMAL);
         //cv::startWindowThread();
@@ -737,22 +772,11 @@ public:
 
         //ENDNOTE
 
-        // Grab camera parameters, if they are not defined (approximate values will be used)
-        fx = 0, fy = 0, cx = 0, cy = 0;
-        // Get camera parameters
-        //CLMTracker::get_camera_params(device, fx, fy, cx, cy, arguments);    
+        fx = 0, fy = 0;
+        cx = 0, cy = 0;
         
-        // If cx (optical axis centre) is undefined will use the image size/2 as an estimate
-        bool cx_undefined = false;
-        bool fx_undefined = false;
-        if (cx == 0 || cy == 0)
-        {
-          cx_undefined = true;
-        }
-        if (fx == 0 || fy == 0)
-        {
-          fx_undefined = true;
-        }
+        cx_undefined = true;
+        fx_undefined = true;
 
         //vector<string> output_similarity_align;
         //vector<string> output_au_files;
@@ -865,29 +889,12 @@ public:
 
         string current_file;
         
-        Mat captured_image;
         int total_frames = -1;
         int reported_completion = 0;
 
         double fps_vid_in = -1.0;
 
         webcam = true;
-   
-        // If optical centers are not defined just use center of image
-        if(cx_undefined)
-        {
-            cx = captured_image.cols / 2.0f;
-            cy = captured_image.rows / 2.0f;
-        }
-        // Use a rough guess-timate of focal length
-        if (fx_undefined)
-        {
-            fx = 500 * (captured_image.cols / 640.0);
-            fy = 500 * (captured_image.rows / 480.0);
-
-            fx = (fx + fy) / 2.0;
-            fy = fx;
-        }
   
         //int frame_count = 0;
         
@@ -904,7 +911,6 @@ public:
 
         // Timestamp in seconds of current processing
         time_stamp = 0;
- 
   };
 
   ~ClmWrapper() {};

@@ -134,16 +134,11 @@ include_directories(lib/local/CLM/include)
 include_directories(lib/local/FaceAnalyser/include)	
 
 # Compile Libraries
-add_subdirectory(lib/3rdParty/dlib) #compiles these
+add_subdirectory(lib/3rdParty/dlib) # dlib
 
-# CLM library (ordering matters)
-add_subdirectory(lib/local/CLM) #compiles these into libraries
+# CLM libraries (order matters)
+add_subdirectory(lib/local/CLM)
 add_subdirectory(lib/local/FaceAnalyser)
-
-## Declare a C++ library
-# add_library(clm_ros_wrapper
-#   src/${PROJECT_NAME}/clm_ros_wrapper.cpp
-# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

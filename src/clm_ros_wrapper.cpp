@@ -1,69 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (C) 2015, University of Cambridge,
 // all rights reserved.
-//
-// THIS SOFTWARE IS PROVIDED “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES,
-// INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
-// THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-// INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY. OR CONSEQUENTIAL DAMAGES
-// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-// HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
-// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//
-// Notwithstanding the license granted herein, Licensee acknowledges that certain components
-// of the Software may be covered by so-called “open source” software licenses (“Open Source
-// Components”), which means any software licenses approved as open source licenses by the
-// Open Source Initiative or any substantially similar licenses, including without limitation any
-// license that, as a condition of distribution of the software licensed under such license,
-// requires that the distributor make the software available in source code format. Licensor shall
-// provide a list of Open Source Components for a particular version of the Software upon
-// Licensee’s request. Licensee will comply with the applicable terms of such licenses and to
-// the extent required by the licenses covering Open Source Components, the terms of such
-// licenses will apply in lieu of the terms of this Agreement. To the extent the terms of the
-// licenses applicable to Open Source Components prohibit any of the restrictions in this
-// License Agreement with respect to such Open Source Component, such restrictions will not
-// apply to such Open Source Component. To the extent the terms of the licenses applicable to
-// Open Source Components require Licensor to make an offer to provide source code or
-// related information in connection with the Software, such offer is hereby made. Any request
-// for source code or related information should be directed to cl-face-tracker-distribution@lists.cam.ac.uk
-// Licensee acknowledges receipt of notices for the Open Source Components for the initial
-// delivery of the Software.
-
-//     * Any publications arising from the use of this software, including but
-//       not limited to academic journal and conference publications, technical
-//       reports and manuals, must cite one of the following works (the related one preferrably):
-//
-//       Tadas Baltrusaitis, Peter Robinson, and Louis-Philippe Morency. 3D
-//       Constrained Local Model for Rigid and Non-Rigid Facial Tracking.
-//       IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2012.    
-//
-//       Tadas Baltrusaitis, Peter Robinson, and Louis-Philippe Morency. 
-//       Constrained Local Neural Fields for robust facial landmark detection in the wild.
-//       in IEEE Int. Conference on Computer Vision Workshops, 300 Faces in-the-Wild Challenge, 2013.    
-//
-//       Tadas Baltrusaitis, Marwa Mahmoud, and Peter Robinson.
-//		 Cross-dataset learning and person-specific normalisation for automatic Action Unit detection
-//       Facial Expression Recognition and Analysis Challenge 2015,
-//       IEEE International Conference on Automatic Face and Gesture Recognition, 2015
-//
-//       Erroll Wood, Tadas Baltrušaitis, Xucong Zhang, Yusuke Sugano, Peter Robinson, and Andreas Bulling
-//		 Rendering of Eyes for Eye-Shape Registration and Gaze Estimation
-//       in IEEE International. Conference on Computer Vision (ICCV), 2015
-//
 ///////////////////////////////////////////////////////////////////////////////
-
 
 #include "CLM_core.h"
 
 #include <fstream>
 #include <sstream>
 
-#include <opencv2/videoio/videoio.hpp>  // Video write
-#include <opencv2/videoio/videoio_c.h>  // Video write
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -102,12 +46,8 @@ private:
     image_transport::Subscriber     imageSubscriber;
 
     ros::Publisher headsPublisher;
-
-    int64_t frames;
-    int64_t frame_fraction = 4; // analyze every 4 frames
     int f_n;
 
-    cv::Mat img_in;
     cv::Mat captured_image;
 
     int64_t t_initial;
@@ -124,8 +64,6 @@ private:
     vector<string> params_output_files;
     vector<string> gaze_output_files;
 
-    VideoWriter output_similarity_aligned_video;
-
     CLMTracker::CLM clm_model;
     vector<CLMTracker::CLMParameters> clm_parameters;
 
@@ -135,7 +73,6 @@ private:
     vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
     std::ofstream hog_output_file;
-    VideoWriter writerFace;
 
     int num_hog_rows;
     int num_hog_cols;
@@ -301,84 +238,11 @@ private:
         }
     }
 
-
-    // Can process images via directories creating a separate output file per directory
-    void get_image_input_output_params_feats(vector<vector<string> > &input_image_files, bool& as_video, vector<string> &arguments)
+    void NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_models, vector<Rect_<double> >& face_detections)
     {
-      return;
-      //bool* valid = new bool[arguments.size()];
-      //  
-      //for(size_t i = 0; i < arguments.size(); ++i)
-      //{
-      //  valid[i] = true;
-      //  if (arguments[i].compare("-fdir") == 0) 
-      //  {                    
-    
-      //    // parse the -fdir directory by reading in all of the .png and .jpg files in it
-      //    path image_directory (arguments[i+1]); 
-    
-      //    try
-      //    {
-      //       // does the file exist and is it a directory
-      //      if (exists(image_directory) && is_directory(image_directory))   
-      //      {
-      //        
-      //        vector<path> file_in_directory;                                
-      //        copy(directory_iterator(image_directory), directory_iterator(), back_inserter(file_in_directory));
-    
-      //        // Sort the images in the directory first
-      //        sort(file_in_directory.begin(), file_in_directory.end()); 
-    
-      //        vector<string> curr_dir_files;
-    
-      //        for (vector<path>::const_iterator file_iterator (file_in_directory.begin()); file_iterator != file_in_directory.end(); ++file_iterator)
-      //        {
-      //          // Possible image extension .jpg and .png
-      //          if(file_iterator->extension().string().compare(".jpg") == 0 || file_iterator->extension().string().compare(".png") == 0)
-      //          {                               
-      //            curr_dir_files.push_back(file_iterator->string());                              
-      //          }
-      //        }
-    
-      //        input_image_files.push_back(curr_dir_files);
-      //      }
-      //    }
-      //    catch (const filesystem_error& ex)
-      //    {
-      //      cout << ex.what() << '\n';
-      //    }
-    
-      //    valid[i] = false;
-      //    valid[i+1] = false;   
-      //    i++;
-      //  }
-      //  else if (arguments[i].compare("-asvid") == 0) 
-      //  {
-      //    as_video = true;
-      //  }
-      //  else if (arguments[i].compare("-help") == 0)
-      //  {
-      //    cout << "Input output files are defined as: -fdir <image directory (can have multiple ones)> -asvid <the images in a folder are assumed to come from a video (consecutive)>" << endl; // Inform the user of how to use the program        
-      //  }
-      //}
-    
-      //// Clear up the argument list
-      //for(int i=arguments.size()-1; i >= 0; --i)
-      //{
-      //  if(!valid[i])
-      //  {
-      //    arguments.erase(arguments.begin()+i);
-      //  }
-      //}
-    }
-
-    void NonOverlapingDetections(const vector<CLMTracker::CLM>& clm_models, vector<Rect_<double> >& face_detections)
-    {
-    
         // Go over the model and eliminate detections that are not informative (there already is a tracker there)
         for(size_t model = 0; model < clm_models.size(); ++model)
         {
-    
             // See if the detections intersect
             Rect_<double> model_rect = clm_models[model].GetBoundingBox();
             
@@ -402,24 +266,14 @@ private:
     */
     void callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
-        ROS_INFO("Triggered callback!");
-
-        frames = frames + 1;
-        if(!(frames % frame_fraction == 0)) {
-            return;
-        }
-
-        typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
-        typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
-        typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
-        typedef clm_ros_wrapper::ClmFacialActionUnit ClmFacialActionUnitMsg;
-
-        // Let's convert the ROS image to OpenCV image format
+        // Convert the ROS image to OpenCV image format
+        // BUG : For CLM, OpenCV 3.* is needed, but cv_bridge segfaults with openCV 3.0
+        // when asked to convert images with BGR encoding. The solution has been to convert them
+        // without a specified encoding (I think it falls back to RGB) and then manually convert 
+        // them to BGR
         cv_bridge::CvImageConstPtr cv_ptr;
         try
         {
-            // removed encoding due to bug
-            // cv_ptr = cv_bridge::toCvShare(msgIn, sensor_msgs::image_encodings::BGR8);
             cv_ptr = cv_bridge::toCvShare(msgIn);
         }
         catch (cv_bridge::Exception& e)
@@ -428,71 +282,28 @@ private:
             return;
         }
 
-        img_in = cv_ptr->image.clone();
-        //cv::Mat img_out = img_in.clone();
+        cv::cvtColor(cv_ptr->image.clone(), captured_image, CV_BGR2RGB);;
 
-        captured_image = img_in.clone();
+        // cv::imshow("output", captured_image);
+        // cv::waitKey(5);
+        // return;
 
-        //cv::imshow("output", img_out);
-        //cv::waitKey(5);
+        typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
+        typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
+        typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
+        typedef clm_ros_wrapper::ClmFacialActionUnit ClmFacialActionUnitMsg;
 
-        // Grab the timestamp first
-        //if (webcam)
-        //{
-        //  int64 curr_time = cv::getTickCount();
-        //  time_stamp = (double(curr_time - t_initial) / cv::getTickFrequency());
-        //}
-        //else if (video_input)
-        //{
-        //  time_stamp = (double)frame_count * (1.0 / fps_vid_in);        
-        //}
-        //else
-        //{
-        //  time_stamp = 0.0;
-        //}
-
-        // e: new timestamp code
+        // Set the timestamp
         int64 curr_time = cv::getTickCount();
         time_stamp = (double(curr_time - t_initial) / cv::getTickFrequency());
-       
 
         // Reading the images
         Mat_<float> depth_image;
         Mat_<uchar> grayscale_image;
         Mat disp_image = captured_image.clone();
 
-
-        if(captured_image.channels() == 3)
-        {
-            cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);       
-        }
-        else
-        {
-            grayscale_image = captured_image.clone();       
-        }
-
-        // e: don't think we need this
-        //// Get depth image
-        //if(use_depth)
-        //{
-        //    char* dst = new char[100];
-        //    std::stringstream sstream;
-
-        //    sstream << depth_directories[f_n] << "\\depth%05d.png";
-        //    sprintf(dst, sstream.str().c_str(), frame_count + 1);
-        //    // Reading in 16-bit png image representing depth
-        //    Mat_<short> depth_image_16_bit = imread(string(dst), -1);
-
-        //    // Convert to a floating point depth image
-        //    if(!depth_image_16_bit.empty())
-        //    {
-        //        depth_image_16_bit.convertTo(depth_image, CV_32F);
-        //    }
-        //    else
-        //    {
-        //        ROS_WARN_STREAM( "Can't find depth image" );
-        //    }
-        //}
+        if(captured_image.channels() == 3) cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);       
+        else                               grayscale_image = captured_image.clone();
 
         vector<Rect_<double> > face_detections;
 
@@ -522,32 +333,31 @@ private:
         }
 
         // Keep only non overlapping detections (also convert to a concurrent vector
-        NonOverlapingDetections(clm_models, face_detections);
+        NonOverlappingDetections(clm_models, face_detections);
 
         vector<tbb::atomic<bool> > face_detections_used(face_detections.size());
 
         ClmHeadsMsg ros_heads_msg;
 
         // Go through every model and update the tracking TODO pull out as a separate parallel/non-parallel method
-        tbb::parallel_for(0, (int)clm_models.size(), [&](int model){
-
+        tbb::parallel_for(0, (int)clm_models.size(), [&](int model)
+        {
             bool detection_success = false;
 
             // If the current model has failed more than 4 times in a row, remove it
             if(clm_models[model].failures_in_a_row > 4)
             {       
-              active_models[model] = false;
-              clm_models[model].Reset();
-
+                active_models[model] = false;
+                clm_models[model].Reset();
             }
 
             // If the model is inactive reactivate it with new detections
             if(!active_models[model])
             {
-          
                 for(size_t detection_ind = 0; detection_ind < face_detections.size(); ++detection_ind)
                 {
-                    // if it was not taken by another tracker take it (if it is false swap it to true and enter detection, this makes it parallel safe)
+                    // if it was not taken by another tracker take it
+                    // (if it is false swap it to true and enter detection, this makes it parallel safe)
                     if(face_detections_used[detection_ind].compare_and_swap(true, false) == false)
                     {
           
@@ -559,7 +369,8 @@ private:
                         //IGNORE STANDALONE IMAGES
                         if(video_input || images_as_video)
                         {
-                            detection_success = CLMTracker::DetectLandmarksInVideo(grayscale_image, depth_image, face_detections[detection_ind], clm_models[model], clm_parameters[model]);
+                            detection_success = CLMTracker::DetectLandmarksInVideo(grayscale_image, depth_image, face_detections[detection_ind],
+                                                                                   clm_models[model], clm_parameters[model]);
                         }
                         else
                         {
@@ -572,7 +383,6 @@ private:
                         // break out of the loop as the tracker has been reinitialised
                         break;
                     }
-
                 }
             }
             else
@@ -601,264 +411,222 @@ private:
                     FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection0, gazeDirection0_head, fx, fy, cx, cy, true);
                     FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
                 }
-               // Do face alignment
-               Mat sim_warped_img;     
-               Mat_<double> hog_descriptor;
+                // Do face alignment
+                Mat sim_warped_img;     
+                Mat_<double> hog_descriptor;
 
-               // But only if needed in output
-               //std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " << hog_output_file.is_open() << " not empty: output_au_files " << !output_au_files.empty() << std::endl;
-               // if(!output_similarity_align.empty() || hog_output_file.is_open() || !output_au_files.empty()) START CHECK
-               // {
-               face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
-               face_analysers[model].GetLatestAlignedFace(sim_warped_img);
+                // But only if needed in output
+                // std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " << 
+                //              hog_output_file.is_open() << " not empty: output_au_files " << !output_au_files.empty() << std::endl;
+                // if(!output_similarity_align.empty() || hog_output_file.is_open() || !output_au_files.empty()) START CHECK
+                // {
+                face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
+                face_analysers[model].GetLatestAlignedFace(sim_warped_img);
 
-               //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);      
-               if(!clm_parameters[model].quiet_mode)
-               {
-                 cv::imshow("sim_warp", sim_warped_img);     
-               }
+                //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);      
+                if(!clm_parameters[model].quiet_mode)
+                {
+                    cv::imshow("sim_warp", sim_warped_img); 
+                    cv::waitKey(1);    
+                }
 
-               if(hog_output_file.is_open())
-               {
-                 FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
+                if(hog_output_file.is_open())
+                {
+                    FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
 
-                 if(visualise_hog && !clm_parameters[model].quiet_mode)
-                 {
-                   Mat_<double> hog_descriptor_vis;
-                   FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
-                   cv::imshow("hog", hog_descriptor_vis);  
-                 }
-               }
-               // } END CHECK
+                    if(visualise_hog && !clm_parameters[model].quiet_mode)
+                    {
+                        Mat_<double> hog_descriptor_vis;
+                        FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
+                        cv::imshow("hog", hog_descriptor_vis);  
+                    }
+                }
+                // } END CHECK
 
-               // Work out the pose of the head from the tracked model
-               Vec6d pose_estimate_CLM;
-               if(use_camera_plane_pose)
-               {
-                 pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
-               }
-               else
-               {
-                 pose_estimate_CLM = CLMTracker::GetCorrectedPoseCamera(clm_models[model], fx, fy, cx, cy);
-               }
+                // Work out the pose of the head from the tracked model
+                Vec6d pose_estimate_CLM;
+                if(use_camera_plane_pose)
+                {
+                    pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
+                }
+                else
+                {
+                    pose_estimate_CLM = CLMTracker::GetCorrectedPoseCamera(clm_models[model], fx, fy, cx, cy);
+                }
 
-               // e: don't think we're using hog
-               //if(hog_output_file.is_open())
-               //{
-               //  output_HOG_frame(&hog_output_file, detection_success, hog_descriptor, num_hog_rows, num_hog_cols);
-               //}
+                // e: don't think we're using hog
+                //if(hog_output_file.is_open())
+                //{
+                //  output_HOG_frame(&hog_output_file, detection_success, hog_descriptor, num_hog_rows, num_hog_cols);
+                //}
 
-               // Write the similarity normalised output
-               if(!output_similarity_align.empty())
-               {
-                 if(video_output)
-                 {
-                   if(output_similarity_aligned_video.isOpened())
-                   {
-                     output_similarity_aligned_video << sim_warped_img;
-                   }
-                 }
-                 else
-                 {
-                   char name[100];
-               
-                   // output the frame number
-                   //std::sprintf(name, "frame_det_%06d.png", frame_count);
+                double confidence = 0.5 * (1 - clm_model.detection_certainty);
 
-                   // Construct the output filename
-                   boost::filesystem::path slash("/");
-               
-                   std::string preferredSlash = slash.make_preferred().string();
-             
-                   string out_file = output_similarity_align[f_n] + preferredSlash + string(name);
-                   imwrite(out_file, sim_warped_img);
-                 }
-               }
+                ClmHeadMsg ros_head_msg;
+                auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
+                auto & ros_aus_msg = ros_head_msg.aus;
 
-               double confidence = 0.5 * (1 - clm_model.detection_certainty);
+                ros_head_msg.detection_success = static_cast<uint8_t>( detection_success );
+                ros_head_msg.detection_confidence = static_cast<float>( confidence );
+                ros_head_msg.time_stamp = static_cast<float>( time_stamp );
 
-               ClmHeadMsg ros_head_msg;
-               auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
-               auto & ros_aus_msg = ros_head_msg.aus;
-
-               ros_head_msg.detection_success = static_cast<uint8_t>( detection_success );
-               ros_head_msg.detection_confidence = static_cast<float>( confidence );
-               ros_head_msg.time_stamp = static_cast<float>( time_stamp );
-
-               // package head pose message
-               ros_head_msg.headpose.x = static_cast<float>( pose_estimate_CLM[0] );
-               ros_head_msg.headpose.y = static_cast<float>( pose_estimate_CLM[1] );
-               ros_head_msg.headpose.z = static_cast<float>( pose_estimate_CLM[2] );
-               ros_head_msg.headpose.pitch = static_cast<float>( pose_estimate_CLM[3] );
-               ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
-               ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
+                // package head pose message
+                ros_head_msg.headpose.x = static_cast<float>( pose_estimate_CLM[0] );
+                ros_head_msg.headpose.y = static_cast<float>( pose_estimate_CLM[1] );
+                ros_head_msg.headpose.z = static_cast<float>( pose_estimate_CLM[2] );
+                ros_head_msg.headpose.pitch = static_cast<float>( pose_estimate_CLM[3] );
+                ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
+                ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
 
 
-               std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
-               std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
+                std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
+                std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
 
-               for (size_t p = 0; p < gazeDirections_head.size(); p++)
-               {
-                 ClmEyeGazeMsg ros_eyegaze_msg;
-                 ros_eyegaze_msg.eye_id = p;
-                 ros_eyegaze_msg.gaze_direction_cameraref_x = static_cast<float>( gazeDirections[p].x ); 
-                 ros_eyegaze_msg.gaze_direction_cameraref_y = static_cast<float>( gazeDirections[p].y );
-                 ros_eyegaze_msg.gaze_direction_cameraref_z = static_cast<float>( gazeDirections[p].z );
-                 ros_eyegaze_msg.gaze_direction_headref_x = static_cast<float>( gazeDirections_head[p].x ); //lateral gaze
-                 ros_eyegaze_msg.gaze_direction_headref_y = static_cast<float>( gazeDirections_head[p].y );
-                 ros_eyegaze_msg.gaze_direction_headref_z = static_cast<float>( gazeDirections_head[p].z );
-                 ros_eyegazes_msg.emplace_back( std::move( ros_eyegaze_msg ) );
-               }
+                for (size_t p = 0; p < gazeDirections_head.size(); p++)
+                {
+                    ClmEyeGazeMsg ros_eyegaze_msg;
+                    ros_eyegaze_msg.eye_id = p;
+                    ros_eyegaze_msg.gaze_direction_cameraref_x = static_cast<float>( gazeDirections[p].x ); 
+                    ros_eyegaze_msg.gaze_direction_cameraref_y = static_cast<float>( gazeDirections[p].y );
+                    ros_eyegaze_msg.gaze_direction_cameraref_z = static_cast<float>( gazeDirections[p].z );
+                    ros_eyegaze_msg.gaze_direction_headref_x = static_cast<float>( gazeDirections_head[p].x ); //lateral gaze
+                    ros_eyegaze_msg.gaze_direction_headref_y = static_cast<float>( gazeDirections_head[p].y );
+                    ros_eyegaze_msg.gaze_direction_headref_z = static_cast<float>( gazeDirections_head[p].z );
+                    ros_eyegazes_msg.emplace_back( std::move( ros_eyegaze_msg ) );
+                }
 
-               //AU01_r, AU04_r, AU06_r, AU10_r, AU12_r, AU14_r, AU17_r, AU25_r, AU02_r, AU05_r, AU09_r, AU15_r, AU20_r, AU26_r, AU12_c, AU23_c, AU28_c, AU04_c, AU15_c, AU45_c
+                //AU01_r, AU04_r, AU06_r, AU10_r, AU12_r, AU14_r, AU17_r, AU25_r, AU02_r, AU05_r,
+                //AU09_r, AU15_r, AU20_r, AU26_r, AU12_c, AU23_c, AU28_c, AU04_c, AU15_c, AU45_c
 
-               // package facial action unit message
-               std::vector<int> au_r_handles = {1, 4, 6, 10, 12, 14, 17, 25, 2, 5, 9, 15, 20, 26};
-               std::vector<int> au_c_handles = {12, 23, 28, 4, 15, 45};
+                // package facial action unit message
+                std::vector<int> au_r_handles = {1, 4, 6, 10, 12, 14, 17, 25, 2, 5, 9, 15, 20, 26};
+                std::vector<int> au_c_handles = {12, 23, 28, 4, 15, 45};
 
-               std::vector<pair<string, double>> aus_reg = face_analysers[model].GetCurrentAUsReg();
-           
-               if(aus_reg.size() == 0)
-               {
-                 for(size_t p = 0; p < face_analysers[model].GetAURegNames().size(); p++)
-                 {
-                   ClmFacialActionUnitMsg ros_au_msg;
-                   ros_au_msg.type = static_cast<uint8_t>( au_r_handles[p] );
-                   ros_au_msg.value = 0;
-                   ros_au_msg.prediction_method = 0;
-                   ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
-                 }
-               }
-               else
-               {
-                 for(size_t p = 0; p < aus_reg.size(); p++)
-                 {
-                   ClmFacialActionUnitMsg ros_au_msg;
-                   ros_au_msg.type = static_cast<uint8_t>( au_r_handles[p] );
-                   ros_au_msg.value = static_cast<float>( aus_reg[p].second );
-                   ros_au_msg.prediction_method = 0;
-                   ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
-                 }
-               }
+                std::vector<pair<string, double>> aus_reg = face_analysers[model].GetCurrentAUsReg();
 
-               std::vector<pair<string, double>> aus_class = face_analysers[model].GetCurrentAUsClass();
-           
-               if(aus_class.size() == 0)
-               {
-                 for(size_t p = 0; p < face_analysers[model].GetAUClassNames().size(); p++)
-                 {
-                   ClmFacialActionUnitMsg ros_au_msg;
-                   ros_au_msg.type = static_cast<uint8_t>( au_c_handles[p] );
-                   ros_au_msg.value = 0;
-                   ros_au_msg.prediction_method = 1;
-                   ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
-                 }
-               }
-               else
-               {
-                 for(size_t p = 0; p < aus_class.size(); p++)
-                 {
-                   ClmFacialActionUnitMsg ros_au_msg;
-                   ros_au_msg.type = static_cast<uint8_t>( au_c_handles[p] );
-                   ros_au_msg.value = static_cast<float>( aus_class[p].second );
-                   ros_au_msg.prediction_method = 1;
-                   ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
-                 }
-               }
+                if(aus_reg.size() == 0)
+                {
+                    for(size_t p = 0; p < face_analysers[model].GetAURegNames().size(); p++)
+                    {
+                        ClmFacialActionUnitMsg ros_au_msg;
+                        ros_au_msg.type = static_cast<uint8_t>( au_r_handles[p] );
+                        ros_au_msg.value = 0;
+                        ros_au_msg.prediction_method = 0;
+                        ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
+                    }
+                }
+                else
+                {
+                    for(size_t p = 0; p < aus_reg.size(); p++)
+                    {
+                        ClmFacialActionUnitMsg ros_au_msg;
+                        ros_au_msg.type = static_cast<uint8_t>( au_r_handles[p] );
+                        ros_au_msg.value = static_cast<float>( aus_reg[p].second );
+                        ros_au_msg.prediction_method = 0;
+                        ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
+                    }
+                }
 
-               ros_heads_msg.heads.emplace_back( std::move( ros_head_msg ) );
+                std::vector<pair<string, double>> aus_class = face_analysers[model].GetCurrentAUsClass();
 
-             }
+                if(aus_class.size() == 0)
+                {
+                    for(size_t p = 0; p < face_analysers[model].GetAUClassNames().size(); p++)
+                    {
+                        ClmFacialActionUnitMsg ros_au_msg;
+                        ros_au_msg.type = static_cast<uint8_t>( au_c_handles[p] );
+                        ros_au_msg.value = 0;
+                        ros_au_msg.prediction_method = 1;
+                        ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
+                    }
+                }
+                else
+                {
+                    for(size_t p = 0; p < aus_class.size(); p++)
+                    {
+                        ClmFacialActionUnitMsg ros_au_msg;
+                        ros_au_msg.type = static_cast<uint8_t>( au_c_handles[p] );
+                        ros_au_msg.value = static_cast<float>( aus_class[p].second );
+                        ros_au_msg.prediction_method = 1;
+                        ros_aus_msg.emplace_back( std::move( ros_au_msg ) );
+                    }
+                }
 
-           });
+                ros_heads_msg.heads.emplace_back( std::move( ros_head_msg ) );
 
-           headsPublisher.publish( ros_heads_msg );
-           ros::spinOnce();
+            }
 
-           // Go through every model and visualise the results
-           for(size_t model = 0; model < clm_models.size(); ++model)
-           {           
-             // Visualising the results
-             // Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
-             double detection_certainty = clm_models[model].detection_certainty;
+        });
 
-             double visualisation_boundary = -0.1;
-        
-             // Only draw if the reliability is reasonable, the value is slightly ad-hoc
-             if(detection_certainty < visualisation_boundary)
-             {
-               CLMTracker::Draw(disp_image, clm_models[model]);
+        headsPublisher.publish( ros_heads_msg );
 
-               if(detection_certainty > 1)
-                 detection_certainty = 1;
-               if(detection_certainty < -1)
-                 detection_certainty = -1;
+        // Go through every model and visualise the results
+        for(size_t model = 0; model < clm_models.size(); ++model)
+        {           
+            // Draw the facial landmarks on the face and the bounding box around it
+            // if tracking is successful and initialized
+            double detection_certainty = clm_models[model].detection_certainty;
+            double visualisation_boundary = -0.1;
 
-               detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
+            // Only draw if the reliability is reasonable, the value is slightly ad-hoc
+            if(detection_certainty < visualisation_boundary)
+            {
+                CLMTracker::Draw(disp_image, clm_models[model]);
 
-               // A rough heuristic for box around the face width
-               int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
-           
-               // Work out the pose of the head from the tracked model
-               Vec6d pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
-           
-               // Draw it in reddish if uncertain, blueish if certain
-               CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0, detection_certainty*255), thickness, fx, fy, cx, cy);
-             }
-           }
+                if(detection_certainty > 1)     detection_certainty =  1;
+                if(detection_certainty < -1)    detection_certainty = -1;
 
-           // e: don't need to work out framerate
-           // Work out the framerate
-           //if(frame_count % 10 == 0)
-           //{      
-           //  double t1 = cv::getTickCount();
-           //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-           //  t0 = t1;
-           //}
-        
-           // Write out the framerate on the image before displaying it
-           char fpsC[255];
-           //sprintf(fpsC, "%d", (int)fps_tracker);
-           string fpsSt("FPS:");
-           fpsSt += fpsC;
-           cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));    
-        
-           int num_active_models = 0;
+                detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
 
-           for( size_t active_model = 0; active_model < active_models.size(); active_model++)
-           {
-             if(active_models[active_model])
-             {
-               num_active_models++;
-             }
-           }
+                // A rough heuristic for box around the face width
+                int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
 
-           char active_m_C[255];
-           sprintf(active_m_C, "%d", num_active_models);
-           string active_models_st("Active models:");
-           active_models_st += active_m_C;
-           cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));   
-        
-           if(!clm_parameters[0].quiet_mode)
-           {
-             namedWindow("tracking_result",1);   
-             imshow("tracking_result", disp_image);
+                // Work out the pose of the head from the tracked model
+                Vec6d pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
 
-             if(!depth_image.empty())
-             {
-               // Division needed for visualisation purposes
-               imshow("depth", depth_image/2000.0);
-             }
-           }
+                // Draw it in reddish if uncertain, blueish if certain
+                CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
+                                                detection_certainty*255), thickness, fx, fy, cx, cy);
+            }
+        }
 
-           // e: don't think we need
-           // output the tracked video
-           if(!tracked_videos_output.empty())
-           {   
-             writerFace << disp_image;
-           }
+        // e: don't need to work out framerate
+        // Work out the framerate
+        //if(frame_count % 10 == 0)
+        //{      
+        //  double t1 = cv::getTickCount();
+        //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+        //  t0 = t1;
+        //}
 
-           //video_capture >> captured_image;
+        // Write out the framerate on the image before displaying it
+        char fpsC[255];
+        //sprintf(fpsC, "%d", (int)fps_tracker);
+        string fpsSt("FPS:");
+        fpsSt += fpsC;
+        cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));    
+
+        int num_active_models = 0;
+
+        for( size_t active_model = 0; active_model < active_models.size(); active_model++)
+        {
+            if(active_models[active_model])
+            {
+                num_active_models++;
+            }
+        }
+
+        char active_m_C[255];
+        sprintf(active_m_C, "%d", num_active_models);
+        string active_models_st("Active models:");
+        active_models_st += active_m_C;
+        cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));   
+
+        if(!clm_parameters[0].quiet_mode)
+        {
+            namedWindow("tracking_result",1);   
+            cv::imshow("tracking_result", disp_image);
+        }
 
            // e: removing key press code
            // detect key presses
@@ -930,9 +698,6 @@ public:
         //cv::startWindowThread();
         //cv::moveWindow("output", 1050, 50);
 
-        // only examines a number of frames taken by usb_cam
-        frames = 0;
-
         typedef clm_ros_wrapper::ClmHeads ClmHeadsMsg;
         typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
         typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
@@ -941,17 +706,11 @@ public:
         vector<string> arguments;
         arguments.push_back(executable_location);
         // Some initial parameters that can be overriden from command line  
-        //vector<string> files, depth_directories, pose_output_files, tracked_videos_output, landmark_output_files, landmark_3D_output_files;
         vector<string> files, depth_directories, pose_output_files, landmark_output_files, landmark_3D_output_files;
 
         // Initialize node parameters from launch file or command line.
         // Use a private node handle so that multiple instances of the node can be run simultaneously
         // while using different parameters.
-
-
-        int device;
-        // e: don't need to access webcam directly
-        //nodeHandle.param("device", device, 0);
 
         // ERICNOTE: this stuff doesn't look too useful - don't know what HOG is though
         CLMTracker::CLMParameters clm_params(arguments);
@@ -969,34 +728,12 @@ public:
         
         // ERICNOTE: the following section deals with image files
         // Indicates that rotation should be with respect to camera plane or with respect to camera
-        //bool use_camera_plane_pose;
-        //CLMTracker::get_video_input_output_params(files, depth_directories, pose_output_files, tracked_videos_output, landmark_output_files, landmark_3D_output_files, use_camera_plane_pose, arguments);
-
-        //bool video_input = true;
-        //bool verbose = true;
-        //bool images_as_video = false;
-
         video_input = true;
         verbose = true;
         images_as_video = false;
         webcam = false;
 
         vector<vector<string> > input_image_files;
-
-        // Adding image support for reading in the files
-        if(files.empty())
-        {
-            vector<string> d_files;
-            vector<string> o_img;
-            vector<Rect_<double>> bboxes;
-            get_image_input_output_params_feats(input_image_files, images_as_video, arguments); 
-
-            // e: don't need this stuff
-            //if(!input_image_files.empty())
-            //{
-            //  video_input = false;
-            //}
-        }
 
         //ENDNOTE
 
@@ -1026,7 +763,6 @@ public:
         double sim_scale = 0.7;
         int sim_size = 112;
         bool grayscale = false; 
-        //bool video_output = false;
         video_output = false;
         bool rigid = false; 
         get_output_feature_params(output_similarity_align, video_output, gaze_output_files,
@@ -1069,7 +805,6 @@ public:
 
         // If multiple video files are tracked, use this to indicate if we are done
         bool done = false;  
-        //int f_n = -1;
         f_n = -1;
         int curr_img = -1;
         string au_loc  = "";
@@ -1129,10 +864,6 @@ public:
         }
 
         string current_file;
-
-        bool use_depth = !depth_directories.empty();  
-        
-        VideoCapture video_capture;
         
         Mat captured_image;
         int total_frames = -1;
@@ -1140,67 +871,7 @@ public:
 
         double fps_vid_in = -1.0;
 
-        // e: commented this chunk out because we know our video source
-        //if(video_input)
-        //{
-        //    // We might specify multiple video files as arguments
-        //    if(files.size() > 0)
-        //    {
-        //        f_n++;      
-        //        current_file = files[f_n];
-        //    }
-        //    else
-        //        f_n = 0;
-        //    }
-        //    // Do some grabbing
-        //    if( current_file.size() > 0 )
-        //    {
-        //        ROS_INFO_STREAM( "Attempting to read from file: " << current_file );
-        //        video_capture = VideoCapture( current_file );
-        //        total_frames = (int)video_capture.get(CV_CAP_PROP_FRAME_COUNT);
-        //        fps_vid_in = video_capture.get(CV_CAP_PROP_FPS);
-
-        //        // Check if fps is nan or less than 0
-        //        if (fps_vid_in != fps_vid_in || fps_vid_in <= 0)
-        //        {
-        //            ROS_INFO_STREAM("FPS of the video file cannot be determined, assuming 30");
-        //            fps_vid_in = 30;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        ROS_INFO_STREAM( "Attempting to capture from device: " << device );
-        //        video_capture = VideoCapture( device );
-        //        webcam = true;
-
-        //        // Read a first frame often empty in camera
-        //        Mat captured_image;
-        //        video_capture >> captured_image;
-        //    }
-
-        //    if( !video_capture.isOpened() ) ROS_FATAL_STREAM( "Failed to open video source" );
-        //    else ROS_INFO_STREAM( "Device or file opened");
-
-        //    video_capture >> captured_image;  
-        //}
-        //else
-        //{
-        //    f_n++;  
-        //    curr_img++;
-        //    if(!input_image_files[f_n].empty())
-        //    {
-        //        string curr_img_file = input_image_files[f_n][curr_img];
-        //        captured_image = imread(curr_img_file, -1);
-        //    }
-        //    else
-        //    {
-        //        ROS_FATAL_STREAM( "No .jpg or .png images in a specified drectory" );
-        //    }
-
-        //} 
-
         webcam = true;
-        // video_capture >> captured_image;
    
         // If optical centers are not defined just use center of image
         if(cx_undefined)
@@ -1218,34 +889,6 @@ public:
             fy = fx;
         }
   
-        // saving the videos
-        // e: don't need to
-        //VideoWriter output_similarity_aligned_video;
-        if(!output_similarity_align.empty())
-        {
-            if(video_output)
-            {
-                ROS_INFO("this stuff");
-                double fps = webcam ? 30 : fps_vid_in;
-                output_similarity_aligned_video = VideoWriter(output_similarity_align[f_n], CV_FOURCC('H', 'F', 'Y', 'U'), fps, Size(sim_size, sim_size), true);
-            }
-        }
-    
-        // Saving the HOG features
-        // e: don't need to
-        if(!output_hog_align_files.empty())
-        {
-            hog_output_file.open(output_hog_align_files[f_n], ios_base::out | ios_base::binary);
-        }
-
-        // saving the videos
-        // e: don't need to
-        if(!tracked_videos_output.empty())
-        {
-            double fps = webcam ? 30 : fps_vid_in;
-            writerFace = VideoWriter(tracked_videos_output[f_n], CV_FOURCC('D', 'I', 'V', 'X'), fps, captured_image.size(), true);
-        }
-
         //int frame_count = 0;
         
         // This is useful for a second pass run (if want AU predictions)

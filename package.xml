@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
     <name>clm_ros_wrapper</name>
-    <version>0.2</version>
+    <version>0.2.0</version>
     <description>The clm_ros_wrapper package</description>
 
     <!-- One maintainer tag required, multiple allowed, one person per tag --> 

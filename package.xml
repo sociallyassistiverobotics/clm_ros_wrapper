@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
     <name>clm_ros_wrapper</name>
-    <version>0.1</version>
+    <version>0.2</version>
     <description>The clm_ros_wrapper package</description>
 
     <!-- One maintainer tag required, multiple allowed, one person per tag --> 
@@ -18,24 +18,18 @@
     <!-- Example: -->
     <!-- <url type="website">http://wiki.ros.org/clm_ros_wrapper</url> -->
 
-
     <!-- Author tags are optional, mutiple are allowed, one per tag -->
     <!-- Authors do not have to be maintianers, but could be -->
     <!-- Example: -->
     <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
 
-
     <!-- The *_depend tags are used to specify dependencies -->
     <!-- Dependencies can be catkin packages or system dependencies -->
     <!-- Examples: -->
     <!-- Use build_depend for packages you need at compile time: -->
-    <!--   <build_depend>message_generation</build_depend> -->
     <!-- Use buildtool_depend for build tool packages: -->
-    <!--   <buildtool_depend>catkin</buildtool_depend> -->
     <!-- Use run_depend for packages you need at runtime: -->
-    <!--   <run_depend>message_runtime</run_depend> -->
     <!-- Use test_depend for packages you need only for testing: -->
-    <!--   <test_depend>gtest</test_depend> -->
     <buildtool_depend>catkin</buildtool_depend>
     <build_depend>message_generation</build_depend>
     <build_depend>std_msgs</build_depend>
@@ -44,7 +38,6 @@
     <run_depend>roscpp</run_depend>
     <run_depend>std_msgs</run_depend>
     <run_depend>message_runtime</run_depend>
-
 
     <!-- The export tag contains other, unspecified, tags -->
     <export>

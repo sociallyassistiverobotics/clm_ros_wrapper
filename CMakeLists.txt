@@ -146,7 +146,7 @@ add_subdirectory(lib/local/FaceAnalyser)
 # add_dependencies(clm_ros_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(clm_ros_wrapper src/clm_ros_wrapper.cpp)
+add_executable(clm_ros_wrapper src/CLMWrapper.h src/CLMWrapper.cpp src/clm_ros_wrapper.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -161,10 +161,6 @@ target_link_libraries(clm_ros_wrapper
                       ${Boost_LIBRARIES}
                       ${TBB_LIBRARIES}
                       ${catkin_LIBRARIES})
-
-add_executable(subscriber src/subscriber.cpp)
-add_dependencies(subscriber ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(subscriber ${catkin_LIBRARIES})
 
 add_custom_command(TARGET clm_ros_wrapper POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory  ${PROJECT_SOURCE_DIR}/lib/local/CLM/model ${CATKIN_DEVEL_PREFIX}/lib/clm_ros_wrapper/model

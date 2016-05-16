@@ -6,12 +6,12 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2") #-O3 for speed, -O2 fo
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
-
-find_package(catkin REQUIRED COMPONENTS message_generation roscpp std_msgs)
+find_package(catkin REQUIRED COMPONENTS 
+             roscpp
+             std_msgs
+             message_generation
+             image_transport
+             cv_bridge)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR};${CMAKE_MODULE_PATH}")
 find_package( TBB REQUIRED)
@@ -127,8 +127,6 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(include 1lib)
-link_directories( lib )
 
 # Resolve includes
 include_directories(lib/3rdParty/dlib/include)
@@ -136,16 +134,11 @@ include_directories(lib/local/CLM/include)
 include_directories(lib/local/FaceAnalyser/include)	
 
 # Compile Libraries
-add_subdirectory(lib/3rdParty/dlib) #compiles these
+add_subdirectory(lib/3rdParty/dlib) # dlib
 
-# CLM library (ordering matters)
-add_subdirectory(lib/local/CLM) #compiles these into libraries
+# CLM libraries (order matters)
+add_subdirectory(lib/local/CLM)
 add_subdirectory(lib/local/FaceAnalyser)
-
-## Declare a C++ library
-# add_library(clm_ros_wrapper
-#   src/${PROJECT_NAME}/clm_ros_wrapper.cpp
-# )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -153,19 +146,21 @@ add_subdirectory(lib/local/FaceAnalyser)
 # add_dependencies(clm_ros_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_executable(clm_ros_wrapper src/clm_ros_wrapper.cpp)
+add_executable(clm_ros_wrapper src/CLMWrapper.h src/CLMWrapper.cpp src/clm_ros_wrapper.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(clm_ros_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(clm_ros_wrapper clm_ros_wrapper_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(clm_ros_wrapper ${catkin_LIBRARIES}
-                                 CLM #links current build with this library
-                                 FaceAnalyser
-                                 dlib
-                                 opencv_videoio opencv_objdetect
-                                 ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+target_link_libraries(clm_ros_wrapper 
+                      CLM
+                      FaceAnalyser
+                      dlib
+                      ${OpenCV_LIBS}
+                      ${Boost_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      ${catkin_LIBRARIES})
 
 add_custom_command(TARGET clm_ros_wrapper POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory  ${PROJECT_SOURCE_DIR}/lib/local/CLM/model ${CATKIN_DEVEL_PREFIX}/lib/clm_ros_wrapper/model

@@ -268,8 +268,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     }
       
     // e: we do the frame detection earlier in the code base
-    // Get the detections (every 8th frame and when there are free models available for tracking)
-    if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
+    // Get the detections (when there are free models available for tracking)
+    if(!all_models_active)
     {       
         if(clm_parameters[0].curr_face_detector == CLMTracker::CLMParameters::HOG_SVM_DETECTOR)
         {
@@ -514,7 +514,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
 
-    // Go through every model and visualise the results
+    // Go through every model and visualize the results
     for(size_t model = 0; model < clm_models.size(); ++model)
     {           
         // Draw the facial landmarks on the face and the bounding box around it
@@ -547,7 +547,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
              << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
-    // Write out the framerate on the image before displaying it
+
+    // Write out the frame rate on the image before displaying it
     char fpsC[255];
     //sprintf(fpsC, "%d", (int)fps_tracker);
     string fpsSt("FPS:");

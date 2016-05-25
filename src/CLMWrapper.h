@@ -39,7 +39,12 @@ private:
     image_transport::ImageTransport imageTransport;
     image_transport::Subscriber     imageSubscriber;
 
+    // publisher for the detected face images
+    image_transport::Publisher imagePublisher;
+
+    // can be called thru the "clm_ros_wrapper/heads" topic
     ros::Publisher headsPublisher;
+
     int f_n;
 
     cv::Mat captured_image;
@@ -104,6 +109,7 @@ private:
 
 public:
     ClmWrapper(std::string _name, std::string _loc);
+	
 
     ~ClmWrapper() {};
 };

@@ -208,7 +208,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         return;
     }
 
-    cv::cvtColor(cv_ptr->image.clone(), captured_image, CV_BGR2RGB);;
+    cv::cvtColor(cv_ptr->image.clone(), captured_image, CV_BGR2RGB);
 
     // cv::imshow("output", captured_image);
     // cv::waitKey(5);
@@ -255,6 +255,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     if(captured_image.channels() == 3) cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);       
     else                               grayscale_image = captured_image.clone();
 
+    // where the current face detections are stored
     vector<Rect_<double> > face_detections;
 
     bool all_models_active = true;
@@ -362,35 +363,35 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
             }
             // Do face alignment
-            Mat sim_warped_img;     
-            Mat_<double> hog_descriptor;
+            //Mat sim_warped_img;     
+            //Mat_<double> hog_descriptor;
 
             // But only if needed in output
             // std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " << 
             //              hog_output_file.is_open() << " not empty: output_au_files " << !output_au_files.empty() << std::endl;
             // if(!output_similarity_align.empty() || hog_output_file.is_open() || !output_au_files.empty()) START CHECK
             // {
-            face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
-            face_analysers[model].GetLatestAlignedFace(sim_warped_img);
+            // face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
+            // face_analysers[model].GetLatestAlignedFace(sim_warped_img);
 
             //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);      
-            if(!clm_parameters[model].quiet_mode)
-            {
-                cv::imshow("sim_warp", sim_warped_img); 
-                cv::waitKey(1);    
-            }
+            // if(!clm_parameters[model].quiet_mode)
+            // {
+            //     //cv::imshow("sim_warp", sim_warped_img); 
+            //     //cv::waitKey(1);    
+            // }
 
-            if(hog_output_file.is_open())
-            {
-                FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
+            // if(hog_output_file.is_open())
+            // {
+            //     FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
 
-                if(visualise_hog && !clm_parameters[model].quiet_mode)
-                {
-                    Mat_<double> hog_descriptor_vis;
-                    FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
-                    cv::imshow("hog", hog_descriptor_vis);  
-                }
-            }
+            //     if(visualise_hog && !clm_parameters[model].quiet_mode)
+            //     {
+            //         Mat_<double> hog_descriptor_vis;
+            //         FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
+            //         cv::imshow("hog", hog_descriptor_vis);  
+            //     }
+            // }
             // } END CHECK
 
             // Work out the pose of the head from the tracked model
@@ -508,7 +509,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     });
 
-    headsPublisher.publish( ros_heads_msg );
+    //headsPublisher.publish( ros_heads_msg );
+
+    // used to check if a face is detected in this iteration    
+    int faceDetected = 0;
 
     // Go through every model and visualise the results
     for(size_t model = 0; model < clm_models.size(); ++model)
@@ -517,12 +521,12 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         // if tracking is successful and initialized
         double detection_certainty = clm_models[model].detection_certainty;
         double visualisation_boundary = -0.1;
-
         // Only draw if the reliability is reasonable, the value is slightly ad-hoc
         if(detection_certainty < visualisation_boundary)
         {
-            CLMTracker::Draw(disp_image, clm_models[model]);
+            faceDetected = 1;
 
+            CLMTracker::Draw(disp_image, clm_models[model]);
             if(detection_certainty > 1)     detection_certainty =  1;
             if(detection_certainty < -1)    detection_certainty = -1;
 
@@ -535,24 +539,14 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             Vec6d pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
 
             // Draw it in reddish if uncertain, blueish if certain
-            CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
-                                            detection_certainty*255), thickness, fx, fy, cx, cy);
+            CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,detection_certainty*255), thickness, fx, fy, cx, cy);
+
 
             cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
              << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
              << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
-
-    // e: don't need to work out framerate
-    // Work out the framerate
-    //if(frame_count % 10 == 0)
-    //{      
-    //  double t1 = cv::getTickCount();
-    //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-    //  t0 = t1;
-    //}
-
     // Write out the framerate on the image before displaying it
     char fpsC[255];
     //sprintf(fpsC, "%d", (int)fps_tracker);
@@ -576,11 +570,30 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     active_models_st += active_m_C;
     cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));   
 
-    if(!clm_parameters[0].quiet_mode)
+    if (faceDetected)
     {
-        namedWindow("tracking_result",1);   
-        cv::imshow("tracking_result", disp_image);
+        // feeding disp_image into the cv pointer's image
+        // only if a face is detected
+        cv::cvtColor(disp_image,cv_ptr->image, CV_RGB2BGR);
     }
+     //publishing the image usign the cv pointer
+    imagePublisher.publish(cv_ptr->toImageMsg());
+
+    // e: don't need to work out framerate
+    // Work out the framerate
+    //if(frame_count % 10 == 0)
+    //{      
+    //  double t1 = cv::getTickCount();
+    //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+    //  t0 = t1;
+    //}
+
+    
+    // if(!clm_parameters[0].quiet_mode)
+    // {
+    //      namedWindow("tracking_result",1);   
+    //      cv::imshow("tracking_result", disp_image);
+    // }
 
        // e: removing key press code
        // detect key presses
@@ -631,6 +644,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
      //  active_models[model] = false;
      //}
 
+
      //// break out of the loop if done with all the files (or using a webcam)
      //if(f_n == files.size() -1 || files.empty())
      //{
@@ -643,12 +657,18 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 {
     ROS_INFO("Called constructor...");
 
+    // raw camera image
     imageSubscriber = imageTransport.subscribe("/usb_cam/image_raw",1,&ClmWrapper::callback, this);
+
+    //current not used
     headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>("/clm_ros_wrapper/heads",1);
+
+    // publisher for the image when a face is detected
+    imagePublisher = imageTransport.advertise("/clm_ros_wrapper/face_image", 1);
 
     init = true;
 
-    // code to start a window
+    // code to start a window	
     //cv::namedWindow("output", cv::WINDOW_NORMAL);
     //cv::startWindowThread();
     //cv::moveWindow("output", 1050, 50);

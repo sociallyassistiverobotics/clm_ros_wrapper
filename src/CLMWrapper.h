@@ -42,7 +42,7 @@ private:
     // publisher for the detected face images
     image_transport::Publisher imagePublisher;
 
-    // can be called thru the "clm_ros_wrapper/heads" topic
+    // can be called through the "clm_ros_wrapper/heads" topic
     ros::Publisher headsPublisher;
 
     int f_n;
@@ -90,6 +90,7 @@ private:
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
+    bool publishImage(cv::Mat &mat, const std::string encoding);
 
     // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
     void get_output_feature_params(vector<std::string> &similarity_aligned, bool &vid_output,

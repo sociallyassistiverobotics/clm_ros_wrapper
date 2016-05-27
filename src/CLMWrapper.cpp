@@ -25,6 +25,16 @@ void ClmWrapper::create_directory_from_file(string output_path)
     }
 }
 
+bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
+{
+    cv_bridge::CvImage msgOut;
+    msgOut.encoding = encoding;
+    msgOut.image    = mat;
+
+    imagePublisher.publish(msgOut.toImageMsg());
+    return true;
+}
+
 // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
 void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_aligned, bool &vid_output,
                                vector<string> &output_gaze_files, vector<string> &output_hog_aligned_files,
@@ -509,7 +519,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     });
 
-    //headsPublisher.publish( ros_heads_msg );
+    headsPublisher.publish( ros_heads_msg );
 
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
@@ -539,7 +549,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             Vec6d pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
 
             // Draw it in reddish if uncertain, blueish if certain
-            CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,detection_certainty*255), thickness, fx, fy, cx, cy);
+            CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
+            	detection_certainty*255), thickness, fx, fy, cx, cy);
 
 
             cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
@@ -575,10 +586,12 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
         // feeding disp_image into the cv pointer's image
         // only if a face is detected
-        cv::cvtColor(disp_image,cv_ptr->image, CV_RGB2BGR);
+        publishImage(disp_image,"bgr8");
     }
      //publishing the image usign the cv pointer
-    imagePublisher.publish(cv_ptr->toImageMsg());
+    else
+    	publishImage(captured_image, "bgr8");
+    	//imagePublisher.publish(cv_ptr->toImageMsg());
 
     // e: don't need to work out framerate
     // Work out the framerate

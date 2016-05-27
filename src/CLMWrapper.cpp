@@ -278,8 +278,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     }
       
     // e: we do the frame detection earlier in the code base
-    // Get the detections (when there are free models available for tracking)
-    if(!all_models_active)
+    // Get the detections (every 8th frame and when there are free models available for tracking)
+    if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
     {       
         if(clm_parameters[0].curr_face_detector == CLMTracker::CLMParameters::HOG_SVM_DETECTOR)
         {
@@ -524,7 +524,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
 
-    // Go through every model and visualize the results
+    // Go through every model and visualise the results
     for(size_t model = 0; model < clm_models.size(); ++model)
     {           
         // Draw the facial landmarks on the face and the bounding box around it
@@ -558,10 +558,19 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
              << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
-
-    // Write out the frame rate on the image before displaying it
+    // Write out the framerate on the image before displaying it
     char fpsC[255];
-    //sprintf(fpsC, "%d", (int)fps_tracker);
+    int fps_tracker;
+
+    if(frame_count % 10 == 0)
+    {      
+     double t1 = cv::getTickCount();
+     fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+     t0 = t1;
+    }
+
+    sprintf(fpsC, "%d", (int)fps_tracker);
+
     string fpsSt("FPS:");
     fpsSt += fpsC;
     cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));    
@@ -630,16 +639,16 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
 
        // Update the frame count
-       //frame_count++;
+       frame_count++;
 
-       //if(total_frames != -1)
-       //{
-       //  if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
-       //  {
-       //    cout << reported_completion * 10 << "% ";
-       //    reported_completion = reported_completion + 1;
-       //  }
-       //}
+       if(total_frames != -1)
+       {
+        if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
+        {
+          cout << reported_completion * 10 << "% ";
+          reported_completion = reported_completion + 1;
+        }
+       }
      //}
 
      // e: not needed for our purposes
@@ -648,7 +657,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
      //  cout << endl;
      //}
 
-     //frame_count = 0;
+     //
      //curr_img = -1;
 
      //// Reset the model, for the next video
@@ -850,7 +859,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     webcam = true;
 
-    //int frame_count = 0;
+    frame_count = 0;
     
     // This is useful for a second pass run (if want AU predictions)
     vector<Vec6d> params_global_video;

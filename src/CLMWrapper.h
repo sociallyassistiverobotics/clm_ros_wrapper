@@ -28,6 +28,8 @@
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 
+#include <math.h>
+
 class ClmWrapper
 {
 private:
@@ -44,6 +46,10 @@ private:
 
     // can be called through the "clm_ros_wrapper/heads" topic
     ros::Publisher headsPublisher;
+
+    //ros::Publisher gazePointPublisher;
+
+    Point3f gazePoint;
 
     int f_n;
     int frame_count;
@@ -91,6 +97,8 @@ private:
     bool  cx_undefined;
 
     bool init;
+
+    float screenAngle = 0;
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);

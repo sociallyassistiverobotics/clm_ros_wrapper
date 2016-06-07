@@ -200,6 +200,7 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 * Callback on the subscriber's topic.
 * @param msgIn an RGB image
 */
+
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
     // Convert the ROS image to OpenCV image format
@@ -277,7 +278,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
     }
       
-    // e: we do the frame detection earlier in the code base
+    // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
     if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
     {       
@@ -439,6 +440,29 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
             ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
 
+            // head location corrected
+            cv::Point3f headLocation;
+
+            headLocation.x = ros_head_msg.headpose.x;
+            headLocation.y = -1 * ros_head_msg.headpose.y; //correcting the head position
+            headLocation.z = ros_head_msg.headpose.z;
+
+            // the level of the surface h
+            float surfaceLevel = 0;
+
+            float projectedLength = headLocation.z - (headLocation.y + surfaceLevel) /tan(ros_head_msg.headpose.pitch);
+
+            gazePoint.z  = cos(ros_head_msg.headpose.yaw)*projectedLength;
+            gazePoint.y = surfaceLevel;
+            gazePoint.x = sin(ros_head_msg.headpose.yaw)*projectedLength;
+
+            //int gazeSector = getSector(gazePoint, screenAngle, headLocation);
+
+            //cout <<  "x:" << ros_head_msg.headpose.x << " \t y:" << ros_head_msg.headpose.y << "\t z:" << ros_head_msg.headpose.z << "\n";
+
+            cout <<  "x:" << gazePoint. x << " \t y:" << gazePoint.y << "\t z:" << gazePoint.z << " \t pitch:" << ros_head_msg.headpose.pitch << "\n";
+
+            //cout << gazeSector << "\n";
 
             std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
             std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
@@ -456,6 +480,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 ros_eyegazes_msg.emplace_back( std::move( ros_eyegaze_msg ) );
             }
 
+            //eyesMsgPublisher.publish(ros_eyegaze_msg);
             //AU01_r, AU04_r, AU06_r, AU10_r, AU12_r, AU14_r, AU17_r, AU25_r, AU02_r, AU05_r,
             //AU09_r, AU15_r, AU20_r, AU26_r, AU12_c, AU23_c, AU28_c, AU04_c, AU15_c, AU45_c
 
@@ -520,6 +545,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     });
 
     headsPublisher.publish( ros_heads_msg );
+   // gazePointPublisher.publish(gazePoint);
 
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
@@ -552,10 +578,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
             	detection_certainty*255), thickness, fx, fy, cx, cy);
 
-
-            cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
-             << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
-             << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
+            // TURN ON BEFORE SUBMITTING
+            //cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+            // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
+            // << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
     // Write out the framerate on the image before displaying it
@@ -689,6 +715,9 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     // publisher for the image when a face is detected
     imagePublisher = imageTransport.advertise("/clm_ros_wrapper/face_image", 1);
 
+    // publishing the gaze direction estimates
+    //gazePointPublisher = nodeHandle.advertise<cv::Point3f>("/clm_ros_wrapper/gazePoint", 1);
+
     init = true;
 
     // code to start a window	
@@ -740,6 +769,10 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     
     cx_undefined = true;
     fx_undefined = true;
+
+    gazePoint.z = 0.0;
+    gazePoint.y = 0.0;
+    gazePoint.x = 0.0;
 
     //vector<string> output_similarity_align;
     //vector<string> output_au_files;
@@ -824,7 +857,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     //vector<bool> active_models;
     //vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
-    int num_faces_max = 4;
+    int num_faces_max = 1;
 
     CLMTracker::CLM clm_model2(clm_parameters[0].model_location);
     clm_model = clm_model2;

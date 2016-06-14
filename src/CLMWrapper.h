@@ -30,6 +30,9 @@
 
 #include <math.h>
 
+#include <tf/transform_datatypes.h>
+
+
 class ClmWrapper
 {
 private:
@@ -98,7 +101,22 @@ private:
 
     bool init;
 
-    float screenAngle = 0;
+    int cameraAtTop = 1;
+
+    float screenAngle = M_PI_4; // representing 45 degrees
+    float screenWidth = 350;
+    float screenHeight = 200;
+
+    int regionCount [7];
+
+    // realframe is the frame of the midpoint of the intersection of the screen and the table
+    float realFrame [3];
+    float realFrameDirections [3];
+
+    int iteration = 0;
+
+    tf::Matrix3x3 rotationMatrix;
+    tf::Vector3 screen_reference_points [7];
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);

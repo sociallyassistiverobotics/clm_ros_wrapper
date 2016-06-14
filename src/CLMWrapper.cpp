@@ -5,6 +5,8 @@
 
 #include "CLMWrapper.h"
 
+#define DETECTION_ERROR 100
+
 using namespace std;
 using namespace cv;
 
@@ -200,6 +202,15 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 * Callback on the subscriber's topic.
 * @param msgIn an RGB image
 */
+
+// later make this a function
+// int ClmWrapper::gazeSector(cv::Point3f gazePoint, cv::Point3f headLocation)
+// {
+
+// }
+int countRegion(const tf::Vector3 average_clm_output){
+    
+}
 
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
@@ -440,27 +451,129 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
             ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
 
-            // head location corrected
-            cv::Point3f headLocation;
+            tf::Vector3 translationVector = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.z , ros_head_msg.headpose.y);
 
-            headLocation.x = ros_head_msg.headpose.x;
-            headLocation.y = -1 * ros_head_msg.headpose.y; //correcting the head position
-            headLocation.z = ros_head_msg.headpose.z;
+            tf::Vector3 zeroVector = tf::Vector3(0,0,0);
 
-            // the level of the surface h
-            float surfaceLevel = 0;
+            tf::Vector3 testVector = tf::Vector3(0, 0, 1000);
 
-            float projectedLength = headLocation.z - (headLocation.y + surfaceLevel) /tan(ros_head_msg.headpose.pitch);
+            //for testing the translation
+            //rotationMatrix.setIdentity();
+            
+            // rotationMatrix is [1, 0, 0] [0, 0, -1] [0, -1, 0]);
+            // this constructor applies the translation after rotation, so the origin is in the new dimensions
+            // changing xzy to xyz
+            tf::Transform changeAxesAndTranslation = tf::Transform(rotationMatrix, translationVector);
 
-            gazePoint.z  = cos(ros_head_msg.headpose.yaw)*projectedLength;
-            gazePoint.y = surfaceLevel;
-            gazePoint.x = sin(ros_head_msg.headpose.yaw)*projectedLength;
+            //tf::Transformation inverse_transformation = inverse(bullet_transform);
 
-            //int gazeSector = getSector(gazePoint, screenAngle, headLocation);
+            // tf::Quaternion rotationWRTGaze;
+            // rotationWRTGaze.setEulerZYX(ros_head_msg.headpose.yaw, ros_head_msg.headpose.roll, ros_head_msg.headpose.pitch);
+            tf::Matrix3x3 rotationWRTGaze;
 
-            //cout <<  "x:" << ros_head_msg.headpose.x << " \t y:" << ros_head_msg.headpose.y << "\t z:" << ros_head_msg.headpose.z << "\n";
+            // yaw Z our yaw, pitch Y our roll, roll X our pitch
+            rotationWRTGaze.setEulerYPR(ros_head_msg.headpose.yaw, ros_head_msg.headpose.roll, ros_head_msg.headpose.pitch);
 
-            cout <<  "x:" << gazePoint. x << " \t y:" << gazePoint.y << "\t z:" << gazePoint.z << " \t pitch:" << ros_head_msg.headpose.pitch << "\n";
+            // tf::Transform rotateWRTGazeDirection = tf::Transform(rotationWRTGaze, zeroVector);
+
+            //cout <<  "yaw:" << ros_head_msg.headpose.yaw << "\t roll:" << ros_head_msg.headpose.roll << "\t pitch:" << ros_head_msg.headpose.pitch << "\n";
+
+            tf::Vector3 newframe_camera_location = changeAxesAndTranslation(tf::Vector3(0,0,0));
+            tf::Vector3 newframe_camera_location2 = changeAxesAndTranslation(tf::Vector3(screenWidth / 2, (screenHeight) * sin(screenAngle), screenHeight * cos(screenAngle)));
+            tf::Vector3 newframe_camera_location3 = changeAxesAndTranslation(tf::Vector3((-1) * screenWidth / 2, (screenHeight) * sin(screenAngle), screenHeight * cos(screenAngle)));
+
+            tf::Vector3 newTranslationVector = tf::Vector3(translationVector.getX(), 0, translationVector.getZ());
+
+            tf::Transform tr = tf::Transform(rotationWRTGaze.inverse(), (-1) * newTranslationVector);
+            tf::Vector3 gazeDirection = tr(newframe_camera_location);
+
+            //tried getting the intersection point
+            //cout <<  "x:" << gazeDirection.getX() << " \t y:" << gazeDirection.getY() << "\t z:" << gazeDirection.getZ() << "\n";
+
+            // gazeDirection is the intersection point
+            cv::Matx<float, 4,4> matrix1 = cv::Matx<float, 4, 4>(1, 1, 1, 0,
+                newframe_camera_location.getX(), newframe_camera_location.getY(), newframe_camera_location.getZ(), (-1) * gazeDirection.getX(),
+                newframe_camera_location2.getX(), newframe_camera_location2.getY(), 0, (-1) * gazeDirection.getY(),
+                newframe_camera_location3.getX(), newframe_camera_location3.getY(), 100, (-1) * gazeDirection.getZ());
+
+            cv::Matx<float, 4,4> matrix2 = cv::Matx<float, 4, 4>(1, 1, 1, 0,
+                newframe_camera_location.getX(), newframe_camera_location.getY(), newframe_camera_location.getZ(), gazeDirection.getX(),
+                newframe_camera_location2.getX(), newframe_camera_location2.getY(), 0, gazeDirection.getY(),
+                newframe_camera_location3.getX(), newframe_camera_location3.getY(), 100, gazeDirection.getZ());
+
+            double determinantRatio = abs(cv::determinant(matrix1) / cv::determinant(matrix2));
+
+            tf::Vector3 gazePoint = gazeDirection * determinantRatio;
+
+            //cout <<  "x:" << gazePoint.getX() << " \t y:" << gazePoint.getY() << "\t z:" << gazePoint.getZ() << "\n";
+
+            for (int i = 0; i<7; i++)
+            {
+                if (i == 6){
+                    regionCount[i]++;
+                    break;
+                }
+
+                if( pow((gazePoint.getX() - screen_reference_points[i].getX()), 2) \
+                    + pow((gazePoint.getZ() - screen_reference_points[i].getZ()),2) < 2500)
+                {
+                    //cout << "distance: " << gazePoint.distance(screen_reference_points[i]) << "\n";
+                    regionCount[i]++;
+                    break;
+                }
+            }
+
+            //assuming gazePoint is the correct point on the plane containing the screen
+
+            // testing the transformation
+            //tf::Vector3 origin = newframe_camera_location;
+            //cout <<  "REAL x:" << origin.getX() << " \t y:" << origin.getY() << "\t z:" << origin.getZ() << "\n";
+
+            // for (int i = 0; i<3; i++)
+            // {
+            //     origin = rotationWRTGaze.getRow(i);
+            //     cout <<  "row" << i << "\t" << origin.getX() << " \t " << origin.getY() << "\t " << origin.getZ() << "\n";
+            // }
+            // cout << "\n";
+
+
+
+            //midpointOfScreen.x = headLocation.x;
+            // point0.x = headLocation.x;
+            // point1.x = headLocation.x;
+            // point2.x = headLocation.x;
+
+            // point0.y = surfaceLevel;
+            // //cout << "\n" << surfaceLevel;
+            // point1.y = surfaceLevel;
+            // point2.y = surfaceLevel;
+
+            // midpointOfScreen.y = surfaceLevel / 2;
+            // midpointOfScreen.z = surfaceLevel * cos(screenAngle) / 2;
+
+            // point1.z = (point1.y - midpointOfScreen.y) * (headLocation.z - midpointOfScreen.z) / (headLocation.y - midpointOfScreen.y);
+
+            // point2.z = point2.y * headLocation.z / headLocation.y;
+
+            // if (gazePoint.z < point0.z - DETECTION_ERROR)
+            // {
+            //     regionCount[0]++;
+            // }
+            // else if (gazePoint.z < point1.z + 3 * DETECTION_ERROR)
+            // {
+            //     regionCount[1]++;
+            // }
+            // else if (gazePoint.z < point2.z + 6 * DETECTION_ERROR)
+            // {
+            //     regionCount[2]++;
+            // }
+            // else
+            // {
+            //     regionCount[3]++;
+            // }
+
+            //cout <<  "0:" << point0.z << " \t 1:" << point1.z << "\t 2:" << point2.z << "\t gazepoint:" << gazePoint.z << "\n";
+
 
             //cout << gazeSector << "\n";
 
@@ -619,6 +732,19 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     if (faceDetected)
     {
+        iteration++;
+
+            if (iteration % 7 == 0)
+            {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (regionCount[i] > 1)
+                    {
+                        cout << "\n" << i << "\t" << iteration;
+                    }
+                regionCount[i] = 0;
+                }
+            }
         // feeding disp_image into the cv pointer's image
         // only if a face is detected
         publishImage(disp_image,"bgr8");
@@ -671,7 +797,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
        {
         if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
         {
-          cout << reported_completion * 10 << "% ";
+            //OPEN BEFORE SUBMITTING
+          //cout << reported_completion * 10 << "% ";
           reported_completion = reported_completion + 1;
         }
        }
@@ -716,7 +843,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     imagePublisher = imageTransport.advertise("/clm_ros_wrapper/face_image", 1);
 
     // publishing the gaze direction estimates
-    //gazePointPublisher = nodeHandle.advertise<cv::Point3f>("/clm_ros_wrapper/gazePoint", 1);
+    //gazePointPublisher = nodeHandle.advertise<geometry_msgs::Point>("/clm_ros_wrapper/gazePoint", 1);
 
     init = true;
 
@@ -842,7 +969,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
         {
             au_loc = loc.string();
         }
-        else
+            else
         {
             ROS_ERROR("[ClmWrapper] Could not find AU prediction files (i.e. %s), exiting.", au_name.c_str());
             return;
@@ -904,7 +1031,20 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     t_initial = cv::getTickCount();
 
     visualise_hog = verbose;
-
     // Timestamp in seconds of current processing
     time_stamp = 0;
+
+    for (int i = 0; i < 7; i++)
+    {
+        regionCount[i] = 0;
+    }
+    //rotation matrix
+    rotationMatrix.setValue(1, 0, 0, 0, 0, -1, 0, -1, 0);
+
+    screen_reference_points[0] = tf::Vector3(screenWidth / 2, (-1) * screenHeight * cos(screenAngle) / 4, (-1) * screenHeight * sin(screenAngle) / 4);
+    screen_reference_points[3] = tf::Vector3(screenWidth / 2, (-3) * screenHeight * cos(screenAngle) / 4, (-3) * screenHeight * sin(screenAngle) / 4);
+    screen_reference_points[2] = tf::Vector3((-1)*screenWidth / 2, (-1) * screenHeight * cos(screenAngle) / 4, (-1) * screenHeight * sin(screenAngle) / 4);
+    screen_reference_points[5] = tf::Vector3((-1) * screenWidth / 2, (-3) * screenHeight * cos(screenAngle) / 4, (-3) * screenHeight * sin(screenAngle) / 4);
+    screen_reference_points[1] = (screen_reference_points[0]+screen_reference_points[2])/2;
+    screen_reference_points[4] = (screen_reference_points[3]+screen_reference_points[5])/2;
 };

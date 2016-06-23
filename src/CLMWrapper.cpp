@@ -5,6 +5,8 @@
 
 #include "CLMWrapper.h"
 
+#define DETECTION_ERROR 100
+
 using namespace std;
 using namespace cv;
 
@@ -23,6 +25,16 @@ void ClmWrapper::create_directory_from_file(string output_path)
             ROS_ERROR("Failed to create the directory: %s", p.string().c_str());
         }
     }
+}
+
+bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
+{
+    cv_bridge::CvImage msgOut;
+    msgOut.encoding = encoding;
+    msgOut.image    = mat;
+
+    imagePublisher.publish(msgOut.toImageMsg());
+    return true;
 }
 
 // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
@@ -190,6 +202,16 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 * Callback on the subscriber's topic.
 * @param msgIn an RGB image
 */
+
+// later make this a function
+// int ClmWrapper::gazeSector(cv::Point3f gazePoint, cv::Point3f headLocation)
+// {
+
+// }
+int countRegion(const tf::Vector3 average_clm_output){
+    
+}
+
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
     // Convert the ROS image to OpenCV image format
@@ -208,7 +230,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         return;
     }
 
-    cv::cvtColor(cv_ptr->image.clone(), captured_image, CV_BGR2RGB);;
+    cv::cvtColor(cv_ptr->image.clone(), captured_image, CV_BGR2RGB);
 
     // cv::imshow("output", captured_image);
     // cv::waitKey(5);
@@ -255,6 +277,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     if(captured_image.channels() == 3) cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);       
     else                               grayscale_image = captured_image.clone();
 
+    // where the current face detections are stored
     vector<Rect_<double> > face_detections;
 
     bool all_models_active = true;
@@ -266,7 +289,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
     }
       
-    // e: we do the frame detection earlier in the code base
+    // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
     if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
     {       
@@ -362,35 +385,35 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
             }
             // Do face alignment
-            Mat sim_warped_img;     
-            Mat_<double> hog_descriptor;
+            //Mat sim_warped_img;     
+            //Mat_<double> hog_descriptor;
 
             // But only if needed in output
             // std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " << 
             //              hog_output_file.is_open() << " not empty: output_au_files " << !output_au_files.empty() << std::endl;
             // if(!output_similarity_align.empty() || hog_output_file.is_open() || !output_au_files.empty()) START CHECK
             // {
-            face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
-            face_analysers[model].GetLatestAlignedFace(sim_warped_img);
+            // face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
+            // face_analysers[model].GetLatestAlignedFace(sim_warped_img);
 
             //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);      
-            if(!clm_parameters[model].quiet_mode)
-            {
-                cv::imshow("sim_warp", sim_warped_img); 
-                cv::waitKey(1);    
-            }
+            // if(!clm_parameters[model].quiet_mode)
+            // {
+            //     //cv::imshow("sim_warp", sim_warped_img); 
+            //     //cv::waitKey(1);    
+            // }
 
-            if(hog_output_file.is_open())
-            {
-                FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
+            // if(hog_output_file.is_open())
+            // {
+            //     FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
 
-                if(visualise_hog && !clm_parameters[model].quiet_mode)
-                {
-                    Mat_<double> hog_descriptor_vis;
-                    FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
-                    cv::imshow("hog", hog_descriptor_vis);  
-                }
-            }
+            //     if(visualise_hog && !clm_parameters[model].quiet_mode)
+            //     {
+            //         Mat_<double> hog_descriptor_vis;
+            //         FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
+            //         cv::imshow("hog", hog_descriptor_vis);  
+            //     }
+            // }
             // } END CHECK
 
             // Work out the pose of the head from the tracked model
@@ -426,7 +449,55 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             ros_head_msg.headpose.z = static_cast<float>( pose_estimate_CLM[2] );
             ros_head_msg.headpose.pitch = static_cast<float>( pose_estimate_CLM[3] );
             ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
-            ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
+            ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] ); 
+
+
+            // using the matrix we found in clm_utils.cpp
+            Matx33d headRotationMatrixCLM_cf = CLMTracker::Euler2RotationMatrix(Vec3d(pose_estimate_CLM[3], pose_estimate_CLM[4], pose_estimate_CLM[5]));
+
+            // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array
+            // and later I load the values in the array to a matrix of type tf::Matrix3x3
+
+            // setFromOPenGLSubMatrix (used below) is defined as follows and skips one element i.e. m[3] (the code might have an error)
+            // so I use a 12 element array instead of 9, and increment the index by 4 each iteration instead of 3
+
+            // from the source code of setFromOpenGLSubMatrix
+            // void setFromOpenGLSubMatrix(const tfScalar *m)
+            // {
+            //     m_el[0].setValue(m[0],m[4],m[8]);
+            //     m_el[1].setValue(m[1],m[5],m[9]);
+            //     m_el[2].setValue(m[2],m[6],m[10]);
+            // }
+            tfScalar array_from_rotation_matrix[12];
+            for (int i = 0; i<3 ; i++)
+            {
+                for (int j = 0;j<3;j++)
+                {
+                    array_from_rotation_matrix[4*i + j] = headRotationMatrixCLM_cf(j,i);
+                    //cout << endl << headRotationMatrixCLM_cf(j,i) <<  " " << i <<" " << j << endl;
+                }
+            }
+
+            tf::Matrix3x3 head_rotation_cf;
+            head_rotation_cf.setFromOpenGLSubMatrix(array_from_rotation_matrix);
+
+            // head fixation vector is equal to -1 * the third column of the head rotation matrix
+            tf::Vector3 hfv_cf = head_rotation_cf * tf::Vector3(0, 0, -1);
+
+            tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
+
+            //converting to type geometry_msgs::Vector3
+            geometry_msgs::Vector3 hfv_cf_msg;
+            tf::vector3TFToMsg(hfv_cf, hfv_cf_msg);
+
+            // head fixation vector publisher
+            hfv_publisher.publish(hfv_cf_msg);
+
+            //converting to type geometry_msgs::Vector3
+            geometry_msgs::Vector3 headposition_cf_msg;
+            tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);
+
+            head_position_publisher.publish(headposition_cf_msg);
 
 
             std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
@@ -445,6 +516,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 ros_eyegazes_msg.emplace_back( std::move( ros_eyegaze_msg ) );
             }
 
+            //eyesMsgPublisher.publish(ros_eyegaze_msg);
             //AU01_r, AU04_r, AU06_r, AU10_r, AU12_r, AU14_r, AU17_r, AU25_r, AU02_r, AU05_r,
             //AU09_r, AU15_r, AU20_r, AU26_r, AU12_c, AU23_c, AU28_c, AU04_c, AU15_c, AU45_c
 
@@ -509,6 +581,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     });
 
     headsPublisher.publish( ros_heads_msg );
+   // gazePointPublisher.publish(gazePoint);
+
+    // used to check if a face is detected in this iteration    
+    int faceDetected = 0;
 
     // Go through every model and visualise the results
     for(size_t model = 0; model < clm_models.size(); ++model)
@@ -517,12 +593,12 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         // if tracking is successful and initialized
         double detection_certainty = clm_models[model].detection_certainty;
         double visualisation_boundary = -0.1;
-
         // Only draw if the reliability is reasonable, the value is slightly ad-hoc
         if(detection_certainty < visualisation_boundary)
         {
-            CLMTracker::Draw(disp_image, clm_models[model]);
+            faceDetected = 1;
 
+            CLMTracker::Draw(disp_image, clm_models[model]);
             if(detection_certainty > 1)     detection_certainty =  1;
             if(detection_certainty < -1)    detection_certainty = -1;
 
@@ -531,31 +607,32 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             // A rough heuristic for box around the face width
             int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
 
-            // Work out the pose of the head from the tracked model
+            // // Work out the pose of the head from the tracked model
             Vec6d pose_estimate_CLM = CLMTracker::GetCorrectedPoseWorld(clm_models[model], fx, fy, cx, cy);
 
             // Draw it in reddish if uncertain, blueish if certain
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
-                                            detection_certainty*255), thickness, fx, fy, cx, cy);
+            	detection_certainty*255), thickness, fx, fy, cx, cy);
 
-            cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
-             << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
-             << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
+            // TURN ON BEFORE SUBMITTING
+            //cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+            // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
+            // << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
-
-    // e: don't need to work out framerate
-    // Work out the framerate
-    //if(frame_count % 10 == 0)
-    //{      
-    //  double t1 = cv::getTickCount();
-    //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-    //  t0 = t1;
-    //}
-
     // Write out the framerate on the image before displaying it
     char fpsC[255];
-    //sprintf(fpsC, "%d", (int)fps_tracker);
+    int fps_tracker;
+
+    if(frame_count % 10 == 0)
+    {      
+     double t1 = cv::getTickCount();
+     fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+     t0 = t1;
+    }
+
+    sprintf(fpsC, "%d", (int)fps_tracker);
+
     string fpsSt("FPS:");
     fpsSt += fpsC;
     cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));    
@@ -576,11 +653,28 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     active_models_st += active_m_C;
     cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));   
 
-    if(!clm_parameters[0].quiet_mode)
+    if (faceDetected)
     {
-        namedWindow("tracking_result",1);   
-        cv::imshow("tracking_result", disp_image);
+        publishImage(disp_image,"bgr8");
     }
+    else
+    	publishImage(captured_image, "bgr8");
+
+    // e: don't need to work out framerate
+    // Work out the framerate
+    //if(frame_count % 10 == 0)
+    //{      
+    //  double t1 = cv::getTickCount();
+    //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+    //  t0 = t1;
+    //}
+
+    
+    // if(!clm_parameters[0].quiet_mode)
+    // {
+    //      namedWindow("tracking_result",1);   
+    //      cv::imshow("tracking_result", disp_image);
+    // }
 
        // e: removing key press code
        // detect key presses
@@ -603,16 +697,17 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
 
        // Update the frame count
-       //frame_count++;
+       frame_count++;
 
-       //if(total_frames != -1)
-       //{
-       //  if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
-       //  {
-       //    cout << reported_completion * 10 << "% ";
-       //    reported_completion = reported_completion + 1;
-       //  }
-       //}
+       if(total_frames != -1)
+       {
+        if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
+        {
+            //OPEN BEFORE SUBMITTING
+          //cout << reported_completion * 10 << "% ";
+          reported_completion = reported_completion + 1;
+        }
+       }
      //}
 
      // e: not needed for our purposes
@@ -621,7 +716,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
      //  cout << endl;
      //}
 
-     //frame_count = 0;
+     //
      //curr_img = -1;
 
      //// Reset the model, for the next video
@@ -630,6 +725,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
      //  clm_models[model].Reset();
      //  active_models[model] = false;
      //}
+
 
      //// break out of the loop if done with all the files (or using a webcam)
      //if(f_n == files.size() -1 || files.empty())
@@ -643,12 +739,24 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 {
     ROS_INFO("Called constructor...");
 
+    // raw camera image
     imageSubscriber = imageTransport.subscribe("/usb_cam/image_raw",1,&ClmWrapper::callback, this);
+
+    //current not used
     headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>("/clm_ros_wrapper/heads",1);
+
+    // publisher for the image when a face is detected
+    imagePublisher = imageTransport.advertise("/clm_ros_wrapper/face_image", 1);
+
+    // publishing the gaze direction estimates
+    hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_vector", 1);
+
+    // publishing head position in the camera frame
+    head_position_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_position", 1);
 
     init = true;
 
-    // code to start a window
+    // code to start a window	
     //cv::namedWindow("output", cv::WINDOW_NORMAL);
     //cv::startWindowThread();
     //cv::moveWindow("output", 1050, 50);
@@ -697,6 +805,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     
     cx_undefined = true;
     fx_undefined = true;
+
 
     //vector<string> output_similarity_align;
     //vector<string> output_au_files;
@@ -766,7 +875,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
         {
             au_loc = loc.string();
         }
-        else
+            else
         {
             ROS_ERROR("[ClmWrapper] Could not find AU prediction files (i.e. %s), exiting.", au_name.c_str());
             return;
@@ -781,7 +890,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     //vector<bool> active_models;
     //vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
-    int num_faces_max = 4;
+    int num_faces_max = 1;
 
     CLMTracker::CLM clm_model2(clm_parameters[0].model_location);
     clm_model = clm_model2;
@@ -816,7 +925,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     webcam = true;
 
-    //int frame_count = 0;
+    frame_count = 0;
     
     // This is useful for a second pass run (if want AU predictions)
     vector<Vec6d> params_global_video;
@@ -828,7 +937,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     t_initial = cv::getTickCount();
 
     visualise_hog = verbose;
-
     // Timestamp in seconds of current processing
     time_stamp = 0;
+
+    
 };

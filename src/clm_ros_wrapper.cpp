@@ -12,6 +12,7 @@ using namespace std;
 int main (int argc, char **argv)
 {
     ROS_INFO("Initializing..");
+//ros::Rate rate(.5);
 
     std::string name = "clm_ros_wrapper";
 

@@ -1,6 +1,9 @@
 
 <launch>
-
+   <param name="screenAngleInDegrees" type="int" value="45"/>
+   <param name="screenHeight" type="double" value="320"/>
+   <param name="screenWidth" type="double" value="520"/>
+   <param name="screenGap" type="double" value="20"/>
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->
   <!--<param name ="device" value="$(arg webcam_num)" type="int"/>-->
@@ -8,6 +11,10 @@
 
    <!-- type="int"/> -->
 
+  <node pkg="clm_ros_wrapper" type="scene_publisher" name="obscene_publisher" output="screen"> 
+    <param name="device_test" type="int" value="0"/>
+  </node>
+  
   <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
     <param name="video_device" value="/dev/video0" />
     <param name="image_width" value="640" />
@@ -27,11 +34,13 @@
   </node>
 
   <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
-   <param name ="device_test" type ="int" value="0"/>
+   <param name="device_test" type="int" value="0"/>
+  
   </node>
 
   <node pkg="clm_ros_wrapper" type="region_detecter" name="region_detecter" output="screen"> 
-   <param name ="device_test" type ="int" value="0"/>
+   <param name="device_test" type="int" value="0"/>
+   
   </node>
 
 </launch>

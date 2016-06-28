@@ -4,6 +4,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "CLM_core.h"
+#include <std_msgs/String.h>
+
 
 #include <fstream>
 #include <sstream>
@@ -56,8 +58,15 @@ private:
      // publishing head position in the camera frame
     ros::Publisher head_position_publisher;
 
+    ros::Publisher detection_rate_publisher;
+
     int f_n;
+    //the total number of frames displayed
     int frame_count;
+
+    //the number of frames with a face detected
+    int num_detected_frames;
+    
     int total_frames;
     int reported_completion;
 

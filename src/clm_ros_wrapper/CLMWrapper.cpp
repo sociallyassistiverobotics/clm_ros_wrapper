@@ -579,6 +579,14 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
 
     });
+    
+    std_msgs::String rate;
+
+    std::stringstream ss;
+    ss << " " << ((float) num_detected_frames)/frame_count << " ";
+    rate.data = ss.str();
+
+    detection_rate_publisher.publish(rate);
 
     headsPublisher.publish( ros_heads_msg );
    // gazePointPublisher.publish(gazePoint);
@@ -612,7 +620,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             // Draw it in reddish if uncertain, blueish if certain
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
-            	detection_certainty*255), thickness, fx, fy, cx, cy);
+                detection_certainty*255), thickness, fx, fy, cx, cy);
 
             // TURN ON BEFORE SUBMITTING
             //cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
@@ -655,10 +663,11 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     if (faceDetected)
     {
+        num_detected_frames++;
         publishImage(disp_image,"bgr8");
     }
     else
-    	publishImage(captured_image, "bgr8");
+        publishImage(captured_image, "bgr8");
 
     // e: don't need to work out framerate
     // Work out the framerate
@@ -754,9 +763,11 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     // publishing head position in the camera frame
     head_position_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_position", 1);
 
+    detection_rate_publisher = nodeHandle.advertise<std_msgs::String>("/clm_ros_wrapper/detection_rate", 1);
+
     init = true;
 
-    // code to start a window	
+    // code to start a window   
     //cv::namedWindow("output", cv::WINDOW_NORMAL);
     //cv::startWindowThread();
     //cv::moveWindow("output", 1050, 50);
@@ -926,6 +937,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     webcam = true;
 
     frame_count = 0;
+    num_detected_frames = 0;
     
     // This is useful for a second pass run (if want AU predictions)
     vector<Vec6d> params_global_video;

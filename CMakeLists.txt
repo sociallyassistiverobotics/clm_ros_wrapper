@@ -149,14 +149,14 @@ add_subdirectory(lib/local/FaceAnalyser)
 ## Declare a C++ executable
 add_executable(clm_ros_wrapper src/clm_ros_wrapper/CLMWrapper.h src/clm_ros_wrapper/CLMWrapper.cpp src/clm_ros_wrapper/clm_ros_wrapper.cpp)
 add_executable(find_gazepoint src/find_gazepoint/FindGazePoint.cpp)
-add_executable(region_detecter src/region_detecter/RegionDetecter.cpp)
+add_executable(region_detector src/region_detector/RegionDetector.cpp)
 add_executable(scene_publisher src/scene_publisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(clm_ros_wrapper clm_ros_wrapper_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(find_gazepoint find_gazepoint_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(region_detecter region_detecter_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(region_detector region_detector_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(scene_publisher scene_publisher_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
@@ -174,7 +174,7 @@ target_link_libraries(find_gazepoint
                       ${Boost_LIBRARIES}
                       ${TBB_LIBRARIES}
                       ${catkin_LIBRARIES})
-target_link_libraries(region_detecter 
+target_link_libraries(region_detector 
                       dlib
                       ${OpenCV_LIBS}
                       ${Boost_LIBRARIES}
@@ -217,7 +217,7 @@ install(TARGETS find_gazepoint
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
-install(TARGETS region_detecter
+install(TARGETS region_detector
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

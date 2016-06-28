@@ -1,8 +1,3 @@
-/*
-This ros node subscribes to "/clm_ros_wrapper/gaze_point" and finds the region on the screen where this 
-gaze point falls into. It then publishes this information with publisher topic "/clm_ros_wrapper/detect_region"
-Yunus
-*/
 
 #include "CLM_core.h"
 #include <std_msgs/String.h>
@@ -37,6 +32,13 @@ Yunus
 #include <geometry_msgs/Vector3.h> 
 #include <limits>
 
+#define GAZE_ERROR 50
+
+int screenAngleInDegrees; 
+float screenWidth; 
+float screenHeight;
+float screenAngle;
+
 using namespace std;
 using namespace cv;
 
@@ -48,36 +50,31 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
    tf::Vector3 gazepoint;
 
-   float screenAngle = M_PI_4; // representing 45 degrees
-   float screenWidth = 520;
-   float screenHeight = 320;
-
 	tf::vector3MsgToTF(*msg, gazepoint);
 
-   // the midpoints of the regions on the screen
-   // note: screen_refence_points[0] is not defined and represents outside of the screen
 	tf::Vector3 screen_reference_points [7];
 
-	screen_reference_points[4] = tf::Vector3((-1)* screenWidth / 2, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
-   screen_reference_points[1] = tf::Vector3((-1) * screenWidth / 2, (3) * screenHeight * cos(screenAngle) / 4, 3 * screenHeight * sin(screenAngle) / 4);
-   screen_reference_points[6] = tf::Vector3(screenWidth / 2, (1) * screenHeight * cos(screenAngle) / 4, (1) * screenHeight * sin(screenAngle) / 4);
-   screen_reference_points[3] = tf::Vector3(screenWidth / 2, (3) * screenHeight * cos(screenAngle) / 4, (3) * screenHeight * sin(screenAngle) / 4);
+	screen_reference_points[4] = tf::Vector3((-5)* screenWidth / 12, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
+   screen_reference_points[1] = tf::Vector3((-5) * screenWidth / 12, (3) * screenHeight * cos(screenAngle) / 4, 3 * screenHeight * sin(screenAngle) / 4);
+   screen_reference_points[6] = tf::Vector3(screenWidth * 5/12, (1) * screenHeight * cos(screenAngle) / 4, (1) * screenHeight * sin(screenAngle) / 4);
+   screen_reference_points[3] = tf::Vector3(screenWidth * 5/12, (3) * screenHeight * cos(screenAngle) / 4, (3) * screenHeight * sin(screenAngle) / 4);
    screen_reference_points[2] = (screen_reference_points[1]+screen_reference_points[3])/2;
    screen_reference_points[5] = (screen_reference_points[4]+screen_reference_points[6])/2;
 
-   // the number value of the closest region to gazepoint
-   // initialized as 0 by default
    int num_closest_region = 0;
 
-   //the distance to this region's midpoint
    float closest_distance = std::numeric_limits<double>::max();
+
+   // do a check to see if the point is inside
+   // if (closest_distance > 175) // define 175 better 
+   // {
+   // 	num_closest_region = 0;
+   // }
+
 
    for (int i = 1; i<7; i++)
    {
-      // for testing
-   	//cout<< i << "     "<< gazepoint.distance(screen_reference_points[i]) << endl;
-
-      // updating the closest region
+   	//cout<< i << "    "<< screen_reference_points[i].getX() << " " << screen_reference_points[i].getY() << "    " << screen_reference_points[i].getZ() << endl;
    	if (closest_distance > gazepoint.distance(screen_reference_points[i]))
    	{
    		closest_distance = gazepoint.distance(screen_reference_points[i]);
@@ -85,13 +82,13 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
    	}
    }
 
-   // if not less than 175, then it means, we're outside
-   if (closest_distance > 175)
+   // do a check to see if the point is inside
+   if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
+   	|| gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
    {
    	num_closest_region = 0;
    }
-
-   //using this String to publish the information
+   
    std_msgs::String region;
    
    std::stringstream ss;
@@ -99,12 +96,19 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
    region.data = ss.str();
 
    region_publisher.publish(region);
+   //cout << endl << num_closest_region << endl << endl;
 }
 
 int main(int argc, char **argv) 
 {
 	ros::init(argc, argv, "region_detecter");
 	ros::NodeHandle nh;
+
+   nh.getParam("region_detecter/screenAngleInDegrees", screenAngleInDegrees);
+   nh.getParam("region_detecter/screenWidth", screenWidth);
+   nh.getParam("region_detecter/screenHeight", screenHeight);
+
+   screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
 	region_publisher = nh.advertise<std_msgs::String>("/clm_ros_wrapper/detect_region", 1);
 

@@ -38,7 +38,7 @@
   
   </node>
 
-  <node pkg="clm_ros_wrapper" type="region_detecter" name="region_detecter" output="screen"> 
+  <node pkg="clm_ros_wrapper" type="region_detector" name="region_detector" output="screen"> 
    <param name="device_test" type="int" value="0"/>
    
   </node>

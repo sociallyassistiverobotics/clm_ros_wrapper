@@ -62,8 +62,19 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
    tf::Matrix3x3 matrix_cf2wf;
    matrix_cf2wf.setValue(-1, 0, 0, 0, 0, -1, 0, -1, 0);
 
+   tf::Matrix3x3 matrix_cf2wf_rotate_axis;
+
+   // in the new setting, the screen is slightly rotated, so
+   // I use this new matrix to do an extra rotation of the axis cf2wf
+   matrix_cf2wf_rotate_axis.setValue(0.897904, 0.0145582, -0.439951,
+    -0.067152, 0.992285,  -0.104216, 
+    0.43504, 0.12312, 0.891954);
+
+   //applying the extra rotation 
+   matrix_cf2wf = matrix_cf2wf_rotate_axis * matrix_cf2wf;
+
    // translation vector from cf to wf
-   tf::Vector3 vector_cf2wf = tf::Vector3(0, sin(screenAngle) * screenHeight, cos(screenAngle) * screenHeight);
+   tf::Vector3 vector_cf2wf = tf::Vector3((-1) * screenWidth/3, sin(screenAngle) * screenHeight, cos(screenAngle) * screenHeight);
 
    // transformation from the camera frame to the world frame
    tf::Transform transfrom_cf2wf = tf::Transform(matrix_cf2wf, vector_cf2wf);
@@ -72,8 +83,9 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
    //in world frame to establish the space where it sits
    tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
    tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3( -1 * screenWidth / 2, 0, 0);
+
    // the location of the camera in the world frame would be equal to the translation vector
-   tf::Vector3 camera_wf = tf::Vector3(0, cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
+   tf::Vector3 camera_wf = tf::Vector3(screenWidth/3, cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
 
    tf::Vector3 hfv_wf = matrix_cf2wf.inverse() * (hfv_cf);
 
@@ -114,7 +126,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
    gazepoint_pub.publish(gazepoint_msg);
 }
 
-void headposition_callback(const clm_ros_wrapper::ConstPtr& msg)
+void headposition_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
 	tf::vector3MsgToTF(*msg, headposition_cf);
 }
@@ -129,10 +141,10 @@ int main(int argc, char **argv)
 	tf::Vector3 headposition_cf;
 
 	nh.getParam("find_gazepoint/screenAngleInDegrees", screenAngleInDegrees);
-   nh.getParam("find_gazepoint/screenWidth", screenWidth);
-   nh.getParam("find_gazepoint/screenHeight", screenHeight);
+  nh.getParam("find_gazepoint/screenWidth", screenWidth);
+  nh.getParam("find_gazepoint/screenHeight", screenHeight);
 
-   screenAngle = screenAngleInDegrees * M_PI_2 / 90;
+  screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
 	gazepoint_pub = nh.advertise<geometry_msgs::Vector3>("clm_ros_wrapper/gaze_point", 1);
 

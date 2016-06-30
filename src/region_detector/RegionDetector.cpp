@@ -102,12 +102,15 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
       	}
       }
 
-      // WHAT IF THE POINT IS OUTSIDE THE SCREEN
-      // do a check to see if the point is inside
-      if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
-      	|| gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+      if (screen_reference_points_names[num_closest_region].compare("robot")!=0)
       {
-      	num_closest_region = num_objects;
+         // WHAT IF THE POINT IS OUTSIDE THE SCREEN
+         // do a check to see if the point is inside
+         if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
+            || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+         {
+            num_closest_region = num_objects;
+         }
       }
       
       std_msgs::String region;

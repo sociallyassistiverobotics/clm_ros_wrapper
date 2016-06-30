@@ -64,11 +64,11 @@ int main(int argc, char **argv)
 
 	clm_ros_wrapper::Scene current_scene;
 
-   current_scene.num_objects = 6;
+   current_scene.num_objects = 7;
 
    //cout << endl << 0 << endl;
 
-   clm_ros_wrapper::Object objects [6];
+   clm_ros_wrapper::Object objects [current_scene.num_objects];
 
    objects[0].name = "upper-left-point";
    objects[0].x_screen = display_screen_width/6;
@@ -95,7 +95,11 @@ int main(int argc, char **argv)
    objects[5].x_screen = 5 * display_screen_width/6;
    objects[5].y_screen = 3 * display_screen_height/4;
 
-   for (int i = 0; i < 6; i++)
+   objects[6].name = "robot";
+   objects[6].x_screen = 3 * display_screen_width/2;
+   objects[6].y_screen = 3 * display_screen_height/4;
+
+   for (int i = 0; i < current_scene.num_objects; i++)
    {
       current_scene.objects.push_back(objects[i]);
    }

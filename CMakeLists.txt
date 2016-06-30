@@ -62,6 +62,9 @@ add_message_files(
    ClmHead.msg
    ClmHeadPose.msg
    ClmHeads.msg
+   Object.msg
+   Scene.msg
+   DetectedRegion.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -115,7 +118,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES clm_ros_wrapper find_gazepoint
+#  LIBRARIES clm_ros_wrapper 
    CATKIN_DEPENDS message_runtime roscpp std_msgs
 #  DEPENDS system_lib
 )

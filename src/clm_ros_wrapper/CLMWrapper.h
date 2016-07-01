@@ -121,13 +121,13 @@ private:
 
     // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
     void get_output_feature_params(vector<std::string> &similarity_aligned, bool &vid_output,
-                                   vector<std::string> &gaze_files, vector<std::string> &hog_aligned_files,
-                                   vector<std::string> &model_param_files, vector<std::string> &au_files,
-                                   double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
-                                   bool& verbose, vector<std::string> &arguments);
+     vector<std::string> &gaze_files, vector<std::string> &hog_aligned_files,
+     vector<std::string> &model_param_files, vector<std::string> &au_files,
+     double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
+     bool& verbose, vector<std::string> &arguments);
 
     void NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_models,
-                                  vector<cv::Rect_<double> >& face_detections);
+      vector<cv::Rect_<double> >& face_detections);
 
     /**
     * Callback on the subscriber's topic.
@@ -137,7 +137,7 @@ private:
 
 public:
     ClmWrapper(std::string _name, std::string _loc);
-	
+    
 
     ~ClmWrapper() {};
 };

@@ -45,82 +45,82 @@ using namespace std;
 
 int main(int argc, char **argv) 
 {
-   float screenWidth; 
-   float screenHeight;
-   float screenGap;
+    float screenWidth; 
+    float screenHeight;
+    float screenGap;
 
-   ros::init(argc, argv, "scene_publisher");
-   ros::NodeHandle nh;
+    ros::init(argc, argv, "scene_publisher");
+    ros::NodeHandle nh;
 
-   nh.getParam("screenWidth", screenWidth);
-   nh.getParam("screenHeight", screenHeight);
-   nh.getParam("screenGap", screenGap);
+    nh.getParam("screenWidth", screenWidth);
+    nh.getParam("screenHeight", screenHeight);
+    nh.getParam("screenGap", screenGap);
 
-   float display_screen_width = screenWidth - 2 * screenGap;
-   float display_screen_height = screenHeight - 2 * screenGap;
+    float display_screen_width = screenWidth - 2 * screenGap;
+    float display_screen_height = screenHeight - 2 * screenGap;
 
-	
-	ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
 
-	clm_ros_wrapper::Scene current_scene;
+    ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
 
-   current_scene.num_objects = 7;
+    clm_ros_wrapper::Scene current_scene;
 
-   //cout << endl << 0 << endl;
+    current_scene.num_objects = 7;
 
-   clm_ros_wrapper::Object objects [current_scene.num_objects];
+//cout << endl << 0 << endl;
 
-   objects[0].name = "upper-left-point";
-   objects[0].x_screen = display_screen_width/6;
-   objects[0].y_screen = display_screen_height/4;
+    clm_ros_wrapper::Object objects [current_scene.num_objects];
 
-   objects[1].name = "upper-mid-point";
-   objects[1].x_screen = display_screen_width/2;
-   objects[1].y_screen = display_screen_height/4;
+    objects[0].name = "upper-left-point";
+    objects[0].x_screen = display_screen_width/6;
+    objects[0].y_screen = display_screen_height/4;
 
-   objects[2].name = "upper-right-point";
-   objects[2].x_screen = 5 * display_screen_width/6;
-   objects[2].y_screen = display_screen_height/4;
-   //cout << endl << 3 << endl;
+    objects[1].name = "upper-mid-point";
+    objects[1].x_screen = display_screen_width/2;
+    objects[1].y_screen = display_screen_height/4;
 
-   objects[3].name = "lower-left-point";
-   objects[3].x_screen = display_screen_width/6;
-   objects[3].y_screen = 3 * display_screen_height/4;
+    objects[2].name = "upper-right-point";
+    objects[2].x_screen = 5 * display_screen_width/6;
+    objects[2].y_screen = display_screen_height/4;
+//cout << endl << 3 << endl;
 
-   objects[4].name = "lower-mid-point";
-   objects[4].x_screen = display_screen_width/2;
-   objects[4].y_screen = 3 * display_screen_height/4;
+    objects[3].name = "lower-left-point";
+    objects[3].x_screen = display_screen_width/6;
+    objects[3].y_screen = 3 * display_screen_height/4;
 
-   objects[5].name = "lower-right-point";
-   objects[5].x_screen = 5 * display_screen_width/6;
-   objects[5].y_screen = 3 * display_screen_height/4;
+    objects[4].name = "lower-mid-point";
+    objects[4].x_screen = display_screen_width/2;
+    objects[4].y_screen = 3 * display_screen_height/4;
 
-   objects[6].name = "robot";
-   objects[6].x_screen = 3 * display_screen_width/2;
-   objects[6].y_screen = 3 * display_screen_height/4;
+    objects[5].name = "lower-right-point";
+    objects[5].x_screen = 5 * display_screen_width/6;
+    objects[5].y_screen = 3 * display_screen_height/4;
 
-   for (int i = 0; i < current_scene.num_objects; i++)
-   {
-      current_scene.objects.push_back(objects[i]);
-   }
-   
-   //cout << endl << 6 << endl;
+    objects[6].name = "robot";
+    objects[6].x_screen = 3 * display_screen_width/2;
+    objects[6].y_screen = 3 * display_screen_height/4;
 
-   while (nh.ok())
-   {
-      scene_publisher.publish(current_scene);
-      ros::spinOnce();
-   }
+    for (int i = 0; i < current_scene.num_objects; i++)
+    {
+        current_scene.objects.push_back(objects[i]);
+    }
 
-   // scene_publisher.publish(current_scene);
-   // ros::spin();
-   // screen_reference_points[4] = tf::Vector3((-5)* screenWidth / 12, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
-   // screen_reference_points[1] = tf::Vector3((-5) * screenWidth / 12, (3) * screenHeight * cos(screenAngle) / 4, 3 * screenHeight * sin(screenAngle) / 4);
-   // screen_reference_points[6] = tf::Vector3(screenWidth * 5/12, (1) * screenHeight * cos(screenAngle) / 4, (1) * screenHeight * sin(screenAngle) / 4);
-   // screen_reference_points[3] = tf::Vector3(screenWidth * 5/12, (3) * screenHeight * cos(screenAngle) / 4, (3) * screenHeight * sin(screenAngle) / 4);
-   // screen_reference_points[2] = (screen_reference_points[1]+screen_reference_points[3])/2;
-   // screen_reference_points[5] = (screen_reference_points[4]+screen_reference_points[6])/2;
+//cout << endl << 6 << endl;
 
-	
-   return 0;
+    while (nh.ok())
+    {
+        scene_publisher.publish(current_scene);
+        ros::spinOnce();
+    }
+
+// scene_publisher.publish(current_scene);
+// ros::spin();
+// screen_reference_points[4] = tf::Vector3((-5)* screenWidth / 12, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
+// screen_reference_points[1] = tf::Vector3((-5) * screenWidth / 12, (3) * screenHeight * cos(screenAngle) / 4, 3 * screenHeight * sin(screenAngle) / 4);
+// screen_reference_points[6] = tf::Vector3(screenWidth * 5/12, (1) * screenHeight * cos(screenAngle) / 4, (1) * screenHeight * sin(screenAngle) / 4);
+// screen_reference_points[3] = tf::Vector3(screenWidth * 5/12, (3) * screenHeight * cos(screenAngle) / 4, (3) * screenHeight * sin(screenAngle) / 4);
+// screen_reference_points[2] = (screen_reference_points[1]+screen_reference_points[3])/2;
+// screen_reference_points[5] = (screen_reference_points[4]+screen_reference_points[6])/2;
+
+
+    return 0;
 }

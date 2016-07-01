@@ -39,10 +39,10 @@ bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
 
 // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
 void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_aligned, bool &vid_output,
-                               vector<string> &output_gaze_files, vector<string> &output_hog_aligned_files,
-                               vector<string> &output_model_param_files, vector<string> &output_au_files,
-                               double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
-                               bool& verbose, vector<string> &arguments)
+ vector<string> &output_gaze_files, vector<string> &output_hog_aligned_files,
+ vector<string> &output_model_param_files, vector<string> &output_au_files,
+ double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
+ bool& verbose, vector<string> &arguments)
 {
     output_similarity_aligned.clear();
     vid_output = false;
@@ -279,7 +279,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             all_models_active = false;
         }
     }
-      
+
     // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
     if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
@@ -324,7 +324,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 // (if it is false swap it to true and enter detection, this makes it parallel safe)
                 if(face_detections_used[detection_ind].compare_and_swap(true, false) == false)
                 {
-      
+
                     // Reinitialise the model
                     clm_models[model].Reset();
 
@@ -334,7 +334,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                     if(video_input || images_as_video)
                     {
                         detection_success = CLMTracker::DetectLandmarksInVideo(grayscale_image, depth_image, face_detections[detection_ind],
-                                                                               clm_models[model], clm_parameters[model]);
+                         clm_models[model], clm_parameters[model]);
                     }
                     else
                     {
@@ -349,6 +349,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 }
             }
         }
+        
         else
         {
             //IGNORE STANDALONE IMAGES
@@ -569,7 +570,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
 
     });
-    
+
     std_msgs::String rate;
 
     std::stringstream ss;
@@ -624,9 +625,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     if(frame_count % 10 == 0)
     {      
-     double t1 = cv::getTickCount();
-     fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-     t0 = t1;
+       double t1 = cv::getTickCount();
+       fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+       t0 = t1;
     }
 
     sprintf(fpsC, "%d", (int)fps_tracker);
@@ -660,8 +661,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
         publishImage(captured_image, "bgr8");\
 
-        //creating dummy vectors to make hfv_publisher and head_position_publisher publish
-        //some vector regardless of whether something is detected
+            //creating dummy vectors to make hfv_publisher and head_position_publisher publish
+            //some vector regardless of whether something is detected
         tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
         tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
 
@@ -669,7 +670,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
     }
 
-    // head fixation vector and the head position publisher (both in camera frame)
+        // head fixation vector and the head position publisher (both in camera frame)
     hfv_publisher.publish(hfv_cf_msg);
     head_position_publisher.publish(headposition_cf_msg);
 
@@ -682,7 +683,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     //  t0 = t1;
     //}
 
-    
+
     // if(!clm_parameters[0].quiet_mode)
     // {
     //      namedWindow("tracking_result",1);   
@@ -692,7 +693,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
        // e: removing key press code
        // detect key presses
        //char character_press = cv::waitKey(1);
-    
+
        //// restart the trackers
        //if(character_press == 'r')
        //{
@@ -710,17 +711,17 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
 
        // Update the frame count
-       frame_count++;
+    frame_count++;
 
-       if(total_frames != -1)
-       {
+    if(total_frames != -1)
+    {
         if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
         {
-            //OPEN BEFORE SUBMITTING
-          //cout << reported_completion * 10 << "% ";
+                //OPEN BEFORE SUBMITTING
+              //cout << reported_completion * 10 << "% ";
           reported_completion = reported_completion + 1;
         }
-       }
+    }
      //}
 
      // e: not needed for our purposes
@@ -834,8 +835,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     video_output = false;
     bool rigid = false; 
     get_output_feature_params(output_similarity_align, video_output, gaze_output_files,
-                              output_hog_align_files, params_output_files, output_au_files,
-                              sim_scale, sim_size, grayscale, rigid, verbose, arguments);
+      output_hog_align_files, params_output_files, output_au_files,
+      sim_scale, sim_size, grayscale, rigid, verbose, arguments);
 
     // Used for image masking - triangulation code
 
@@ -890,7 +891,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
         {
             au_loc = loc.string();
         }
-            else
+        else
         {
             ROS_ERROR("[ClmWrapper] Could not find AU prediction files (i.e. %s), exiting.", au_name.c_str());
             return;
@@ -911,7 +912,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     clm_model = clm_model2;
     clm_model.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
     clm_model.face_detector_location = clm_parameters[0].face_detector_location;
-      
+
     // Will warp to scaled mean shape
     Mat_<double> similarity_normalised_shape = clm_model.pdm.mean_shape * sim_scale;
     // Discard the z component
@@ -932,7 +933,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     }
 
     string current_file;
-    
+
     int total_frames = -1;
     int reported_completion = 0;
 
@@ -942,19 +943,25 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     frame_count = 0;
     num_detected_frames = 0;
-    
-    // This is useful for a second pass run (if want AU predictions)
+
+        // This is useful for a second pass run (if want AU predictions)
     vector<Vec6d> params_global_video;
     vector<bool> successes_video;
     vector<Mat_<double>> params_local_video;
     vector<Mat_<double>> detected_landmarks_video;
-        
-    // Use for timestamping if using a webcam
+
+        // Use for timestamping if using a webcam
     t_initial = cv::getTickCount();
 
     visualise_hog = verbose;
-    // Timestamp in seconds of current processing
+        // Timestamp in seconds of current processing
     time_stamp = 0;
 
-    
+          //creating dummy vectors to make hfv_publisher and head_position_publisher publish
+          //some vector regardless of whether something is detected
+    tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
+    tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
+
+    tf::vector3TFToMsg(no_face_detection_head_position, headposition_cf_msg);
+    tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
 };

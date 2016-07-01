@@ -481,10 +481,15 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             tf::Matrix3x3 head_rotation_cf;
             head_rotation_cf.setFromOpenGLSubMatrix(array_from_rotation_matrix);
 
+            // //printing out the head rotation matrix to get the rotation of the screen
+            // //wrt the camera in the new setting
+            // for(int i = 0; i < 3; i++)
+            // {
+            //     cout << head_rotation_cf.getRow(i).getX() << "\t" << head_rotation_cf.getRow(i).getY() << "\t" <<  head_rotation_cf.getRow(i).getZ() << endl;
+            // }
+
             // head fixation vector is equal to -1 * the third column of the head rotation matrix
             tf::Vector3 hfv_cf = head_rotation_cf * tf::Vector3(0, 0, -1);
-
-            tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
 
             //converting to type geometry_msgs::Vector3
             geometry_msgs::Vector3 hfv_cf_msg;
@@ -492,6 +497,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             // head fixation vector publisher
             hfv_publisher.publish(hfv_cf_msg);
+
+            tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
 
             //converting to type geometry_msgs::Vector3
             geometry_msgs::Vector3 headposition_cf_msg;

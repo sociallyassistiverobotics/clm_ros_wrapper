@@ -27,6 +27,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/Scene.h>
 #include <clm_ros_wrapper/Object.h>
+#include <clm_ros_wrapper/DetectedRegion.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -64,7 +65,6 @@ using namespace std;
 
 void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {  
-   cout << endl << num_objects << "print" << endl;
    // for (int i = 0; i < 6; i++)
    // cout << endl << screen_reference_points_names[i] << "\t" << screen_reference_points_wf[i].getX() << "\t" << screen_reference_points_wf[i].getY() << "\t" <<  screen_reference_points_wf[i].getZ() << endl;
    if (num_objects != 0)
@@ -112,12 +112,20 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
             num_closest_region = num_objects;
          }
       }
+      //this part should change in the next commit
+      // you should use the head location to estimate whether the kid is looking at the robot
+      else //num_closest_region is the index of the object named robot
+      {
+         if (closest_distance > 3 * GAZE_ERROR)
+         {
+            num_closest_region = num_objects;
+         }
+      }
       
-      std_msgs::String region;
+      clm_ros_wrapper::DetectedRegion region;
       
-      std::stringstream ss;
-      ss << "Object name: " << screen_reference_points_names[num_closest_region] << "\t Distance: " << closest_distance  << " ";
-      region.data = ss.str();
+      region.name = screen_reference_points_names[num_closest_region];
+      region.distance = closest_distance;
 
       region_publisher.publish(region);
       //cout << endl << num_closest_region << endl << endl;
@@ -150,7 +158,7 @@ int main(int argc, char **argv)
 
    screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-	region_publisher = nh.advertise<std_msgs::String>("/clm_ros_wrapper/detect_region", 1);
+	region_publisher = nh.advertise<clm_ros_wrapper::DetectedRegion>("/clm_ros_wrapper/detect_region", 1);
 
    ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
 

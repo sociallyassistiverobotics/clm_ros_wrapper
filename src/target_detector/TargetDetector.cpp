@@ -72,6 +72,16 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
       tf::Vector3 gazepoint;
 
    	tf::vector3MsgToTF(*msg, gazepoint);
+
+      if (gazepoint.isZero())
+      {
+         clm_ros_wrapper::DetectedTarget no_detection_target;
+         
+         no_detection_target.name = "NO DETECTION";
+         no_detection_target.distance = 0;
+
+         target_publisher.publish(no_detection_target);
+      }
       
 
    	// screen_reference_points[4] = tf::Vector3((-5)* screenWidth / 12, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
@@ -112,7 +122,7 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
             num_closest_target = num_objects;
          }
       }
-      //this part should change in the next commit
+      //this part should change in the next commits
       // you should use the head location to estimate whether the kid is looking at the robot
       else //num_closest_target is the index of the object named robot
       {
@@ -149,6 +159,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 int main(int argc, char **argv) 
 {
 	ros::init(argc, argv, "target_detector");
+
 	ros::NodeHandle nh;
 
    nh.getParam("screenAngleInDegrees", screenAngleInDegrees);

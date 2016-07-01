@@ -112,6 +112,9 @@ private:
 
     bool init;
 
+    geometry_msgs::Vector3 hfv_cf_msg;
+    geometry_msgs::Vector3 headposition_cf_msg;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
     bool publishImage(cv::Mat &mat, const std::string encoding);

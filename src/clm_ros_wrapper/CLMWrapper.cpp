@@ -482,21 +482,13 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             // head fixation vector is equal to -1 * the third column of the head rotation matrix
             tf::Vector3 hfv_cf = head_rotation_cf * tf::Vector3(0, 0, -1);
 
-            //converting to type geometry_msgs::Vector3
-            geometry_msgs::Vector3 hfv_cf_msg;
+            //converting to type geometry_msgs::Vector3 and overwriting hfv_cf_msg
             tf::vector3TFToMsg(hfv_cf, hfv_cf_msg);
-
-            // head fixation vector publisher
-            hfv_publisher.publish(hfv_cf_msg);
 
             tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
 
-            //converting to type geometry_msgs::Vector3
-            geometry_msgs::Vector3 headposition_cf_msg;
+            //converting to type geometry_msgs::Vector3 and overwriting headposition_cf_msg
             tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);
-
-            head_position_publisher.publish(headposition_cf_msg);
-
 
             std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
             std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
@@ -665,7 +657,21 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         publishImage(disp_image,"bgr8");
     }
     else
-        publishImage(captured_image, "bgr8");
+    {
+        publishImage(captured_image, "bgr8");\
+
+        //creating dummy vectors to make hfv_publisher and head_position_publisher publish
+        //some vector regardless of whether something is detected
+        tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
+        tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
+
+        tf::vector3TFToMsg(no_face_detection_head_position, headposition_cf_msg);
+        tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
+    }
+
+    // head fixation vector and the head position publisher (both in camera frame)
+    hfv_publisher.publish(hfv_cf_msg);
+    head_position_publisher.publish(headposition_cf_msg);
 
     // e: don't need to work out framerate
     // Work out the framerate

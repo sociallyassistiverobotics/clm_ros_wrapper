@@ -5,8 +5,6 @@
 
 #include "CLMWrapper.h"
 
-#define DETECTION_ERROR 100
-
 using namespace std;
 using namespace cv;
 

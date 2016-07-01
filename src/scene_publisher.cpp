@@ -39,9 +39,6 @@ Yunus
 #include <geometry_msgs/Vector3.h> 
 
 using namespace std;
-// using namespace cv;
-
-// using namespace boost::filesystem;
 
 int main(int argc, char **argv) 
 {
@@ -56,17 +53,16 @@ int main(int argc, char **argv)
     nh.getParam("screenHeight", screenHeight);
     nh.getParam("screenGap", screenGap);
 
+    // the dimensions of the display screen
     float display_screen_width = screenWidth - 2 * screenGap;
     float display_screen_height = screenHeight - 2 * screenGap;
 
-
+    //publishing the current scene
     ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
 
     clm_ros_wrapper::Scene current_scene;
 
     current_scene.num_objects = 7;
-
-//cout << endl << 0 << endl;
 
     clm_ros_wrapper::Object objects [current_scene.num_objects];
 
@@ -81,7 +77,6 @@ int main(int argc, char **argv)
     objects[2].name = "upper-right-point";
     objects[2].x_screen = 5 * display_screen_width/6;
     objects[2].y_screen = display_screen_height/4;
-//cout << endl << 3 << endl;
 
     objects[3].name = "lower-left-point";
     objects[3].x_screen = display_screen_width/6;
@@ -99,28 +94,18 @@ int main(int argc, char **argv)
     objects[6].x_screen = 3 * display_screen_width/2;
     objects[6].y_screen = 3 * display_screen_height/4;
 
+    // pushing the objects back to the objects parameter of the scene message
     for (int i = 0; i < current_scene.num_objects; i++)
     {
         current_scene.objects.push_back(objects[i]);
     }
 
-//cout << endl << 6 << endl;
 
     while (nh.ok())
     {
         scene_publisher.publish(current_scene);
         ros::spinOnce();
     }
-
-// scene_publisher.publish(current_scene);
-// ros::spin();
-// screen_reference_points[4] = tf::Vector3((-5)* screenWidth / 12, screenHeight * cos(screenAngle) / 4, screenHeight * sin(screenAngle) / 4);
-// screen_reference_points[1] = tf::Vector3((-5) * screenWidth / 12, (3) * screenHeight * cos(screenAngle) / 4, 3 * screenHeight * sin(screenAngle) / 4);
-// screen_reference_points[6] = tf::Vector3(screenWidth * 5/12, (1) * screenHeight * cos(screenAngle) / 4, (1) * screenHeight * sin(screenAngle) / 4);
-// screen_reference_points[3] = tf::Vector3(screenWidth * 5/12, (3) * screenHeight * cos(screenAngle) / 4, (3) * screenHeight * sin(screenAngle) / 4);
-// screen_reference_points[2] = (screen_reference_points[1]+screen_reference_points[3])/2;
-// screen_reference_points[5] = (screen_reference_points[4]+screen_reference_points[6])/2;
-
-
+    
     return 0;
 }

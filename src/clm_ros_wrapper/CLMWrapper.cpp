@@ -447,8 +447,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             // using the matrix we found in clm_utils.cpp
             Matx33d headRotationMatrixCLM_cf = CLMTracker::Euler2RotationMatrix(Vec3d(pose_estimate_CLM[3], pose_estimate_CLM[4], pose_estimate_CLM[5]));
 
-            // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array
-            // and later I load the values in the array to a matrix of type tf::Matrix3x3
+            // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array and 
+            // load the values in the array to a matrix of type tf::Matrix3x3
 
             // setFromOPenGLSubMatrix (used below) is defined as follows and skips one element i.e. m[3] (the code might have an error)
             // so I use a 12 element array instead of 9, and increment the index by 4 each iteration instead of 3
@@ -472,13 +472,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             tf::Matrix3x3 head_rotation_cf;
             head_rotation_cf.setFromOpenGLSubMatrix(array_from_rotation_matrix);
-
-            // //printing out the head rotation matrix to get the rotation of the screen
-            // //wrt the camera in the new setting
-            // for(int i = 0; i < 3; i++)
-            // {
-            //     cout << head_rotation_cf.getRow(i).getX() << "\t" << head_rotation_cf.getRow(i).getY() << "\t" <<  head_rotation_cf.getRow(i).getZ() << endl;
-            // }
 
             // head fixation vector is equal to -1 * the third column of the head rotation matrix
             tf::Vector3 hfv_cf = head_rotation_cf * tf::Vector3(0, 0, -1);
@@ -580,7 +573,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     detection_rate_publisher.publish(rate);
 
     headsPublisher.publish( ros_heads_msg );
-   // gazePointPublisher.publish(gazePoint);
 
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
@@ -613,10 +605,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
                 detection_certainty*255), thickness, fx, fy, cx, cy);
 
-            // TURN ON BEFORE SUBMITTING
-            //cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
-            // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
-            // << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
+            cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+            << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
+            << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
     // Write out the framerate on the image before displaying it
@@ -661,8 +652,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
         publishImage(captured_image, "bgr8");\
 
-            //creating dummy vectors to make hfv_publisher and head_position_publisher publish
-            //some vector regardless of whether something is detected
+        //creating dummy vectors to make hfv_publisher and head_position_publisher publish
+        //some vector regardless of whether something is detected
         tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
         tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
 
@@ -670,7 +661,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
     }
 
-        // head fixation vector and the head position publisher (both in camera frame)
+    // head fixation vector and the head position publisher (both in camera frame)
     hfv_publisher.publish(hfv_cf_msg);
     head_position_publisher.publish(headposition_cf_msg);
 
@@ -717,9 +708,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
         if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
         {
-                //OPEN BEFORE SUBMITTING
-              //cout << reported_completion * 10 << "% ";
-          reported_completion = reported_completion + 1;
+            cout << reported_completion * 10 << "%";
+            reported_completion = reported_completion + 1;
         }
     }
      //}
@@ -957,8 +947,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
         // Timestamp in seconds of current processing
     time_stamp = 0;
 
-          //creating dummy vectors to make hfv_publisher and head_position_publisher publish
-          //some vector regardless of whether something is detected
+    // assinging the default values of the dummy vectors
     tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
     tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
 

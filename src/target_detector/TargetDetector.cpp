@@ -60,8 +60,6 @@ using namespace std;
 
 void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {  
-    // for (int i = 0; i < 6; i++)
-    // cout << endl << screen_reference_points_names[i] << "\t" << screen_reference_points_wf[i].getX() << "\t" << screen_reference_points_wf[i].getY() << "\t" <<  screen_reference_points_wf[i].getZ() << endl;
     if (num_objects != 0)
     {
         tf::Vector3 gazepoint;

@@ -140,7 +140,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 
 int main(int argc, char **argv) 
 {
-	ros::init(argc, argv, "region_detector");
+	ros::init(argc, argv, "target_detector");//cmhuang: change necessary places throughout
 	ros::NodeHandle nh;
 
    nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
    screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-	region_publisher = nh.advertise<std_msgs::String>("/clm_ros_wrapper/detect_region", 1);
+	region_publisher = nh.advertise<std_msgs::String>("/clm_ros_wrapper/detected_target", 1); //cmhuang: the message type is incorrect..
 
    ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
 

@@ -203,15 +203,6 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 * @param msgIn an RGB image
 */
 
-// later make this a function
-// int ClmWrapper::gazeSector(cv::Point3f gazePoint, cv::Point3f headLocation)
-// {
-
-// }
-int countRegion(const tf::Vector3 average_clm_output){
-    
-}
-
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
     // Convert the ROS image to OpenCV image format

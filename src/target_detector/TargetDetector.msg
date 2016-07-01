@@ -1,7 +1,7 @@
 
 /*
-This ros node subscribes to "/clm_ros_wrapper/gaze_point" and finds the region on the screen where this 
-gaze point falls into. It then publishes this information with publisher topic "/clm_ros_wrapper/detect_region"
+This ros node subscribes to "/clm_ros_wrapper/gaze_point" and finds the target on the screen where this 
+gaze point falls into. It then publishes this information with publisher topic "/clm_ros_wrapper/detect_target"
 */
 #include "CLM_core.h"
 #include <std_msgs/String.h>
@@ -27,7 +27,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/Scene.h>
 #include <clm_ros_wrapper/Object.h>
-#include <clm_ros_wrapper/DetectedRegion.h>
+#include <clm_ros_wrapper/DetectedTarget.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -54,7 +54,7 @@ int num_objects;
 tf::Vector3 screen_reference_points_wf [max_num_objects];
 
 std::string screen_reference_points_names [max_num_objects];
-ros::Publisher region_publisher;
+ros::Publisher target_publisher;
 
 using namespace std;
 // using namespace cv;
@@ -81,14 +81,14 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
     //   screen_reference_points[2] = (screen_reference_points[1]+screen_reference_points[3])/2;
     //   screen_reference_points[5] = (screen_reference_points[4]+screen_reference_points[6])/2;
 
-      int num_closest_region = 0;
+      int num_closest_target = 0;
 
       float closest_distance = std::numeric_limits<double>::max();
 
       // do a check to see if the point is inside
       // if (closest_distance > 175) // define 175 better 
       // {
-      // 	num_closest_region = 0;
+      // 	num_closest_target = 0;
       // }
 
 
@@ -98,37 +98,37 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
       	if (closest_distance > gazepoint.distance(screen_reference_points_wf[i]))
       	{
       		closest_distance = gazepoint.distance(screen_reference_points_wf[i]);
-      		num_closest_region = i;
+      		num_closest_target = i;
       	}
       }
 
-      if (screen_reference_points_names[num_closest_region].compare("robot")!=0)
+      if (screen_reference_points_names[num_closest_target].compare("robot")!=0)
       {
          // WHAT IF THE POINT IS OUTSIDE THE SCREEN
          // do a check to see if the point is inside
          if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
             || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
          {
-            num_closest_region = num_objects;
+            num_closest_target = num_objects;
          }
       }
       //this part should change in the next commit
       // you should use the head location to estimate whether the kid is looking at the robot
-      else //num_closest_region is the index of the object named robot
+      else //num_closest_target is the index of the object named robot
       {
          if (closest_distance > 3 * GAZE_ERROR)
          {
-            num_closest_region = num_objects;
+            num_closest_target = num_objects;
          }
       }
       
-      clm_ros_wrapper::DetectedRegion region;
+      clm_ros_wrapper::DetectedTarget target;
       
-      region.name = screen_reference_points_names[num_closest_region];
-      region.distance = closest_distance;
+      target.name = screen_reference_points_names[num_closest_target];
+      target.distance = closest_distance;
 
-      region_publisher.publish(region);
-      //cout << endl << num_closest_region << endl << endl;
+      target_publisher.publish(target);
+      //cout << endl << num_closest_target << endl << endl;
    }
 }
 
@@ -148,7 +148,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 
 int main(int argc, char **argv) 
 {
-	ros::init(argc, argv, "region_detector");
+	ros::init(argc, argv, "target_detector");
 	ros::NodeHandle nh;
 
    nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
 
    screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-	region_publisher = nh.advertise<clm_ros_wrapper::DetectedRegion>("/clm_ros_wrapper/detect_region", 1);
+	target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/clm_ros_wrapper/detect_target", 1);
 
    ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
 

@@ -4,6 +4,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "CLM_core.h"
+#include <std_msgs/String.h>
+
 
 #include <fstream>
 #include <sstream>
@@ -28,6 +30,11 @@
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 
+#include <math.h>
+
+#include <tf/transform_datatypes.h>
+
+
 class ClmWrapper
 {
 private:
@@ -45,8 +52,21 @@ private:
     // can be called through the "clm_ros_wrapper/heads" topic
     ros::Publisher headsPublisher;
 
+    // publishing the head fixation vector
+    ros::Publisher hfv_publisher;
+
+     // publishing head position in the camera frame
+    ros::Publisher head_position_publisher;
+
+    ros::Publisher detection_rate_publisher;
+
     int f_n;
+    //the total number of frames displayed
     int frame_count;
+
+    //the number of frames with a face detected
+    int num_detected_frames;
+
     int total_frames;
     int reported_completion;
 
@@ -92,19 +112,22 @@ private:
 
     bool init;
 
+    geometry_msgs::Vector3 hfv_cf_msg;
+    geometry_msgs::Vector3 headposition_cf_msg;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
     bool publishImage(cv::Mat &mat, const std::string encoding);
 
     // Extracting the following command line arguments -f, -fd, -op, -of, -ov (and possible ordered repetitions)
     void get_output_feature_params(vector<std::string> &similarity_aligned, bool &vid_output,
-                                   vector<std::string> &gaze_files, vector<std::string> &hog_aligned_files,
-                                   vector<std::string> &model_param_files, vector<std::string> &au_files,
-                                   double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
-                                   bool& verbose, vector<std::string> &arguments);
+     vector<std::string> &gaze_files, vector<std::string> &hog_aligned_files,
+     vector<std::string> &model_param_files, vector<std::string> &au_files,
+     double &similarity_scale, int &similarity_size, bool &grayscale, bool &rigid,
+     bool& verbose, vector<std::string> &arguments);
 
     void NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_models,
-                                  vector<cv::Rect_<double> >& face_detections);
+      vector<cv::Rect_<double> >& face_detections);
 
     /**
     * Callback on the subscriber's topic.
@@ -114,7 +137,6 @@ private:
 
 public:
     ClmWrapper(std::string _name, std::string _loc);
-	
 
     ~ClmWrapper() {};
 };

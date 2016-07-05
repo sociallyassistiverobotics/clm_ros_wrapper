@@ -62,6 +62,9 @@ add_message_files(
    ClmHead.msg
    ClmHeadPose.msg
    ClmHeads.msg
+   Object.msg
+   Scene.msg
+   DetectedTarget.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -115,7 +118,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES clm_ros_wrapper
+#  LIBRARIES clm_ros_wrapper 
    CATKIN_DEPENDS message_runtime roscpp std_msgs
 #  DEPENDS system_lib
 )
@@ -144,18 +147,43 @@ add_subdirectory(lib/local/FaceAnalyser)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(clm_ros_wrapper ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_dependencies(find_gazepoint ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
 
 ## Declare a C++ executable
-add_executable(clm_ros_wrapper src/CLMWrapper.h src/CLMWrapper.cpp src/clm_ros_wrapper.cpp)
+add_executable(clm_ros_wrapper src/clm_ros_wrapper/CLMWrapper.h src/clm_ros_wrapper/CLMWrapper.cpp src/clm_ros_wrapper/clm_ros_wrapper.cpp)
+add_executable(find_gazepoint src/find_gazepoint/FindGazePoint.cpp)
+add_executable(target_detector src/target_detector/TargetDetector.cpp)
+add_executable(scene_publisher src/scene_publisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(clm_ros_wrapper clm_ros_wrapper_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(find_gazepoint find_gazepoint_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(target_detector target_detector_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(scene_publisher scene_publisher_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(clm_ros_wrapper 
                       CLM
                       FaceAnalyser
+                      dlib
+                      ${OpenCV_LIBS}
+                      ${Boost_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      ${catkin_LIBRARIES})
+target_link_libraries(find_gazepoint 
+                      dlib
+                      ${OpenCV_LIBS}
+                      ${Boost_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      ${catkin_LIBRARIES})
+target_link_libraries(target_detector 
+                      dlib
+                      ${OpenCV_LIBS}
+                      ${Boost_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      ${catkin_LIBRARIES})
+target_link_libraries(scene_publisher 
                       dlib
                       ${OpenCV_LIBS}
                       ${Boost_LIBRARIES}
@@ -187,6 +215,22 @@ install(TARGETS clm_ros_wrapper
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
+install(TARGETS find_gazepoint
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS target_detector
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS scene_publisher
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/

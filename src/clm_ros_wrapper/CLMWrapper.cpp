@@ -662,9 +662,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
     }
      //publishing the image usign the cv pointer
-    else
-    	publishImage(captured_image, "bgr8");
-    	//imagePublisher.publish(cv_ptr->toImageMsg());
 
     // e: don't need to work out framerate
     // Work out the framerate

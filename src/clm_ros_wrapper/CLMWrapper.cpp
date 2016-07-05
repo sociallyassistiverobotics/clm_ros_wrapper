@@ -601,6 +601,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             // Draw it in reddish if uncertain, blueish if certain
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
+
                 detection_certainty*255), thickness, fx, fy, cx, cy);
 
             cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
@@ -644,6 +645,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     if (faceDetected)
     {
         num_detected_frames++;
+        // feeding disp_image into the cv pointer's image
+        // only if a face is detected
         publishImage(disp_image,"bgr8");
     }
     else
@@ -658,6 +661,26 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         tf::vector3TFToMsg(no_face_detection_head_position, headposition_cf_msg);
         tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
     }
+     //publishing the image usign the cv pointer
+    else
+    	publishImage(captured_image, "bgr8");
+    	//imagePublisher.publish(cv_ptr->toImageMsg());
+
+    // e: don't need to work out framerate
+    // Work out the framerate
+    //if(frame_count % 10 == 0)
+    //{      
+    //  double t1 = cv::getTickCount();
+    //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+    //  t0 = t1;
+    //}
+
+    
+    // if(!clm_parameters[0].quiet_mode)
+    // {
+    //      namedWindow("tracking_result",1);   
+    //      cv::imshow("tracking_result", disp_image);
+    // }
 
     // head fixation vector and the head position publisher (both in camera frame)
     hfv_publisher.publish(hfv_cf_msg);
@@ -761,6 +784,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     init = true;
 
     // code to start a window   
+
     //cv::namedWindow("output", cv::WINDOW_NORMAL);
     //cv::startWindowThread();
     //cv::moveWindow("output", 1050, 50);

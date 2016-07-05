@@ -19,7 +19,7 @@ sudo apt-get -y install libopencv-dev build-essential cmake git libgtk2.0-dev pk
 
 #### 1.3.1 Download OpenCV
 
-Download OpenCV from [opencv.org](opencv.org). I used the 3.1.0 version available [here](https://github.com/Itseez/opencv/archive/3.1.0.zip).
+Download OpenCV from [opencv.org](http://opencv.org/). I used the 3.1.0 version available [here](https://github.com/Itseez/opencv/archive/3.1.0.zip).
 
 #### 1.3.2 Install OpenCV
 
@@ -27,17 +27,15 @@ Download OpenCV from [opencv.org](opencv.org). I used the 3.1.0 version availabl
  * `cd ~/src/opencv-3.1.0`
  * `mkdir build`
  * `cd build`
- * `cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_TBB=ON -D WITH_V4L=ON -D WITH_QT=ON -D WITH_OPENGL=ON ..`
+ * `cmake -D CMAKE_BUILD_TYPE=RELEASE -D WITH_TBB=ON -D WITH_V4L=ON -D WITH_QT=ON -D WITH_OPENGL=ON ..`
  * `make -j7`
- * `sudo make install`
 
 #### 1.3.3 Finish installation
 
-To get OpenCV working properly, we need:
+To get OpenCV working properly, you need to edit your `~/.bashrc` file by adding a proper `OpenCV_DIR`, to let the system know where OpenCV 3.* is compiled. Just add this line at the end of said file:
 
 ```
-sudo /bin/bash -c 'echo "/usr/local/lib" > /etc/ld.so.conf.d/opencv.conf'
-sudo ldconfig
+export OpenCV_DIR=~/src/opencv-3.1.0/build
 ```
 
 ## 2. Download and configure

@@ -66,7 +66,7 @@ private:
 
     //the number of frames with a face detected
     int num_detected_frames;
-    
+
     int total_frames;
     int reported_completion;
 
@@ -137,7 +137,6 @@ private:
 
 public:
     ClmWrapper(std::string _name, std::string _loc);
-    
 
     ~ClmWrapper() {};
 };

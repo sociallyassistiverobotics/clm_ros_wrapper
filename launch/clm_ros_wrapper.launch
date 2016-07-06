@@ -24,8 +24,14 @@
    <param name="translation_cf2wf_2" type="double" value="226.274"/>
    <param name="translation_cf2wf_3" type="double" value="226.274"/>
 
-   <!-- robot parameters -->
-   <!-- <param name="robot_position_wf_x" type="double" value="1"/> -->
+   <!-- robot parameters - position -->
+   <param name="robot_position_wf_x" type="double" value="400"/>
+   <param name="robot_position_wf_y" type="double" value="-100"/>
+   <param name="robot_position_wf_z" type="double" value="220"/>
+
+   <!-- robot parameters - width and height -->
+   <param name="robot_height" type="double" value="220"/>
+   <param name="robot_width" type="double" value="110"/>
 
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->

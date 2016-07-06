@@ -57,49 +57,68 @@ int main(int argc, char **argv)
     float display_screen_width = screenWidth - 2 * screenGap;
     float display_screen_height = screenHeight - 2 * screenGap;
 
+    float robot_height;
+    float robot_width;
+
+    nh.getParam("robot_width", robot_width);
+    nh.getParam("robot_height", robot_height);
+
     //publishing the current scene
     ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
 
     clm_ros_wrapper::Scene current_scene;
 
-    current_scene.num_objects = 7;
+    current_scene.num_planes = 2;
 
-    clm_ros_wrapper::Object objects [current_scene.num_objects];
+    clm_ros_wrapper::Objects planes [current_scene.num_planes];
 
-    objects[0].name = "upper-left-point";
-    objects[0].x_screen = display_screen_width/6;
-    objects[0].y_screen = display_screen_height/4;
+    planes[0].num_objects = 6;
 
-    objects[1].name = "upper-mid-point";
-    objects[1].x_screen = display_screen_width/2;
-    objects[1].y_screen = display_screen_height/4;
+    clm_ros_wrapper::Object objects_on_plane0 [planes[0].num_objects];
 
-    objects[2].name = "upper-right-point";
-    objects[2].x_screen = 5 * display_screen_width/6;
-    objects[2].y_screen = display_screen_height/4;
+    objects_on_plane0[0].name = "upper-left-point";
+    objects_on_plane0[0].x_screen = display_screen_width/6;
+    objects_on_plane0[0].y_screen = display_screen_height/4;
 
-    objects[3].name = "lower-left-point";
-    objects[3].x_screen = display_screen_width/6;
-    objects[3].y_screen = 3 * display_screen_height/4;
+    objects_on_plane0[1].name = "upper-mid-point";
+    objects_on_plane0[1].x_screen = display_screen_width/2;
+    objects_on_plane0[1].y_screen = display_screen_height/4;
 
-    objects[4].name = "lower-mid-point";
-    objects[4].x_screen = display_screen_width/2;
-    objects[4].y_screen = 3 * display_screen_height/4;
+    objects_on_plane0[2].name = "upper-right-point";
+    objects_on_plane0[2].x_screen = 5 * display_screen_width/6;
+    objects_on_plane0[2].y_screen = display_screen_height/4;
 
-    objects[5].name = "lower-right-point";
-    objects[5].x_screen = 5 * display_screen_width/6;
-    objects[5].y_screen = 3 * display_screen_height/4;
+    objects_on_plane0[3].name = "lower-left-point";
+    objects_on_plane0[3].x_screen = display_screen_width/6;
+    objects_on_plane0[3].y_screen = 3 * display_screen_height/4;
 
-    objects[6].name = "robot";
-    objects[6].x_screen = 3 * display_screen_width/2;
-    objects[6].y_screen = 3 * display_screen_height/4;
+    objects_on_plane0[4].name = "lower-mid-point";
+    objects_on_plane0[4].x_screen = display_screen_width/2;
+    objects_on_plane0[4].y_screen = 3 * display_screen_height/4;
+
+    objects_on_plane0[5].name = "lower-right-point";
+    objects_on_plane0[5].x_screen = 5 * display_screen_width/6;
+    objects_on_plane0[5].y_screen = 3 * display_screen_height/4;
 
     // pushing the objects back to the objects parameter of the scene message
-    for (int i = 0; i < current_scene.num_objects; i++)
+    for (int j = 0; j < planes[0].num_objects; j++)
     {
-        current_scene.objects.push_back(objects[i]);
+        planes[0].objects.push_back(objects_on_plane0[j]);
     }
 
+    planes[1].num_objects = 1;
+
+    clm_ros_wrapper::Object objects_on_plane1 [planes[1].num_objects];
+
+    objects_on_plane1[0].name = "robot";
+    objects_on_plane1[0].x_screen = robot_height / 2;
+    objects_on_plane1[0].y_screen = robot_width / 2;
+
+    // pushing the objects back to the objects parameter of the scene message
+    for (int j = 0; j < planes[1].num_objects; j++)
+    {
+        planes[1].objects.push_back(objects_on_plane1[j]);
+    }
 
     while (nh.ok())
     {

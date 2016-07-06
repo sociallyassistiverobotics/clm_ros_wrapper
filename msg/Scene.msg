@@ -1,2 +1,2 @@
-int32 num_objects
-clm_ros_wrapper/Object[] objects
+int32 num_planes
+clm_ros_wrapper/Objects[] object_planes

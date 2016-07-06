@@ -1,0 +1,5 @@
+int32 num_objects_on_plane
+clm_ros_wrapper/Object[] objects
+geometry_msgs/Vector3 plane_ref1_wf
+geometry_msgs/Vector3 plane_ref2_wf
+geometry_msgs/Vector3 plane_ref3_wf

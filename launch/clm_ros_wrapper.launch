@@ -6,7 +6,8 @@
    <param name="screenWidth" type="double" value="520"/>
    <param name="screenGap" type="double" value="20"/>
 
-   <!-- camera frame to world frame rotation matrix rotation_cf2wf_ij refers to the entry in row i and column j-->
+   <!-- camera frame to world frame rotation matrix 
+    rotation_cf2wf_ij refers to the entry in row i and column j-->
    <param name="rotation_cf2wf_11" type="double" value="-0.897904"/>
    <param name="rotation_cf2wf_12" type="double" value="0.439951"/>
    <param name="rotation_cf2wf_13" type="double" value="-0.0145582"/>
@@ -17,8 +18,9 @@
    <param name="rotation_cf2wf_32" type="double" value="-0.891954"/>
    <param name="rotation_cf2wf_33" type="double" value="-0.12312"/>
 
-   <!-- camera frame to world frame translation vector translation_cf2wf_i refers to the entry i-->
-   <param name="translation_cf2wf_1" type="double" value="173.33"/>
+   <!-- camera frame to world frame translation vector 
+    translation_cf2wf_i refers to the entry i-->
+   <param name="translation_cf2wf_1" type="double" value="-173.33"/>
    <param name="translation_cf2wf_2" type="double" value="226.274"/>
    <param name="translation_cf2wf_3" type="double" value="226.274"/>
 

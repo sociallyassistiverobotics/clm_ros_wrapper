@@ -604,9 +604,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
                 detection_certainty*255), thickness, fx, fy, cx, cy);
 
-            cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
-            << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
-            << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
+            // cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+            // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
+            // << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
     }
     // Write out the framerate on the image before displaying it
@@ -726,7 +726,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     {
         if((double)frame_count/(double)total_frames >= reported_completion / 10.0)
         {
-            cout << reported_completion * 10 << "%";
+            //cout << reported_completion * 10 << "%";
             reported_completion = reported_completion + 1;
         }
     }

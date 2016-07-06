@@ -70,7 +70,7 @@ int main(int argc, char **argv)
 
     current_scene.num_planes = 2;
 
-    clm_ros_wrapper::Objects planes [current_scene.num_planes];
+    clm_ros_wrapper::ObjectsOnPlane planes [current_scene.num_planes];
 
     planes[0].num_objects = 6;
 

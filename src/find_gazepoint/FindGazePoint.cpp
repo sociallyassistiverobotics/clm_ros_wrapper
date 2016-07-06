@@ -144,8 +144,6 @@ int main(int argc, char **argv)
     ros::Subscriber vector_sub;
     ros::NodeHandle nh;
 
-    tf::Vector3 headposition_cf;
-
     // Screen parameters
     nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
     nh.getParam("screenWidth", screenWidth);
@@ -174,7 +172,8 @@ int main(int argc, char **argv)
     {
         for(int j = 0; j < 3; j++)
         {
-            nh.getParam("rotation_cf2wf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*i+j]);
+            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
+            nh.getParam("rotation_cf2wf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*j+i]);
         }
     }
 

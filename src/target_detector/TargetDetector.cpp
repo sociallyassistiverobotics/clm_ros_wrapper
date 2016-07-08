@@ -95,17 +95,28 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             float closest_distance_screen = std::numeric_limits<double>::max();
             float closest_distance_free_object = std::numeric_limits<double>::max();
 
-            for (int i = 0; i<num_objects_on_screen; i++)
+
+            //inside/outside check for the screen
+            if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
             {
-                if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
+                num_closest_object_on_screen = num_objects_on_screen;
+            }
+            else
+            {
+                for (int i = 0; i<num_objects_on_screen; i++)
                 {
-                    closest_distance_screen = gaze_point_wf.distance(screen_reference_points_wf[i]);
-                    num_closest_object_on_screen = i;
+                    if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
+                    {
+                        closest_distance_screen = gaze_point_wf.distance(screen_reference_points_wf[i]);
+                        num_closest_object_on_screen = i;
+                    }
                 }
             }
 
             //USING THE LINE-POINT DISTANCE FORMULA TO FIND THE CLOSEST FREE OBJECT
-            // To see the calculations: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+            // To see the calculations in more depth: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+            // Explanation:
             // X_1: head_position_wf, X_2:randompoint_on_gazedirection X_0:free object's position
 
             tf::Vector3 randompoint_on_gazedirection = head_position_wf + 100 * hfv_wf;

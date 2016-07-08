@@ -117,6 +117,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             {   
                 tf::Vector3 diff_freeobj_headpos = free_objects_positions[i]-head_position_wf;
                 tf::Vector3 diff_freeobj_rand = free_objects_positions[i]-randompoint_on_gazedirection;
+
                 //using the formula from the link
                 float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
                     /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
@@ -148,13 +149,21 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             //     }
             // }
 
-            clm_ros_wrapper::DetectedTarget target;
+            clm_ros_wrapper::DetectedTarget detected_target;
 
-            // TODO add check between free objects and screen objects
-            target.name = screen_reference_points_names[num_closest_target];
-            target.distance = closest_distance;
+            // checking between free objects and screen objects to find the closest
+            if (closest_distance_free_object > closest_distance_screen)
+            {
+                detected_target.name = screen_reference_points_names[num_closest_object_on_screen];
+                detected_target.distance = closest_distance_screen;
+            }
+            else
+            {
+                detected_target.name = free_objects_names[num_closest_free_object];
+                detected_target.distance = closest_distance_free_object;
+            }
 
-            target_publisher.publish(target);
+            target_publisher.publish(detected_target);
             //cout << endl << num_closest_target << endl << endl;
         }
     }

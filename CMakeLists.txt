@@ -63,7 +63,7 @@ add_message_files(
    ClmHeadPose.msg
    ClmHeads.msg
    Object.msg
-   ObjectsOnPlane.msg
+   Screen.msg
    Scene.msg
    DetectedTarget.msg
 )

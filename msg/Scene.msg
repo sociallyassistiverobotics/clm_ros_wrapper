@@ -1,2 +1,3 @@
-int32 num_planes
-clm_ros_wrapper/ObjectsOnPlane[] object_planes
+clm_ros_wrapper/ObjectsOnPlane screen
+int32 num_free_objects
+clm_ros_wrapper/FreeObject[] free_objects

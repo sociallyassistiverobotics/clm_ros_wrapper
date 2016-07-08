@@ -57,67 +57,75 @@ int main(int argc, char **argv)
     float display_screen_width = screenWidth - 2 * screenGap;
     float display_screen_height = screenHeight - 2 * screenGap;
 
-    float robot_height;
-    float robot_width;
-
-    nh.getParam("robot_width", robot_width);
-    nh.getParam("robot_height", robot_height);
-
     //publishing the current scene
     ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
 
     clm_ros_wrapper::Scene current_scene;
 
-    current_scene.num_planes = 2;
+    //SCREEN
 
-    clm_ros_wrapper::ObjectsOnPlane planes [current_scene.num_planes];
+    //number of objects on the screen
+    current_scene.screen.num_objects_on_screen = 6;
 
-    planes[0].num_objects = 6;
+    // constructing the array to define the objects on the screen
+    clm_ros_wrapper::Object objects_on_screen [current_scene.screen.num_objects_on_screen];
 
-    clm_ros_wrapper::Object objects_on_plane0 [planes[0].num_objects];
+    objects_on_screen[0].name = "upper-left-point";
+    objects_on_screen[0].x_screen = display_screen_width/6;
+    objects_on_screen[0].y_screen = display_screen_height/4;
 
-    objects_on_plane0[0].name = "upper-left-point";
-    objects_on_plane0[0].x_screen = display_screen_width/6;
-    objects_on_plane0[0].y_screen = display_screen_height/4;
+    objects_on_screen[1].name = "upper-mid-point";
+    objects_on_screen[1].x_screen = display_screen_width/2;
+    objects_on_screen[1].y_screen = display_screen_height/4;
 
-    objects_on_plane0[1].name = "upper-mid-point";
-    objects_on_plane0[1].x_screen = display_screen_width/2;
-    objects_on_plane0[1].y_screen = display_screen_height/4;
+    objects_on_screen[2].name = "upper-right-point";
+    objects_on_screen[2].x_screen = 5 * display_screen_width/6;
+    objects_on_screen[2].y_screen = display_screen_height/4;
 
-    objects_on_plane0[2].name = "upper-right-point";
-    objects_on_plane0[2].x_screen = 5 * display_screen_width/6;
-    objects_on_plane0[2].y_screen = display_screen_height/4;
+    objects_on_screen[3].name = "lower-left-point";
+    objects_on_screen[3].x_screen = display_screen_width/6;
+    objects_on_screen[3].y_screen = 3 * display_screen_height/4;
 
-    objects_on_plane0[3].name = "lower-left-point";
-    objects_on_plane0[3].x_screen = display_screen_width/6;
-    objects_on_plane0[3].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[4].name = "lower-mid-point";
+    objects_on_screen[4].x_screen = display_screen_width/2;
+    objects_on_screen[4].y_screen = 3 * display_screen_height/4;
 
-    objects_on_plane0[4].name = "lower-mid-point";
-    objects_on_plane0[4].x_screen = display_screen_width/2;
-    objects_on_plane0[4].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[5].name = "lower-right-point";
+    objects_on_screen[5].x_screen = 5 * display_screen_width/6;
+    objects_on_screen[5].y_screen = 3 * display_screen_height/4;
 
-    objects_on_plane0[5].name = "lower-right-point";
-    objects_on_plane0[5].x_screen = 5 * display_screen_width/6;
-    objects_on_plane0[5].y_screen = 3 * display_screen_height/4;
-
-    // pushing the objects back to the objects parameter of the scene message
-    for (int j = 0; j < planes[0].num_objects; j++)
+    // pushing the objects back to the objects_on_screen component of current_scene.screen
+    for (int i = 0; i < planes[0].num_objects_on_plane; i++)
     {
-        planes[0].objects.push_back(objects_on_plane0[j]);
+        current_scene.screen.objects_on_screen.push_back(objects_on_screen[i]);
     }
 
-    planes[1].num_objects = 1;
+    //FREE OBJECTS
+    
+    current_scene.num_free_objects = 1;
 
-    clm_ros_wrapper::Object objects_on_plane1 [planes[1].num_objects];
+    clm_ros_wrapper::FreeObject free_objects [current_scene.num_free_objects];
 
-    objects_on_plane1[0].name = "robot";
-    objects_on_plane1[0].x_screen = robot_height / 2;
-    objects_on_plane1[0].y_screen = robot_width / 2;
+    free_objects[0].name = "robot";
+    
+    // Reading robot position from the parameter server
+    float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
+    nh.getParam("robot_position_wf_x", robot_position_wf_x);
+    nh.getParam("robot_position_wf_y", robot_position_wf_y);
+    nh.getParam("robot_position_wf_z", robot_position_wf_z);
 
-    // pushing the objects back to the objects parameter of the scene message
-    for (int j = 0; j < planes[1].num_objects; j++)
+    tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
+
+    geometry_msgs::Vector3 position_msg;
+
+    tf::vector3TFToMsg(position_tf, position_msg);
+
+    free_objects[0].position = position_msg;
+
+    // pushing the free objects back to the free_objects component of the scene message
+    for (int i = 0; i < current_scene.free_objects; i++)
     {
-        planes[1].objects.push_back(objects_on_plane1[j]);
+        current_scene.free_objects.push_back(free_objects[i]);
     }
 
     while (nh.ok())

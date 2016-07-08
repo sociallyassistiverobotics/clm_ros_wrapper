@@ -62,7 +62,7 @@ std::string screen_reference_points_names [max_num_objects];
 std::string free_objects_names [max_num_objects];
 
 //to do in/out checks for the free objects
-float free_object_radii [max_num_objects];
+float free_object_radius;
 
 ros::Publisher target_publisher;
 
@@ -98,23 +98,21 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             float closest_distance_screen = std::numeric_limits<double>::max();
             float closest_distance_free_object = std::numeric_limits<double>::max();
 
+            for (int i = 0; i<num_objects_on_screen; i++)
+            {
+                if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
+                {
+                    closest_distance_screen = gaze_point_wf.distance(screen_reference_points_wf[i]);
+                    num_closest_object_on_screen = i;
+                }
+            }
 
             //inside/outside check for the screen
             if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
                 || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
             {
                 num_closest_object_on_screen = num_objects_on_screen;
-            }
-            else
-            {
-                for (int i = 0; i<num_objects_on_screen; i++)
-                {
-                    if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
-                    {
-                        closest_distance_screen = gaze_point_wf.distance(screen_reference_points_wf[i]);
-                        num_closest_object_on_screen = i;
-                    }
-                }
+                closest_distance_screen = std::numeric_limits<double>::max();
             }
 
             //USING THE LINE-POINT DISTANCE FORMULA TO FIND THE CLOSEST FREE OBJECT
@@ -143,12 +141,11 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
 
-            // inside/outside check for the closest free object
-            float closest_free_object_radius;
-            
-            if (closest_distance_free_object > free_object_radii[num_closest_free_object])
+            // inside/outside check for the closest free object 
+            if (closest_distance_free_object > free_object_radius)
             {
                 num_closest_free_object = num_free_objects;
+                closest_distance_free_object = std::numeric_limits<double>::max();
                 //setting it to "OUTSIDE"
             }
 
@@ -175,16 +172,25 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
             clm_ros_wrapper::DetectedTarget detected_target;
 
-            // checking between free objects and screen objects to find the closest
-            if (closest_distance_free_object > closest_distance_screen)
+            if (screen_reference_points_names[num_closest_object_on_screen].compare("OUTSIDE") == 0
+                && free_objects_names[num_closest_free_object].compare("OUTSIDE") == 0)
             {
-                detected_target.name = screen_reference_points_names[num_closest_object_on_screen];
-                detected_target.distance = closest_distance_screen;
+                detected_target.name = "OUTSIDE";
+                detected_target.distance = 0.0;
             }
             else
             {
-                detected_target.name = free_objects_names[num_closest_free_object];
-                detected_target.distance = closest_distance_free_object;
+                // checking between free objects and screen objects to find the closest
+                if (closest_distance_free_object > closest_distance_screen)
+                {
+                    detected_target.name = screen_reference_points_names[num_closest_object_on_screen];
+                    detected_target.distance = closest_distance_screen;
+                }
+                else
+                {
+                    detected_target.name = free_objects_names[num_closest_free_object];
+                    detected_target.distance = closest_distance_free_object;
+                }
             }
 
             target_publisher.publish(detected_target);
@@ -232,20 +238,14 @@ int main(int argc, char **argv)
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
     nh.getParam("screenGap", screenGap);
+    
+    nh.getParam("robot_radius", free_object_radius);
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/clm_ros_wrapper/detect_target", 1);
 
     ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
-
-    if (free_objects_names[0] != NULL)
-    {
-        for (int i = 0; i < num_free_objects; i++)
-        {
-            nh.getParam(free_objects_names[i] + "_radius", free_object_radii[i]);
-        }
-    }
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/clm_ros_wrapper/gaze_point_and_direction", 1, &gazepoint_callback);
 

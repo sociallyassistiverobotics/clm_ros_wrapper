@@ -32,8 +32,9 @@
    <param name="robot_position_wf_y" type="double" value="-100"/>
    <param name="robot_position_wf_z" type="double" value="220"/>
 
-   <!-- robot parameters - radius for inside/outside check -->
-   <param name="robot_radius" type="double" value="100"/>
+   <!-- robot parameters - radius for inside/outside check
+    FIX IT -->
+   <param name="robot_radius" type="double" value="200"/>
 
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->

@@ -1,11 +1,6 @@
 
 <launch>
-
-   <param name="screenAngleInDegrees" type="int" value="45"/>
-   <param name="screenHeight" type="double" value="320"/>
-   <param name="screenWidth" type="double" value="520"/>
-   <param name="screenGap" type="double" value="20"/>
-
+   
    <!-- camera frame to world frame rotation matrix 
     rotation_cf2wf_ij refers to the entry in row i and column j-->
    <param name="rotation_cf2wf_11" type="double" value="-0.897904"/>
@@ -24,12 +19,20 @@
    <param name="translation_cf2wf_2" type="double" value="226.274"/>
    <param name="translation_cf2wf_3" type="double" value="226.274"/>
 
+    <!-- screen parameters - dimensions and angles -->
+   <param name="screenAngleInDegrees" type="int" value="45"/>
+   <param name="screenHeight" type="double" value="320"/>
+   <param name="screenWidth" type="double" value="520"/>
+   <param name="screenGap" type="double" value="20"/>
+
+   <!-- screen parameters - for inside/outside check TODO -->
+
    <!-- robot parameters - position -->
    <param name="robot_position_wf_x" type="double" value="400"/>
    <param name="robot_position_wf_y" type="double" value="-100"/>
    <param name="robot_position_wf_z" type="double" value="220"/>
 
-   <!-- robot parameters - width and height -->
+   <!-- robot parameters - width and height for inside/outside check -->
    <param name="robot_height" type="double" value="220"/>
    <param name="robot_width" type="double" value="110"/>
 

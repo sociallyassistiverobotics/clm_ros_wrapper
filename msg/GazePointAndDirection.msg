@@ -1,3 +1,3 @@
 geometry_msgs/Vector3 gaze_point
-geometry_msgs/Vector3 head_location
+geometry_msgs/Vector3 head_position
 geometry_msgs/Vector3 hfv

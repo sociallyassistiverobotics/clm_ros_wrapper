@@ -47,7 +47,7 @@ using namespace cv;
 
 using namespace boost::filesystem;
 
-ros::Publisher gazepoint_pub;
+ros::Publisher gaze_point_and_direction_pub;
 
 tf::Vector3 headposition_cf;
 
@@ -60,10 +60,18 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
     tf::vector3MsgToTF(*msg, hfv_cf);
 
+    //Message to publish pd -> point and direction 
+    clm_ros_wrapper::GazePointAndDirection gaze_pd_msg;
+
+    //checking if there is a detection
     if (headposition_cf.isZero() && hfv_cf.isZero())
     {
-        // no face detection publish zero vector
-        gazepoint_pub.publish(msg);
+        // no face detection publish the message with 3 zero vectors
+        tf::Vector3 zero_vector = tf::Vector3(0, 0, 0);
+        tf::vector3TFToMsg(zero_vector, gaze_pd_msg.gaze_point);
+        tf::vector3TFToMsg(zero_vector, gaze_pd_msg.head_position);
+        tf::vector3TFToMsg(zero_vector, gaze_pd_msg.hfv);
+        gazepoint_pub.publish(gaze_pd_msg);
     }
 
     else 
@@ -126,10 +134,10 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // finally I plug in the determinant ratio (t) to get the intersection point
         tf::Vector3 gazepoint_on_screen_wf = headposition_wf + determinant_ratio * (randompoint_on_gazedirection_wf - headposition_wf);
 
-        geometry_msgs::Vector3 gazepoint_msg;
-        tf::vector3TFToMsg(gazepoint_on_screen_wf, gazepoint_msg);
-
-        gazepoint_pub.publish(gazepoint_msg);
+        tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
+        tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
+        tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
+        gazepoint_pub.publish(gaze_pd_msg);
     }
 }
 
@@ -195,7 +203,7 @@ int main(int argc, char **argv)
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-    gazepoint_pub = nh.advertise<geometry_msgs::Vector3>("clm_ros_wrapper/gaze_point", 1);
+    gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>("clm_ros_wrapper/gaze_point_and_direction", 1);
 
     headposition_sub = nh.subscribe("/clm_ros_wrapper/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe("/clm_ros_wrapper/head_vector", 1, &vector_callback);

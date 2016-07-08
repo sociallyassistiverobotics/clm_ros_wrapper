@@ -71,7 +71,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.hfv);
-        gazepoint_pub.publish(gaze_pd_msg);
+        gaze_point_and_direction_pub.publish(gaze_pd_msg);
     }
 
     else 
@@ -137,7 +137,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
-        gazepoint_pub.publish(gaze_pd_msg);
+        gaze_point_and_direction_pub.publish(gaze_pd_msg);
     }
 }
 

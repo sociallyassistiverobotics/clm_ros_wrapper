@@ -28,6 +28,7 @@ Yunus
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/Scene.h>
 #include <clm_ros_wrapper/Object.h>
+#include <clm_ros_wrapper/FreeObject.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -101,7 +102,7 @@ int main(int argc, char **argv)
     }
 
     //FREE OBJECTS
-    
+
     current_scene.num_free_objects = 1;
 
     clm_ros_wrapper::FreeObject free_objects [current_scene.num_free_objects];
@@ -123,7 +124,7 @@ int main(int argc, char **argv)
     free_objects[0].position = position_msg;
 
     // pushing the free objects back to the free_objects component of the scene message
-    for (int i = 0; i < current_scene.free_objects; i++)
+    for (int i = 0; i < current_scene.num_free_objects; i++)
     {
         current_scene.free_objects.push_back(free_objects[i]);
     }

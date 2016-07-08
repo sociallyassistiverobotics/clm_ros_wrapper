@@ -65,6 +65,7 @@ add_message_files(
    Object.msg
    Screen.msg
    Scene.msg
+   FreeObject.msg
    DetectedTarget.msg
 )
 

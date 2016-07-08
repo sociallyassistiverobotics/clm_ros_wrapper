@@ -62,22 +62,26 @@ ros::Publisher target_publisher;
 
 using namespace std;
 
-void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
+void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
 {  
     if (num_objects != 0)
     {
-        tf::Vector3 gazepoint;
+        tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
-        tf::vector3MsgToTF(*msg, gazepoint);
+        //checking if there is detection
+        tf::vector3MsgToTF((*msg).gaze_point, gaze_point_wf);
+        tf::vector3MsgToTF((*msg).head_position, head_position_wf);
+        tf::vector3MsgToTF((*msg).hfv, hfv_wf);
 
-        if (gazepoint.isZero())
-        {
-            clm_ros_wrapper::DetectedTarget no_detection_target;
+        if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
+        {   
+            //means no detection
+            clm_ros_wrapper::DetectedTarget no_detection;
 
-            no_detection_target.name = "NO DETECTION";
-            no_detection_target.distance = 0;
+            no_detection.name = "NO DETECTION";
+            no_detection.distance = 0;
 
-            target_publisher.publish(no_detection_target);
+            target_publisher.publish(no_detection);
         }
 
         else

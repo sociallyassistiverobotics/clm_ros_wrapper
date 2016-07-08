@@ -1,0 +1,5 @@
+string name
+geometry_msgs/Vector3 position
+geometry_msgs/Vector3 plane_ref1_wf
+geometry_msgs/Vector3 plane_ref2_wf
+geometry_msgs/Vector3 plane_ref3_wf

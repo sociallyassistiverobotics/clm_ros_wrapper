@@ -52,9 +52,12 @@ float screenGap;
 
 int num_objects;
 
+//the positions are loaded to these arrays
 tf::Vector3 screen_reference_points_wf [max_num_objects];
 tf::Vector3 free_objects_positions [max_num_objects];
 
+//the objects' names are here with the same index as they have
+//in the array for positions
 std::string screen_reference_points_names [max_num_objects];
 std::string free_objects_names [max_num_objects];
 
@@ -150,6 +153,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
         tf::vector3MsgToTF((*msg).free_objects[i].position, free_objects_positions[i]);
         free_objects_names[i] = std::string((*msg).free_objects[i].name);
     }
+    free_objects_names[(*msg).num_free_objects] =  "OUTSIDE";
 }
 
 int main(int argc, char **argv) 

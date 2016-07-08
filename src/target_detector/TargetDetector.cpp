@@ -76,12 +76,12 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
         {   
             //means no detection
-            clm_ros_wrapper::DetectedTarget no_detection;
+            clm_ros_wrapper::DetectedTarget target_no_detection;
 
-            no_detection.name = "NO DETECTION";
-            no_detection.distance = 0;
+            target_no_detection.name = "NO DETECTION";
+            target_no_detection.distance = 0;
 
-            target_publisher.publish(no_detection);
+            target_publisher.publish(target_no_detection);
         }
 
         else

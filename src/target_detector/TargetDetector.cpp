@@ -89,7 +89,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         else
         {
-            int num_closest_target = 0;
+            int num_closest_object_on_screen = 0;
 
             float closest_distance = std::numeric_limits<double>::max();
 
@@ -98,7 +98,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 if (closest_distance > gazepoint.distance(screen_reference_points_wf[i]))
                 {
                     closest_distance = gazepoint.distance(screen_reference_points_wf[i]);
-                    num_closest_target = i;
+                    num_closest_object_on_screen = i;
                 }
             }
 
@@ -135,6 +135,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
 void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 {
+    num_objects = (*msg).screen.num_objects_on_screen + (*msg).num_free_objects;
+    
     // the objects on the screen
     for (int i =0; i < (*msg).screen.num_objects_on_screen ; i++)
     {

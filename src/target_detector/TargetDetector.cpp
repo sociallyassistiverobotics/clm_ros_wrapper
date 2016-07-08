@@ -239,9 +239,12 @@ int main(int argc, char **argv)
 
     ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
 
-    for (int i = 0; i < num_free_objects; i++)
+    if (free_objects_names[0] != NULL)
     {
-        nh.getParam(free_objects_names[i] + "_radius", free_object_radii[i]);
+        for (int i = 0; i < num_free_objects; i++)
+        {
+            nh.getParam(free_objects_names[i] + "_radius", free_object_radii[i]);
+        }
     }
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/clm_ros_wrapper/gaze_point_and_direction", 1, &gazepoint_callback);

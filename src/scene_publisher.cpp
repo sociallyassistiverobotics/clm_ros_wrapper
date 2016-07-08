@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     objects_on_screen[5].y_screen = 3 * display_screen_height/4;
 
     // pushing the objects back to the objects_on_screen component of current_scene.screen
-    for (int i = 0; i < planes[0].num_objects_on_plane; i++)
+    for (int i = 0; i < current_scene.screen.num_objects_on_screen; i++)
     {
         current_scene.screen.objects_on_screen.push_back(objects_on_screen[i]);
     }

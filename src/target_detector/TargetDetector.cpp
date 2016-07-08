@@ -52,8 +52,11 @@ float screenGap;
 int num_objects;
 
 tf::Vector3 screen_reference_points_wf [max_num_objects];
+tf::Vector3 free_objects_positions [max_num_objects];
 
 std::string screen_reference_points_names [max_num_objects];
+std::string free_objects_names [max_num_objects];
+
 ros::Publisher target_publisher;
 
 using namespace std;
@@ -124,16 +127,24 @@ void gazepoint_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 {
-    num_objects = (*msg).num_objects;
-    for (int i =0; i < (*msg).num_objects ; i++)
+    // the objects on the screen
+    for (int i =0; i < (*msg).screen.num_objects_on_screen ; i++)
     {
-       screen_reference_points_wf[i] = tf::Vector3 ((*msg).objects[i].x_screen - screenWidth/2 + screenGap,
-        cos(screenAngle) * (screenHeight - screenGap - (*msg).objects[i].y_screen),
-        sin(screenAngle) * (screenHeight - screenGap - (*msg).objects[i].y_screen));
+        //converting 2D coordinates of points on the screen to 3D points in the world frame
+        screen_reference_points_wf[i] = tf::Vector3 ((*msg).screen.objects_on_screen[i].x_screen - screenWidth/2 + screenGap,
+            cos(screenAngle) * (screenHeight - screenGap - (*msg).screen.objects_on_screen[i].y_screen),
+            sin(screenAngle) * (screenHeight - screenGap - (*msg).screen.objects_on_screen[i].y_screen));
 
-       screen_reference_points_names[i] =  std::string((*msg).objects[i].name);
-   }
-   screen_reference_points_names[num_objects] =  "OUTSIDE";
+       screen_reference_points_names[i] =  std::string((*msg).screen.objects_on_screen[i].name);
+    }
+    screen_reference_points_names[(*msg).screen.num_objects_on_screen] =  "OUTSIDE";
+
+    // the free objects
+    for (int i =0; i < (*msg).num_free_objects; i++)
+    {
+        tf::vector3MsgToTF((*msg).free_objects[i].position, free_objects_positions[i]);
+        free_objects_names[i] = std::string((*msg).free_objects[i].name);
+    }
 }
 
 int main(int argc, char **argv) 

@@ -28,6 +28,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <clm_ros_wrapper/Scene.h>
 #include <clm_ros_wrapper/Object.h>
 #include <clm_ros_wrapper/DetectedTarget.h>
+#include <clm_ros_wrapper/GazePointAndDirection.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>

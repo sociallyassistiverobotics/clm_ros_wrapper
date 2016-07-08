@@ -67,6 +67,7 @@ add_message_files(
    Scene.msg
    FreeObject.msg
    DetectedTarget.msg
+   GazePointAndDirection.msg
 )
 
 ## Generate services in the 'srv' folder

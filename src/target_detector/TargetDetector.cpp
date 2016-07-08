@@ -61,6 +61,9 @@ tf::Vector3 free_objects_positions [max_num_objects];
 std::string screen_reference_points_names [max_num_objects];
 std::string free_objects_names [max_num_objects];
 
+//to do in/out checks for the free objects
+float free_object_radii [max_num_objects];
+
 ros::Publisher target_publisher;
 
 using namespace std;
@@ -132,11 +135,21 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 //using the formula from the link
                 float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
                     /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
+
                 if (closest_distance_free_object > distance)
                 {
                     closest_distance_free_object = distance;
                     num_closest_free_object = i;
                 }
+            }
+
+            // inside/outside check for the closest free object
+            float closest_free_object_radius;
+            
+            if (closest_distance_free_object > free_object_radii[num_closest_free_object])
+            {
+                num_closest_free_object = num_free_objects;
+                //setting it to "OUTSIDE"
             }
 
             // This part changes because of the new free object message type
@@ -195,6 +208,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 
        screen_reference_points_names[i] =  std::string((*msg).screen.objects_on_screen[i].name);
     }
+
     screen_reference_points_names[(*msg).screen.num_objects_on_screen] =  "OUTSIDE";
 
     // the free objects
@@ -204,6 +218,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
         tf::vector3MsgToTF((*msg).free_objects[i].position, free_objects_positions[i]);
         free_objects_names[i] = std::string((*msg).free_objects[i].name);
     }
+
     free_objects_names[(*msg).num_free_objects] =  "OUTSIDE";
 }
 
@@ -223,6 +238,11 @@ int main(int argc, char **argv)
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/clm_ros_wrapper/detect_target", 1);
 
     ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
+
+    for (int i = 0; i < num_free_objects; i++)
+    {
+        nh.getParam(free_objects_names[i] + "_radius", free_object_radii[i]);
+    }
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/clm_ros_wrapper/gaze_point_and_direction", 1, &gazepoint_callback);
 

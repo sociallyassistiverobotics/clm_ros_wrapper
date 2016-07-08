@@ -48,11 +48,15 @@ using namespace cv;
 using namespace boost::filesystem;
 
 ros::Publisher gaze_point_and_direction_pub;
+ros::Publisher head_position_rf_pub;
 
 tf::Vector3 headposition_cf;
 
 tf::Matrix3x3 rotation_matrix_cf2wf;
 tf::Vector3 translation_vector_cf2wf;
+
+tf::Matrix3x3 rotation_matrix_wf2rf;
+tf::Vector3 translation_vector_wf2rf;
 
 void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
@@ -72,6 +76,11 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.hfv);
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
+
+        //for head position in the robot frame
+        geometry_msgs::Vector3 zero_msg;
+        tf::vector3TFToMsg(zero_vector, zero_msg);
+        head_position_rf_pub.publish(zero_msg);
     }
 
     else 
@@ -138,6 +147,15 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
+
+        //tranforming the head position to robot frame
+        tf:: Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, tf::Vector3(0, 0, 0));
+        tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf - translation_vector_wf2rf);
+
+        geometry_msgs::Vector3 head_position_rf_msg;
+        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
+
+        head_position_rf_pub.publish(head_position_rf_msg);
     }
 }
 
@@ -175,6 +193,7 @@ int main(int argc, char **argv)
     //     m_el[2].setValue(m[2],m[6],m[10]);
     // }
 
+    // loading rotation matrix from cf to wf from the parameter server
     tfScalar rotation_matrix_cf2wf_array_parameter_server[12];
 
     for (int i = 0; i < 3; i++)
@@ -200,10 +219,39 @@ int main(int argc, char **argv)
     translation_vector_cf2wf.setX(translation_vector_cf2wf_array_parameter_server[0]);
     translation_vector_cf2wf.setY(translation_vector_cf2wf_array_parameter_server[1]);
     translation_vector_cf2wf.setZ(translation_vector_cf2wf_array_parameter_server[2]);
+    
+    // loading rotation matrix from wf to rf from the parameter server
+    tfScalar rotation_matrix_wf2rf_array_parameter_server[12];
+
+    for (int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
+            nh.getParam("rotation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_wf2rf_array_parameter_server[4*j+i]);
+        }
+    }
+
+    rotation_matrix_wf2rf.setFromOpenGLSubMatrix(rotation_matrix_wf2rf_array_parameter_server);
+
+    //array to load the entries of translation_vector from the parameter server
+    tfScalar translation_vector_wf2rf_array_parameter_server[3];
+
+    for (int i = 0; i < 3; i++)
+    {
+        nh.getParam("robot_position_wf_"+std::to_string(i+1), translation_vector_wf2rf_array_parameter_server[i]);
+    }
+
+    //constructing the translation vector object using the values from the array
+    translation_vector_wf2rf.setX(translation_vector_wf2rf_array_parameter_server[0]);
+    translation_vector_wf2rf.setY(translation_vector_wf2rf_array_parameter_server[1]);
+    translation_vector_wf2rf.setZ(translation_vector_wf2rf_array_parameter_server[2]);
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>("clm_ros_wrapper/gaze_point_and_direction", 1);
+
+    head_position_rf_pub = nh.advertise<geometry_msgs::Vector3>("clm_ros_wrapper/head_position_rf",1);
 
     headposition_sub = nh.subscribe("/clm_ros_wrapper/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe("/clm_ros_wrapper/head_vector", 1, &vector_callback);

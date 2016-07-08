@@ -28,9 +28,22 @@
    <!-- screen parameters - for inside/outside check TODO -->
 
    <!-- robot parameters - position -->
-   <param name="robot_position_wf_x" type="double" value="400"/>
-   <param name="robot_position_wf_y" type="double" value="-100"/>
-   <param name="robot_position_wf_z" type="double" value="220"/>
+   <param name="robot_position_wf_1" type="double" value="400"/>
+   <param name="robot_position_wf_2" type="double" value="-100"/>
+   <param name="robot_position_wf_3" type="double" value="220"/>
+
+   <!-- world frame to robot frame rotation matrix 
+    rotation_wf2rf_ij refers to the entry in row i and column j
+    referring to 3*pi/4 counter-clockwise rotation-->
+   <param name="rotation_wf2rf_11" type="double" value="-0.70710678118"/>
+   <param name="rotation_wf2rf_12" type="double" value="0.70710678118"/>
+   <param name="rotation_wf2rf_13" type="double" value="0"/>
+   <param name="rotation_wf2rf_21" type="double" value="-0.70710678118"/>
+   <param name="rotation_wf2rf_22" type="double" value="-0.70710678118"/>
+   <param name="rotation_wf2rf_23" type="double" value="0"/>
+   <param name="rotation_wf2rf_31" type="double" value="0"/>
+   <param name="rotation_wf2rf_32" type="double" value="0"/>
+   <param name="rotation_wf2rf_33" type="double" value="1"/>
 
    <!-- robot parameters - radius for inside/outside check
     FIX IT -->

@@ -111,9 +111,9 @@ int main(int argc, char **argv)
     
     // Reading robot position from the parameter server
     float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
-    nh.getParam("robot_position_wf_x", robot_position_wf_x);
-    nh.getParam("robot_position_wf_y", robot_position_wf_y);
-    nh.getParam("robot_position_wf_z", robot_position_wf_z);
+    nh.getParam("robot_position_wf_1", robot_position_wf_x);
+    nh.getParam("robot_position_wf_2", robot_position_wf_y);
+    nh.getParam("robot_position_wf_3", robot_position_wf_z);
 
     tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 

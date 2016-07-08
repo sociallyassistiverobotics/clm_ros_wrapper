@@ -50,7 +50,7 @@ float screenAngle;
 float screenGap;
 
 
-int num_objects;
+int num_objects_on_screen, num_free_objects;
 
 //the positions are loaded to these arrays
 tf::Vector3 screen_reference_points_wf [max_num_objects];
@@ -66,8 +66,9 @@ ros::Publisher target_publisher;
 using namespace std;
 
 void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
-{  
-    if (num_objects != 0)
+{
+    // to make sure this callback happens after scene_callback  
+    if (num_objects_on_screen != 0 || num_free_objects != 0)
     {
         tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
@@ -89,41 +90,67 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         else
         {
-            int num_closest_object_on_screen = 0;
+            int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
-            float closest_distance = std::numeric_limits<double>::max();
+            float closest_distance_screen = std::numeric_limits<double>::max();
+            float closest_distance_free_object = std::numeric_limits<double>::max();
 
-            for (int i = 0; i<num_objects; i++)
+            for (int i = 0; i<num_objects_on_screen; i++)
             {
-                if (closest_distance > gazepoint.distance(screen_reference_points_wf[i]))
+                if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
                 {
-                    closest_distance = gazepoint.distance(screen_reference_points_wf[i]);
+                    closest_distance_screen = gaze_point_wf.distance(screen_reference_points_wf[i]);
                     num_closest_object_on_screen = i;
                 }
             }
 
-            if (screen_reference_points_names[num_closest_target].compare("robot")!=0)
-            {
-            // WHAT IF THE POINT IS OUTSIDE THE SCREEN
-            // do a check to see if the point is inside
-                if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
-                    || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            //USING THE LINE-POINT DISTANCE FORMULA TO FIND THE CLOSEST FREE OBJECT
+            // To see the calculations: http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+            // X_1: head_position_wf, X_2:randompoint_on_gazedirection X_0:free object's position
+
+            tf::Vector3 randompoint_on_gazedirection = head_position_wf + 100 * hfv_wf;
+
+            //dummy zero vector because the function length is defined for quaternions only ???
+            tf::Vector3 zero_vector = tf::Vector3(0,0,0);
+
+            for (int i = 0; i < num_free_objects; i++)
+            {   
+                tf::Vector3 diff_freeobj_headpos = free_objects_positions[i]-head_position_wf;
+                tf::Vector3 diff_freeobj_rand = free_objects_positions[i]-randompoint_on_gazedirection;
+                //using the formula from the link
+                float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
+                    /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
+                if (closest_distance_free_object > distance)
                 {
-                    num_closest_target = num_objects;
+                    closest_distance_free_object = distance;
+                    num_closest_free_object = i;
                 }
             }
-            //this part should change in the next commits
-            // you should use the head location to estimate whether the kid is looking at the robot
-            else //num_closest_target is the index of the object named robot
-            {
-                if (closest_distance > 3 * GAZE_ERROR)
-                {
-                    num_closest_target = num_objects;
-                }
-            }
+
+            // This part changes because of the new free object message type
+            // if (screen_reference_points_names[num_closest_target].compare("robot")!=0)
+            // {
+            // // WHAT IF THE POINT IS OUTSIDE THE SCREEN
+            // // do a check to see if the point is inside
+            //     if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
+            //         || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            //     {
+            //         num_closest_target = num_objects;
+            //     }
+            // }
+            // //this part should change in the next commits
+            // // you should use the head location to estimate whether the kid is looking at the robot
+            // else //num_closest_target is the index of the object named robot
+            // {
+            //     if (closest_distance > 3 * GAZE_ERROR)
+            //     {
+            //         num_closest_target = num_objects;
+            //     }
+            // }
 
             clm_ros_wrapper::DetectedTarget target;
 
+            // TODO add check between free objects and screen objects
             target.name = screen_reference_points_names[num_closest_target];
             target.distance = closest_distance;
 
@@ -135,8 +162,9 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
 void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 {
-    num_objects = (*msg).screen.num_objects_on_screen + (*msg).num_free_objects;
-    
+    num_objects_on_screen = (*msg).screen.num_objects_on_screen;
+    num_free_objects = (*msg).num_free_objects;
+
     // the objects on the screen
     for (int i =0; i < (*msg).screen.num_objects_on_screen ; i++)
     {
@@ -152,6 +180,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
     // the free objects
     for (int i =0; i < (*msg).num_free_objects; i++)
     {
+        //free objects' positions are already given in world frame
         tf::vector3MsgToTF((*msg).free_objects[i].position, free_objects_positions[i]);
         free_objects_names[i] = std::string((*msg).free_objects[i].name);
     }

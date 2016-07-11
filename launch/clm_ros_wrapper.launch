@@ -1,6 +1,6 @@
 
 <launch>
-   
+   <!-- A*B=C matrix the numbers are correct -->
    <!-- camera frame to world frame rotation matrix 
     rotation_cf2wf_ij refers to the entry in row i and column j-->
    <param name="rotation_cf2wf_11" type="double" value="-0.9130"/>
@@ -11,44 +11,46 @@
    <param name="rotation_cf2wf_23" type="double" value="-0.9130"/>
    <param name="rotation_cf2wf_31" type="double" value="0"/>
    <param name="rotation_cf2wf_32" type="double" value="-1"/>
-   <param name="rotation_cf2wf_33" type="double" value="0"/>
+   <param name="rotation_cf2wf_33" type="double" value="0"/> 
 
+   <!-- camera's location in the world frame and it's wrong measure it again-->
    <!-- camera frame to world frame translation vector 
     translation_cf2wf_i refers to the entry i-->
    <param name="translation_cf2wf_1" type="double" value="342"/>
    <param name="translation_cf2wf_2" type="double" value="390"/>
    <param name="translation_cf2wf_3" type="double" value="180"/>
 
-    <!-- screen parameters - dimensions and angles -->
-   <param name="screenAngleInDegrees" type="int" value="45"/>
-   <param name="screenHeight" type="double" value="320"/>
-   <param name="screenWidth" type="double" value="520"/>
-   <param name="screenGap" type="double" value="20"/>
+     <!-- screen parameters - dimensions and angles -->
+    <param name="screenAngleInDegrees" type="int" value="52"/>
+    <param name="screenHeight" type="double" value="380"/>
+    <param name="screenWidth" type="double" value="520"/>
+    <param name="screenGap" type="double" value="20"/> <!-- only used when detecting the targets on screen-->
 
-   <!-- screen parameters - for inside/outside check TODO -->
+    <!-- screen parameters - for inside/outside check TODO -->
 
-   <!-- robot parameters - position -->
-   <param name="robot_position_wf_1" type="double" value="400"/>
-   <param name="robot_position_wf_2" type="double" value="-100"/>
-   <param name="robot_position_wf_3" type="double" value="220"/>
+    <!-- robot parameters - position -->
+    <param name="robot_position_wf_1" type="double" value="340"/>
+    <param name="robot_position_wf_2" type="double" value="-100"/>
+    <param name="robot_position_wf_3" type="double" value="0"/>
 
-   <!-- world frame to robot frame rotation matrix 
-    rotation_wf2rf_ij refers to the entry in row i and column j
-    referring to 3*pi/4 counter-clockwise rotation-->
-   <param name="rotation_wf2rf_11" type="double" value="-0.70710678118"/>
-   <param name="rotation_wf2rf_12" type="double" value="0.70710678118"/>
-   <param name="rotation_wf2rf_13" type="double" value="0"/>
-   <param name="rotation_wf2rf_21" type="double" value="-0.70710678118"/>
-   <param name="rotation_wf2rf_22" type="double" value="-0.70710678118"/>
-   <param name="rotation_wf2rf_23" type="double" value="0"/>
-   <param name="rotation_wf2rf_31" type="double" value="0"/>
-   <param name="rotation_wf2rf_32" type="double" value="0"/>
-   <param name="rotation_wf2rf_33" type="double" value="1"/>
+    <!-- world frame to robot frame rotation matrix 
+     rotation_wf2rf_ij refers to the entry in row i and column j
+     referring to 3*pi/4 counter-clockwise rotation
+     robot frame is right-handed and world frame is left-handed
+     so using reflections for the second row-->
+    <param name="rotation_wf2rf_11" type="double" value="-0.7041"/> <!-- cos(theta) 70710678118-->
+    <param name="rotation_wf2rf_12" type="double" value="-0.7100"/> <!-- sin(theta)-->
+    <param name="rotation_wf2rf_13" type="double" value="0"/> 
+    <param name="rotation_wf2rf_21" type="double" value="0.7100"/> <!-- -sin(theta)-->
+    <param name="rotation_wf2rf_22" type="double" value="-0.7041"/> <!-- cos(theta), minue due to reflection-->
+    <param name="rotation_wf2rf_23" type="double" value="0"/>
+    <param name="rotation_wf2rf_31" type="double" value="0"/>
+    <param name="rotation_wf2rf_32" type="double" value="0"/>
+    <param name="rotation_wf2rf_33" type="double" value="1"/>
 
-   <!-- robot parameters - radius for inside/outside check
-    FIX IT -->
-   <param name="robot_radius" type="double" value="200"/>
-
+    <!-- robot parameters - radius for inside/outside check
+     FIX IT -->
+    <param name="robot_radius" type="double" value="200"/>
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->
   <!--<param name ="device" value="$(arg webcam_num)" type="int"/>-->

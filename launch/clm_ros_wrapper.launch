@@ -15,9 +15,9 @@
 
    <!-- camera frame to world frame translation vector 
     translation_cf2wf_i refers to the entry i-->
-   <param name="translation_cf2wf_1" type="double" value="-173.33"/>
-   <param name="translation_cf2wf_2" type="double" value="226.274"/>
-   <param name="translation_cf2wf_3" type="double" value="226.274"/>
+   <param name="translation_cf2wf_1" type="double" value="342"/>
+   <param name="translation_cf2wf_2" type="double" value="390"/>
+   <param name="translation_cf2wf_3" type="double" value="180"/>
 
     <!-- screen parameters - dimensions and angles -->
    <param name="screenAngleInDegrees" type="int" value="45"/>

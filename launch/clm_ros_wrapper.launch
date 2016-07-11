@@ -3,15 +3,15 @@
    
    <!-- camera frame to world frame rotation matrix 
     rotation_cf2wf_ij refers to the entry in row i and column j-->
-   <param name="rotation_cf2wf_11" type="double" value="-0.897904"/>
-   <param name="rotation_cf2wf_12" type="double" value="0.439951"/>
-   <param name="rotation_cf2wf_13" type="double" value="-0.0145582"/>
-   <param name="rotation_cf2wf_21" type="double" value="0.067152"/>
-   <param name="rotation_cf2wf_22" type="double" value="0.104216"/>
-   <param name="rotation_cf2wf_23" type="double" value="-0.992285"/>
-   <param name="rotation_cf2wf_31" type="double" value="-0.43504"/>
-   <param name="rotation_cf2wf_32" type="double" value="-0.891954"/>
-   <param name="rotation_cf2wf_33" type="double" value="-0.12312"/>
+   <param name="rotation_cf2wf_11" type="double" value="-0.9130"/>
+   <param name="rotation_cf2wf_12" type="double" value="0"/>
+   <param name="rotation_cf2wf_13" type="double" value="0.4078"/>
+   <param name="rotation_cf2wf_21" type="double" value="-0.4078"/>
+   <param name="rotation_cf2wf_22" type="double" value="0"/>
+   <param name="rotation_cf2wf_23" type="double" value="-0.9130"/>
+   <param name="rotation_cf2wf_31" type="double" value="0"/>
+   <param name="rotation_cf2wf_32" type="double" value="-1"/>
+   <param name="rotation_cf2wf_33" type="double" value="0"/>
 
    <!-- camera frame to world frame translation vector 
     translation_cf2wf_i refers to the entry i-->

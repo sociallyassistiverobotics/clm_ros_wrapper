@@ -28,6 +28,7 @@ Yunus
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/Scene.h>
 #include <clm_ros_wrapper/Object.h>
+#include <clm_ros_wrapper/FreeObject.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -62,44 +63,71 @@ int main(int argc, char **argv)
 
     clm_ros_wrapper::Scene current_scene;
 
-    current_scene.num_objects = 7;
+    //SCREEN
 
-    clm_ros_wrapper::Object objects [current_scene.num_objects];
+    //number of objects on the screen
+    current_scene.screen.num_objects_on_screen = 6;
 
-    objects[0].name = "upper-left-point";
-    objects[0].x_screen = display_screen_width/6;
-    objects[0].y_screen = display_screen_height/4;
+    // constructing the array to define the objects on the screen
+    clm_ros_wrapper::Object objects_on_screen [current_scene.screen.num_objects_on_screen];
 
-    objects[1].name = "upper-mid-point";
-    objects[1].x_screen = display_screen_width/2;
-    objects[1].y_screen = display_screen_height/4;
+    objects_on_screen[0].name = "upper-left-point";
+    objects_on_screen[0].x_screen = display_screen_width/6;
+    objects_on_screen[0].y_screen = display_screen_height/4;
 
-    objects[2].name = "upper-right-point";
-    objects[2].x_screen = 5 * display_screen_width/6;
-    objects[2].y_screen = display_screen_height/4;
+    objects_on_screen[1].name = "upper-mid-point";
+    objects_on_screen[1].x_screen = display_screen_width/2;
+    objects_on_screen[1].y_screen = display_screen_height/4;
 
-    objects[3].name = "lower-left-point";
-    objects[3].x_screen = display_screen_width/6;
-    objects[3].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[2].name = "upper-right-point";
+    objects_on_screen[2].x_screen = 5 * display_screen_width/6;
+    objects_on_screen[2].y_screen = display_screen_height/4;
 
-    objects[4].name = "lower-mid-point";
-    objects[4].x_screen = display_screen_width/2;
-    objects[4].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[3].name = "lower-left-point";
+    objects_on_screen[3].x_screen = display_screen_width/6;
+    objects_on_screen[3].y_screen = 3 * display_screen_height/4;
 
-    objects[5].name = "lower-right-point";
-    objects[5].x_screen = 5 * display_screen_width/6;
-    objects[5].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[4].name = "lower-mid-point";
+    objects_on_screen[4].x_screen = display_screen_width/2;
+    objects_on_screen[4].y_screen = 3 * display_screen_height/4;
 
-    objects[6].name = "robot";
-    objects[6].x_screen = 3 * display_screen_width/2;
-    objects[6].y_screen = 3 * display_screen_height/4;
+    objects_on_screen[5].name = "lower-right-point";
+    objects_on_screen[5].x_screen = 5 * display_screen_width/6;
+    objects_on_screen[5].y_screen = 3 * display_screen_height/4;
 
-    // pushing the objects back to the objects parameter of the scene message
-    for (int i = 0; i < current_scene.num_objects; i++)
+    // pushing the objects back to the objects_on_screen component of current_scene.screen
+    for (int i = 0; i < current_scene.screen.num_objects_on_screen; i++)
     {
-        current_scene.objects.push_back(objects[i]);
+        current_scene.screen.objects_on_screen.push_back(objects_on_screen[i]);
     }
 
+    //FREE OBJECTS
+
+    current_scene.num_free_objects = 1;
+
+    clm_ros_wrapper::FreeObject free_objects [current_scene.num_free_objects];
+
+    free_objects[0].name = "robot";
+    
+    // Reading robot position from the parameter server
+    float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
+    nh.getParam("robot_position_wf_1", robot_position_wf_x);
+    nh.getParam("robot_position_wf_2", robot_position_wf_y);
+    nh.getParam("robot_position_wf_3", robot_position_wf_z);
+
+    tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
+
+    geometry_msgs::Vector3 position_msg;
+
+    tf::vector3TFToMsg(position_tf, position_msg);
+
+    free_objects[0].position = position_msg;
+
+    // pushing the free objects back to the free_objects component of the scene message
+    for (int i = 0; i < current_scene.num_free_objects; i++)
+    {
+        current_scene.free_objects.push_back(free_objects[i]);
+    }
 
     while (nh.ok())
     {

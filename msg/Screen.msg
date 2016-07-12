@@ -1,0 +1,2 @@
+int32 num_objects_on_screen
+clm_ros_wrapper/Object[] objects_on_screen

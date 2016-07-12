@@ -1,7 +1,6 @@
 
 <launch>
-   <!-- A*B=C matrix the numbers are correct -->
-   <!-- camera frame to world frame rotation matrix 
+  <!-- camera frame to world frame rotation matrix 
     rotation_cf2wf_ij refers to the entry in row i and column j-->
    <param name="rotation_cf2wf_11" type="double" value="-0.9130"/>
    <param name="rotation_cf2wf_12" type="double" value="0"/>
@@ -13,9 +12,8 @@
    <param name="rotation_cf2wf_32" type="double" value="-1"/>
    <param name="rotation_cf2wf_33" type="double" value="0"/> 
 
-   <!-- camera's location in the world frame and it's wrong measure it again-->
-   <!-- camera frame to world frame translation vector 
-    translation_cf2wf_i refers to the entry i-->
+   <!-- camera position in the world frame used as cf2wf translation vector 
+      translation_cf2wf_i refers to the entry i-->
    <param name="translation_cf2wf_1" type="double" value="342"/>
    <param name="translation_cf2wf_2" type="double" value="390"/>
    <param name="translation_cf2wf_3" type="double" value="180"/>
@@ -28,21 +26,20 @@
 
     <!-- screen parameters - for inside/outside check TODO -->
 
-    <!-- robot parameters - position -->
-    <param name="robot_position_wf_1" type="double" value="340"/>
-    <param name="robot_position_wf_2" type="double" value="-100"/>
-    <param name="robot_position_wf_3" type="double" value="0"/>
+    <!-- world frame's origin in the robot frame used as wf2rf translation vector 
+      translation_wf2rf_i refers to the entry i UPDATE THIS-->
+    <param name="translation_wf2rf_1" type="double" value="340"/>
+    <param name="translation_wf2rf_2" type="double" value="-100"/>
+    <param name="translation_wf2rf_3" type="double" value="0"/>
 
     <!-- world frame to robot frame rotation matrix 
-     rotation_wf2rf_ij refers to the entry in row i and column j
-     referring to 3*pi/4 counter-clockwise rotation
-     robot frame is right-handed and world frame is left-handed
-     so using reflections for the second row-->
-    <param name="rotation_wf2rf_11" type="double" value="-0.7041"/> <!-- cos(theta) 70710678118-->
-    <param name="rotation_wf2rf_12" type="double" value="-0.7100"/> <!-- sin(theta)-->
+     rotation_wf2rf_ij refers to the entry in row i and column j 
+     rotation around Z-axis by theta+90 degrees where theta is 44.75 in degrees-->
+    <param name="rotation_wf2rf_11" type="double" value="-0.7041"/> <!-- cos(theta+90) = -sin(theta)-->
+    <param name="rotation_wf2rf_12" type="double" value="-0.7100"/> <!-- sin(theta+90) = -cos(theta)-->
     <param name="rotation_wf2rf_13" type="double" value="0"/> 
-    <param name="rotation_wf2rf_21" type="double" value="0.7100"/> <!-- -sin(theta)-->
-    <param name="rotation_wf2rf_22" type="double" value="-0.7041"/> <!-- cos(theta), minue due to reflection-->
+    <param name="rotation_wf2rf_21" type="double" value="0.7100"/> <!-- -sin(theta+90)-->
+    <param name="rotation_wf2rf_22" type="double" value="-0.7041"/> <!-- cos(theta+90)-->
     <param name="rotation_wf2rf_23" type="double" value="0"/>
     <param name="rotation_wf2rf_31" type="double" value="0"/>
     <param name="rotation_wf2rf_32" type="double" value="0"/>

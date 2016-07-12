@@ -149,8 +149,8 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
         //tranforming the head position to robot frame
-        tf:: Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, tf::Vector3(0, 0, 0));
-        tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf - translation_vector_wf2rf);
+        tf:: Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, translation_vector_wf2rf);
+        tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf);
 
         geometry_msgs::Vector3 head_position_rf_msg;
         tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
@@ -201,7 +201,7 @@ int main(int argc, char **argv)
         for(int j = 0; j < 3; j++)
         {
             // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
-            nh.getParam("rotation_cf2wf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*j+i]);
+            nh.getParam("translation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*j+i]);
         }
     }
 

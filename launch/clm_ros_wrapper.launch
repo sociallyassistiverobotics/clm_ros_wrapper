@@ -1,7 +1,9 @@
 
 <launch>
   <!-- camera frame to world frame transformation matrix row-major representation-->
-    <rosparam param = "transformation_cf2wf">[-0.9130, 0, -0.4078, 390.0, 0.4078, 0, -0.9130, 178.0, 0, -1, 0, 350.0, 0,0 , 0, 1]</rosparam>
+    <!-- <rosparam param = "transformation_cf2wf">[-0.9130, 0, -0.4078, 390.0, 0.4078, 0, -0.9130, 178.0, 0, -1, 0, 350.0, 0,0 , 0, 1]</rosparam> -->
+    <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
+    <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
      <!-- screen parameters - dimensions and angles -->
     <param name="screenAngleInDegrees" type="int" value="52"/>
@@ -20,15 +22,6 @@
     <!-- world frame to robot frame rotation matrix 
      rotation_wf2rf_ij refers to the entry in row i and column j 
      rotation about Z-axis by -(theta+90) degrees where theta is 44.75 in degrees-->
-    <param name="rotation_wf2rf_11" type="double" value="-0.7041"/> <!-- cos(theta+90) = -sin(theta)-->
-    <param name="rotation_wf2rf_12" type="double" value="0.7100"/> <!-- sin(theta+90) = cos(theta)-->
-    <param name="rotation_wf2rf_13" type="double" value="0"/> 
-    <param name="rotation_wf2rf_21" type="double" value="-0.7100"/> <!-- -sin(theta+90)-->
-    <param name="rotation_wf2rf_22" type="double" value="-0.7041"/> <!-- cos(theta+90)-->
-    <param name="rotation_wf2rf_23" type="double" value="0"/>
-    <param name="rotation_wf2rf_31" type="double" value="0"/>
-    <param name="rotation_wf2rf_32" type="double" value="0"/>
-    <param name="rotation_wf2rf_33" type="double" value="1"/>
 
     <!-- camera frame to world frame transformation matrix row-major representation-->
     <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 134.375, -0.7100, -0.7041, 0, -327.968, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>

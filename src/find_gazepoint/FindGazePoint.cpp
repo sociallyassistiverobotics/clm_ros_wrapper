@@ -58,6 +58,9 @@ tf::Vector3 translation_vector_cf2wf;
 tf::Matrix3x3 rotation_matrix_wf2rf;
 tf::Vector3 translation_vector_wf2rf;
 
+std::vector<double> transformation_matrix_cf2wf_array_parameter_server;
+std::vector<double> transformation_matrix_wf2rf_array_parameter_server;
+
 void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
     tf::Vector3 hfv_cf;
@@ -68,7 +71,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
     clm_ros_wrapper::GazePointAndDirection gaze_pd_msg;
 
     //checking if there is a detection
-    if (headposition_cf.isZero() && hfv_cf.isZero())
+    if (headposition_cf.isZero() || hfv_cf.isZero())
     {
         // no face detection publish the message with 3 zero vectors
         tf::Vector3 zero_vector = tf::Vector3(0, 0, 0);
@@ -117,6 +120,9 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
         tf::Vector3 hfv_wf = rotation_matrix_cf2wf.inverse() * (hfv_cf);
 
+        // testing
+        //headposition_cf = tf::Vector3(-82, 350, 260);
+
         // storing the head position in the camera frame
         tf::Vector3 headposition_wf = transfrom_cf2wf(headposition_cf);
 
@@ -149,19 +155,24 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
         //tranforming the head position to robot frame
-        tf:: Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, translation_vector_wf2rf);
+        tf::Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, translation_vector_wf2rf);
         tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf);
 
         geometry_msgs::Vector3 head_position_rf_msg;
         tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
 
         head_position_rf_pub.publish(head_position_rf_msg);
+
+        tf::Vector3 zero_vector = tf::Vector3(0,0,0);
+        headposition_cf = zero_vector;
+        hfv_cf = zero_vector;
     }
 }
 
 void headposition_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
     tf::vector3MsgToTF(*msg, headposition_cf);
+    headposition_cf = headposition_cf + tf::Vector3(0,0,60);
 }
 
 int main(int argc, char **argv) 
@@ -193,59 +204,49 @@ int main(int argc, char **argv)
     //     m_el[2].setValue(m[2],m[6],m[10]);
     // }
 
-    // loading rotation matrix from cf to wf from the parameter server
-    tfScalar rotation_matrix_cf2wf_array_parameter_server[12];
-
-    for (int i = 0; i < 3; i++)
-    {
-        for(int j = 0; j < 3; j++)
-        {
-            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
-            nh.getParam("translation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*j+i]);
-        }
-    }
-
-    rotation_matrix_cf2wf.setFromOpenGLSubMatrix(rotation_matrix_cf2wf_array_parameter_server);
-
-    //array to load the entries of translation_vector from the parameter server
-    tfScalar translation_vector_cf2wf_array_parameter_server[3];
-
-    for (int i = 0; i < 3; i++)
-    {
-        nh.getParam("translation_cf2wf_"+std::to_string(i+1), translation_vector_cf2wf_array_parameter_server[i]);
-    }
-
-    //constructing the translation vector object using the values from the array
-    translation_vector_cf2wf.setX(translation_vector_cf2wf_array_parameter_server[0]);
-    translation_vector_cf2wf.setY(translation_vector_cf2wf_array_parameter_server[1]);
-    translation_vector_cf2wf.setZ(translation_vector_cf2wf_array_parameter_server[2]);
+    // loading transformation matrix from cf to wf from the parameter server
+    nh.getParam("transformation_cf2wf", transformation_matrix_cf2wf_array_parameter_server);
     
-    // loading rotation matrix from wf to rf from the parameter server
-    tfScalar rotation_matrix_wf2rf_array_parameter_server[12];
+    tfScalar tf_scalar_row_major_transformation_matrix_array_cf2wf [16];
 
-    for (int i = 0; i < 3; i++)
+    for(int i = 0; i < 4 ; i++)
     {
-        for(int j = 0; j < 3; j++)
+        for(int j = 0; j<4; j++)
         {
-            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
-            nh.getParam("rotation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_wf2rf_array_parameter_server[4*j+i]);
+            tf_scalar_row_major_transformation_matrix_array_cf2wf[4*j+i] = (tfScalar) transformation_matrix_cf2wf_array_parameter_server[4*i+j];
         }
     }
 
-    rotation_matrix_wf2rf.setFromOpenGLSubMatrix(rotation_matrix_wf2rf_array_parameter_server);
+    rotation_matrix_cf2wf.setFromOpenGLSubMatrix(tf_scalar_row_major_transformation_matrix_array_cf2wf);
 
-    //array to load the entries of translation_vector from the parameter server
-    tfScalar translation_vector_wf2rf_array_parameter_server[3];
-
-    for (int i = 0; i < 3; i++)
-    {
-        nh.getParam("robot_position_wf_"+std::to_string(i+1), translation_vector_wf2rf_array_parameter_server[i]);
-    }
+    // for (int i = 0; i<3; i++)
+    // {
+    //     cout << endl << rotation_matrix_cf2wf.getRow(i).getX() << "   " << rotation_matrix_cf2wf.getRow(i).getY() << "   " << rotation_matrix_cf2wf.getRow(i).getZ() << endl; 
+    // }
 
     //constructing the translation vector object using the values from the array
-    translation_vector_wf2rf.setX(translation_vector_wf2rf_array_parameter_server[0]);
-    translation_vector_wf2rf.setY(translation_vector_wf2rf_array_parameter_server[1]);
-    translation_vector_wf2rf.setZ(translation_vector_wf2rf_array_parameter_server[2]);
+    translation_vector_cf2wf.setX(transformation_matrix_cf2wf_array_parameter_server[12]);
+    translation_vector_cf2wf.setY(transformation_matrix_cf2wf_array_parameter_server[13]);
+    translation_vector_cf2wf.setZ(transformation_matrix_cf2wf_array_parameter_server[14]); //CHECK THESE INDICES!!!
+
+    nh.getParam("transformation_wf2rf", transformation_matrix_wf2rf_array_parameter_server);
+    
+    tfScalar tf_scalar_row_major_transformation_matrix_array_wf2rf [16];
+
+    for(int i = 0; i < 4 ; i++)
+    {
+        for(int j = 0; j<4; j++)
+        {
+            tf_scalar_row_major_transformation_matrix_array_wf2rf[4*j+i] = (tfScalar) transformation_matrix_wf2rf_array_parameter_server[4*i+j];
+        }
+    }
+
+    rotation_matrix_cf2wf.setFromOpenGLSubMatrix(tf_scalar_row_major_transformation_matrix_array_wf2rf);
+
+    //constructing the translation vector object using the values from the array
+    translation_vector_cf2wf.setX(transformation_matrix_wf2rf_array_parameter_server[12]);
+    translation_vector_cf2wf.setY(transformation_matrix_wf2rf_array_parameter_server[13]);
+    translation_vector_cf2wf.setZ(transformation_matrix_wf2rf_array_parameter_server[14]);
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 

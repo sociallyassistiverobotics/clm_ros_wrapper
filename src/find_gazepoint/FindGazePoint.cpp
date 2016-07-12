@@ -136,9 +136,6 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
         tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3( -1 * screenWidth / 2, 0, 0);
 
-        // the location of the camera in the world frame would be equal to the translation vector
-        tf::Vector3 camera_wf = tf::Vector3(screenWidth/3, cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
-
         cv::Matx<float,4,4> transformation_matrix_cf2wf = transformation_cf2intermediate_frame * transformation_intermediate_frame2wf;
 
         tf::Vector3 hfv_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(hfv_cf, 0)));
@@ -147,9 +144,16 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         //headposition_cf = tf::Vector3(-82, 350, 260);
 
         // storing the head position in the camera frame
-        tf::Vector3 headposition_wf = vector3_cv2tf(transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1)));
+        // /headposition_cf = tf::Vector3(0,0,500);
+        cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
+        tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
+        //cout<< endl << headposition_wf_cv << endl;
 
         tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
+
+        // the position of the camera in the world frame
+        cv::Matx<float, 4,1> camera_wf_cv = transformation_matrix_cf2wf.inv() * vector3_tf2cv(tf::Vector3(0,0,0),1);
+        tf::Vector3 camera_wf = vector3_cv2tf(camera_wf_cv);
 
         // using the Line-Plane intersection formula on Wolfram link: http://mathworld.wolfram.com/Line-PlaneIntersection.html
         // ALL CALCULATIONS ARE MADE IN WORLD FRAME

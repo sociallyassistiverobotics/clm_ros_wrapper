@@ -22,7 +22,7 @@
 
     <!-- robot parameters - radius for inside/outside check
      FIX IT -->
-    <param name="robot_radius" type="double" value="200"/>
+    <param name="robot_radius" type="double" value="300"/> <!-- mm -->
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->
   <!--<param name ="device" value="$(arg webcam_num)" type="int"/>-->

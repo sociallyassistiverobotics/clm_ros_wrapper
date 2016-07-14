@@ -146,7 +146,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 
         // correcting the Z element of the head fixation vector from CLM
-        hfv_wf.setZ(hfv_wf.getZ() -0.2);
+        hfv_wf.setZ(hfv_wf.getZ() -0.1);
 
         // testing
         //headposition_cf = tf::Vector3(-82, 350, 260);
@@ -155,7 +155,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // /headposition_cf = tf::Vector3(0,0,500);
 
         // adding the box size = 200mm
-        headposition_cf = headposition_cf + tf::Vector3(0,0,200);
+        headposition_cf = headposition_cf + tf::Vector3(0,0,150);
 
         cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
         tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);

@@ -115,8 +115,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             }
 
             //inside/outside check for the screen
-            if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-                || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            if ((-1)* 2 * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 + 3 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - 2 * GAZE_ERROR)
             {
                 num_closest_object_on_screen = num_objects_on_screen;
                 closest_distance_screen = std::numeric_limits<double>::max();
@@ -204,8 +204,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         //clm_ros_wrapper::DetectedTarget detected_target;
 
-        if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-            || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+        if ((-1)* 2 * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
+            || gaze_point_wf.getX() > screenWidth / 2 + 2 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
         {
             detected_target.region = detected_target.OUTSIDE;
         }
@@ -223,14 +223,16 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         //using the formula from the link
         float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))/tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
-        if (detected_target.region == detected_target.SCREEN)
-        {
-            detected_target.region = detected_target.SCREEN;
-        }
-        else if (distance < free_object_radius)
+        if (distance < free_object_radius)
         {
             detected_target.region = detected_target.ROBOT;
         }
+
+        else if (detected_target.region == detected_target.SCREEN)
+        {
+            detected_target.region = detected_target.SCREEN;
+        }
+
         else
         {
             detected_target.region = detected_target.OUTSIDE;

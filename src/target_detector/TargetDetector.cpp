@@ -79,22 +79,22 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     tf::vector3MsgToTF((*msg).head_position, head_position_wf);
     tf::vector3MsgToTF((*msg).hfv, hfv_wf);
 
-    // to make sure this callback happens after scene_callback  
-    if (num_objects_on_screen != 0 || num_free_objects != 0)
+    if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
+    {   
+        //means no detection
+        clm_ros_wrapper::DetectedTarget target_no_detection;
+
+        target_no_detection.name = "NO DETECTION";
+        target_no_detection.distance = 0;
+
+        target_publisher.publish(target_no_detection);
+    }
+
+    else
     {
-
-        if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
-        {   
-            //means no detection
-            clm_ros_wrapper::DetectedTarget target_no_detection;
-
-            target_no_detection.name = "NO DETECTION";
-            target_no_detection.distance = 0;
-
-            target_publisher.publish(target_no_detection);
-        }
-
-        else
+        clm_ros_wrapper::DetectedTarget detected_target;
+        // to make sure this callback happens after scene_callback  
+        if (num_objects_on_screen != 0 || num_free_objects != 0)
         {
             int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
@@ -173,7 +173,6 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             //     }
             // }
 
-            clm_ros_wrapper::DetectedTarget detected_target;
 
             if (screen_reference_points_names[num_closest_object_on_screen].compare("OUTSIDE") == 0
                 && free_objects_names[num_closest_free_object].compare("OUTSIDE") == 0)
@@ -196,14 +195,11 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
 
-            target_publisher.publish(detected_target);
+            //target_publisher.publish(detected_target);
             //cout << endl << num_closest_target << endl << endl;
         }
-    }
 
-    else // scene callback not called
-    {
-        clm_ros_wrapper::DetectedTarget detected_target;
+        //clm_ros_wrapper::DetectedTarget detected_target;
 
         if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
             || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)

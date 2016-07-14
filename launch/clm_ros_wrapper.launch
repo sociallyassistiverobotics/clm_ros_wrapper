@@ -6,18 +6,12 @@
     <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
      <!-- screen parameters - dimensions and angles -->
-    <param name="screenAngleInDegrees" type="int" value="52"/>
+    <param name="screenAngleInDegrees" type="int" value="45"/>
     <param name="screenHeight" type="double" value="380"/>
     <param name="screenWidth" type="double" value="520"/>
     <param name="screenGap" type="double" value="20"/> <!-- only used when detecting the targets on screen-->
 
     <!-- screen parameters - for inside/outside check TODO -->
-
-    <!-- world frame's origin in the robot frame used as wf2rf translation vector 
-      translation_wf2rf_i refers to the entry i UPDATE THIS-->
-    <param name="translation_wf2rf_1" type="double" value="134.375"/>
-    <param name="translation_wf2rf_2" type="double" value="-327.968"/>
-    <param name="translation_wf2rf_3" type="double" value="0"/>
 
     <!-- world frame to robot frame rotation matrix 
      rotation_wf2rf_ij refers to the entry in row i and column j 

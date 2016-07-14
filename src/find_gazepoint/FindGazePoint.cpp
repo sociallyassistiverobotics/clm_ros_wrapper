@@ -27,6 +27,7 @@ Yunus
 #include <clm_ros_wrapper/ClmEyeGaze.h>
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/GazePointAndDirection.h>
+#include <clm_ros_wrapper/VectorWithCertainty.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -60,6 +61,8 @@ cv::Matx<float, 4, 4> transformation_wf2rf;
 std::vector<double> transformation_matrix_cf2intermediate_frame_array_parameter_server;
 std::vector<double> transformation_matrix_intermediate_frame2wf_array_parameter_server;
 std::vector<double> transformation_matrix_wf2rf_array_parameter_server;
+
+float detection_certainty;
 
 tf::Vector3 vector3_cv2tf(cv::Matx<float, 4, 1> vector_cv)
 {
@@ -201,9 +204,10 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
     }
 }
 
-void headposition_callback(const geometry_msgs::Vector3::ConstPtr& msg)
+void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr& msg)
 {
-    tf::vector3MsgToTF(*msg, headposition_cf);
+    tf::vector3MsgToTF((*msg).position, headposition_cf);
+    detection_certainty = (*msg).certainty;
     headposition_cf = headposition_cf + tf::Vector3(0,0,60);
 }
 

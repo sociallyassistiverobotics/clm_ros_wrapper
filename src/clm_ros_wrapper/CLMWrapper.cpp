@@ -425,6 +425,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             double confidence = 0.5 * (1 - clm_model.detection_certainty);
 
+            cout << "certainty";
+
             ClmHeadMsg ros_head_msg;
             auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
             auto & ros_aus_msg = ros_head_msg.aus;
@@ -581,6 +583,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         // Draw the facial landmarks on the face and the bounding box around it
         // if tracking is successful and initialized
         double detection_certainty = clm_models[model].detection_certainty;
+        global_detection_certainty = detection_certainty;
         double visualisation_boundary = -0.1;
         // Only draw if the reliability is reasonable, the value is slightly ad-hoc
         if(detection_certainty < visualisation_boundary)
@@ -592,6 +595,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             if(detection_certainty < -1)    detection_certainty = -1;
 
             detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
+
+            global_detection_certainty = detection_certainty;
 
             // A rough heuristic for box around the face width
             int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
@@ -681,7 +686,12 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // head fixation vector and the head position publisher (both in camera frame)
     hfv_publisher.publish(hfv_cf_msg);
-    head_position_publisher.publish(headposition_cf_msg);
+
+    clm_ros_wrapper::VectorWithCertainty headpos_certainty_msg;
+    headpos_certainty_msg.position = headposition_cf_msg;
+    headpos_certainty_msg.certainty = global_detection_certainty;
+
+    head_position_publisher.publish(headpos_certainty_msg);
 
     // e: don't need to work out framerate
     // Work out the framerate
@@ -774,7 +784,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_vector", 1);
 
     // publishing head position in the camera frame
-    head_position_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_position", 1);
+    head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorWithCertainty>("/clm_ros_wrapper/head_position", 1);
 
     detection_rate_publisher = nodeHandle.advertise<std_msgs::String>("/clm_ros_wrapper/detection_rate", 1);
 

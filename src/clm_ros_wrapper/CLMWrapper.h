@@ -26,6 +26,7 @@
 #include <clm_ros_wrapper/ClmHeads.h>
 #include <clm_ros_wrapper/ClmEyeGaze.h>
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
+#include <clm_ros_wrapper/VectorWithCertainty.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -109,6 +110,8 @@ private:
     bool  fx_undefined;
     float cx, cy;
     bool  cx_undefined;
+
+    float global_detection_certainty = 0;
 
     bool init;
 

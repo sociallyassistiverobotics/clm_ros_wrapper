@@ -40,7 +40,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <geometry_msgs/Vector3.h> 
 #include <limits>
 
-#define GAZE_ERROR 50
+#define GAZE_ERROR -20
 #define max_num_objects 20
 
 int screenAngleInDegrees; 
@@ -143,7 +143,6 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                     num_closest_free_object = i;
                 }
             }
-
             // inside/outside check for the closest free object 
             if (closest_distance_free_object > free_object_radius)
             {
@@ -206,6 +205,10 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         {
             detected_target.region = detected_target.OUTSIDE;
         }
+        else
+        {
+            detected_target.region = detected_target.SCREEN;
+        }
 
         tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 
@@ -215,10 +218,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         tf::Vector3 diff_robotpos_rand = robot_position_tf-randompoint_on_gazedirection;
 
         //using the formula from the link
-        float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))\
-            /tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
-
-        if (distance > free_object_radius && detected_target.region != detected_target.OUTSIDE)
+        float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))/tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
+        if (detected_target.region == detected_target.SCREEN)
         {
             detected_target.region = detected_target.SCREEN;
         }
@@ -279,9 +280,17 @@ int main(int argc, char **argv)
 
     // Reading robot position from the parameter server
     
-    nh.getParam("robot_position_wf_1", robot_position_wf_x);
-    nh.getParam("robot_position_wf_2", robot_position_wf_y);
-    nh.getParam("robot_position_wf_3", robot_position_wf_z);
+    std::vector<float> transformation_wf2rf_param_ser;
+
+    nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
+
+    float robot_radius;
+
+    nh.getParam("robot_radius", robot_radius);
+
+    robot_position_wf_x = transformation_wf2rf_param_ser [3];
+    robot_position_wf_y = transformation_wf2rf_param_ser [7];
+    robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 

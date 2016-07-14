@@ -72,6 +72,7 @@ using namespace std;
 
 void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
 {
+    double detection_certainty = (*msg).certainty;
     tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
     //checking if there is detection
@@ -83,6 +84,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     {   
         //means no detection
         clm_ros_wrapper::DetectedTarget target_no_detection;
+        target_no_detection.certainty = detection_certainty;
 
         target_no_detection.name = "NO DETECTION";
         target_no_detection.distance = 0;
@@ -93,6 +95,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     else
     {
         clm_ros_wrapper::DetectedTarget detected_target;
+        detected_target.certainty = detection_certainty;
+
         // to make sure this callback happens after scene_callback  
         if (num_objects_on_screen != 0 || num_free_objects != 0)
         {

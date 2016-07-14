@@ -102,12 +102,17 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.hfv);
+        gaze_pd_msg.certainty = detection_certainty;
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
         //for head position in the robot frame
         geometry_msgs::Vector3 zero_msg;
         tf::vector3TFToMsg(zero_vector, zero_msg);
-        head_position_rf_pub.publish(zero_msg);
+
+        clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
+        head_position_rf_with_certainty.position = zero_msg;
+        head_position_rf_with_certainty.certainty = detection_certainty;
+        head_position_rf_pub.publish(head_position_rf_with_certainty);
     }
 
     else 
@@ -159,10 +164,15 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf.inv()*vector3_tf2cv(headposition_wf, 1));
 
         //publishing the head position in the robot frame
-        geometry_msgs::Vector3 head_position_rf_msg;
-        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
+        clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
 
-        head_position_rf_pub.publish(head_position_rf_msg);
+        geometry_msgs::Vector3 head_position_rf_msg;
+        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg); 
+
+        head_position_rf_with_certainty.position = head_position_rf_msg;
+        head_position_rf_with_certainty.certainty = detection_certainty;
+
+        head_position_rf_pub.publish(head_position_rf_with_certainty);
 
         tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
 
@@ -196,12 +206,14 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
+        gaze_pd_msg.certainty = detection_certainty;
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
         tf::Vector3 zero_vector = tf::Vector3(0,0,0);
         headposition_cf = zero_vector;
         hfv_cf = zero_vector;
     }
+    cout << "detection_certainty" << detection_certainty << endl;
 }
 
 void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr& msg)
@@ -275,7 +287,7 @@ int main(int argc, char **argv)
 
     gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>("clm_ros_wrapper/gaze_point_and_direction", 1);
 
-    head_position_rf_pub = nh.advertise<geometry_msgs::Vector3>("clm_ros_wrapper/head_position_rf",1);
+    head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>("clm_ros_wrapper/head_position_rf",1);
 
     headposition_sub = nh.subscribe("/clm_ros_wrapper/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe("/clm_ros_wrapper/head_vector", 1, &vector_callback);

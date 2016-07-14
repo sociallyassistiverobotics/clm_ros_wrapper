@@ -1,5 +1,6 @@
 float32 distance
 string name
+float32 certainty
 
 int8 region
 

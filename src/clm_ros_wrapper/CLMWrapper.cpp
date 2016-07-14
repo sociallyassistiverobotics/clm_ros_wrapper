@@ -689,7 +689,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     clm_ros_wrapper::VectorWithCertainty headpos_certainty_msg;
     headpos_certainty_msg.position = headposition_cf_msg;
-    headpos_certainty_msg.certainty = global_detection_certainty;
+
+    //global_detection_certainty between 0 and 1 and decreases as the detection gets certain
+    headpos_certainty_msg.certainty = 1- global_detection_certainty;
 
     head_position_publisher.publish(headpos_certainty_msg);
 

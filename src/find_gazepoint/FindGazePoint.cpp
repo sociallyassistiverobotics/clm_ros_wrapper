@@ -145,9 +145,13 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
         // storing the head position in the camera frame
         // /headposition_cf = tf::Vector3(0,0,500);
+
+        // adding the box size = 200mm
+        headposition_cf = headposition_cf + tf::Vector3(0,0,200);
+
         cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
         tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
-        //cout<< endl << headposition_wf_cv << endl;
+        cout<< endl << vector3_tf2cv(headposition_cf, 1) << endl;
 
         tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
 
@@ -181,14 +185,12 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
-        // //tranforming the head position to robot frame
-        // tf::Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, translation_vector_wf2rf);
-        // tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf);
+        tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf.inv()*vector3_tf2cv(headposition_wf, 1));
 
-        // geometry_msgs::Vector3 head_position_rf_msg;
-        // tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
+        geometry_msgs::Vector3 head_position_rf_msg;
+        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
 
-        // head_position_rf_pub.publish(head_position_rf_msg);
+        head_position_rf_pub.publish(head_position_rf_msg);
 
         tf::Vector3 zero_vector = tf::Vector3(0,0,0);
         headposition_cf = zero_vector;

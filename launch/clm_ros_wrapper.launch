@@ -23,8 +23,8 @@
      rotation_wf2rf_ij refers to the entry in row i and column j 
      rotation about Z-axis by -(theta+90) degrees where theta is 44.75 in degrees-->
 
-    <!-- camera frame to world frame transformation matrix row-major representation-->
-    <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 134.375, -0.7100, -0.7041, 0, -327.968, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
+    <!-- world frame to robot frame transformation matrix row-major representation-->
+    <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
     <!-- robot parameters - radius for inside/outside check
      FIX IT -->

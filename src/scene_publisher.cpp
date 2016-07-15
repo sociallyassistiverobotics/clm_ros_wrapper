@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 
     robot_position_wf_x = transformation_wf2rf_param_ser [3];
     robot_position_wf_y = transformation_wf2rf_param_ser [7];
-    robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 
+    robot_position_wf_z = transformation_wf2rf_param_ser [11] + 225; // 22.5 cm above the center of the robot
 
     tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 

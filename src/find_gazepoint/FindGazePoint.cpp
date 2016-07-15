@@ -64,6 +64,9 @@ std::vector<double> transformation_matrix_wf2rf_array_parameter_server;
 
 float detection_certainty;
 
+float offset_hfv_wf_z;
+float offset_head_position_cf_z;
+
 tf::Vector3 vector3_cv2tf(cv::Matx<float, 4, 1> vector_cv)
 {
     tf::Vector3 vector_tf;
@@ -146,7 +149,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 
         // correcting the Z element of the head fixation vector from CLM
-        hfv_wf.setZ(hfv_wf.getZ() -0.1);
+        hfv_wf.setZ(hfv_wf.getZ() + offset_hfv_wf_z);
 
         // testing
         //headposition_cf = tf::Vector3(-82, 350, 260);
@@ -154,8 +157,8 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // storing the head position in the camera frame
         // /headposition_cf = tf::Vector3(0,0,500);
 
-        // adding the box size = 200mm
-        headposition_cf = headposition_cf + tf::Vector3(0,0,150);
+        // adding the box size offset_head_position_cf_z
+        headposition_cf = headposition_cf + tf::Vector3(0,0,offset_head_position_cf_z);
 
         cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
         tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
@@ -220,7 +223,6 @@ void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr&
 {
     tf::vector3MsgToTF((*msg).position, headposition_cf);
     detection_certainty = (*msg).certainty;
-    headposition_cf = headposition_cf + tf::Vector3(0,0,60);
 }
 
 int main(int argc, char **argv) 
@@ -234,6 +236,9 @@ int main(int argc, char **argv)
     nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
+
+    nh.getParam("offset_hfv_wf_z", offset_hfv_wf_z);
+    nh.getParam("offset_head_position_cf_z", offset_head_position_cf_z);
 
     // loading rotation matrix from cf to wf from the parameter server
     // this rotation matrix depends on the rotation of the screen

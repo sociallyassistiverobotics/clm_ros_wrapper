@@ -115,8 +115,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             }
 
             //inside/outside check for the screen
-            if ((-1)* 2 * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-                || gaze_point_wf.getX() > screenWidth / 2 + 3 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - 2 * GAZE_ERROR)
+            if ((-2) * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 + 3 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 -  GAZE_ERROR)
             {
                 num_closest_object_on_screen = num_objects_on_screen;
                 closest_distance_screen = std::numeric_limits<double>::max();
@@ -204,8 +204,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         //clm_ros_wrapper::DetectedTarget detected_target;
 
-        if ((-1)* 2 * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-            || gaze_point_wf.getX() > screenWidth / 2 + 2 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+        if (num_closest_object_on_screen == num_objects_on_screen) // means the point is outside the screen
         {
             detected_target.region = detected_target.OUTSIDE;
         }
@@ -283,8 +282,6 @@ int main(int argc, char **argv)
     nh.getParam("screenGap", screenGap);
 
     nh.getParam("robot_radius", free_object_radius);
-
-    // Reading robot position from the parameter server
     
     std::vector<float> transformation_wf2rf_param_ser;
 
@@ -294,6 +291,7 @@ int main(int argc, char **argv)
 
     nh.getParam("robot_radius", robot_radius);
 
+    //the last column in transformation matrix correspends to the robot position
     robot_position_wf_x = transformation_wf2rf_param_ser [3];
     robot_position_wf_y = transformation_wf2rf_param_ser [7];
     robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 

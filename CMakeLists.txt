@@ -68,6 +68,7 @@ add_message_files(
    FreeObject.msg
    DetectedTarget.msg
    GazePointAndDirection.msg
+   VectorWithCertainty.msg
 )
 
 ## Generate services in the 'srv' folder

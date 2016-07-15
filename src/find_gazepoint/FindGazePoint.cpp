@@ -27,6 +27,7 @@ Yunus
 #include <clm_ros_wrapper/ClmEyeGaze.h>
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/GazePointAndDirection.h>
+#include <clm_ros_wrapper/VectorWithCertainty.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -46,17 +47,46 @@ using namespace std;
 using namespace cv;
 
 using namespace boost::filesystem;
+using std::vector;
 
 ros::Publisher gaze_point_and_direction_pub;
 ros::Publisher head_position_rf_pub;
 
 tf::Vector3 headposition_cf;
 
-tf::Matrix3x3 rotation_matrix_cf2wf;
-tf::Vector3 translation_vector_cf2wf;
+cv::Matx<float, 4, 4> transformation_cf2intermediate_frame;
+cv::Matx<float, 4, 4> transformation_intermediate_frame2wf;
+cv::Matx<float, 4, 4> transformation_wf2rf;
 
-tf::Matrix3x3 rotation_matrix_wf2rf;
-tf::Vector3 translation_vector_wf2rf;
+std::vector<double> transformation_matrix_cf2intermediate_frame_array_parameter_server;
+std::vector<double> transformation_matrix_intermediate_frame2wf_array_parameter_server;
+std::vector<double> transformation_matrix_wf2rf_array_parameter_server;
+
+float detection_certainty;
+
+float offset_hfv_wf_z;
+float offset_head_position_cf_z;
+
+tf::Vector3 vector3_cv2tf(cv::Matx<float, 4, 1> vector_cv)
+{
+    tf::Vector3 vector_tf;
+    vector_tf.setX(vector_cv(0,0));
+    vector_tf.setY(vector_cv(1,0));
+    vector_tf.setZ(vector_cv(2,0));
+    return vector_tf;
+}
+
+cv::Matx<float, 4, 1> vector3_tf2cv(tf::Vector3 vector_tf, bool isPoint)
+{
+    if (isPoint)
+    {
+        return cv::Matx<float, 4, 1>(vector_tf.getX(), vector_tf.getY(), vector_tf.getZ(), 1);
+    }
+    else
+    {
+        return cv::Matx<float, 4, 1>(vector_tf.getX(), vector_tf.getY(), vector_tf.getZ(), 0);
+    }
+}
 
 void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 {
@@ -68,19 +98,24 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
     clm_ros_wrapper::GazePointAndDirection gaze_pd_msg;
 
     //checking if there is a detection
-    if (headposition_cf.isZero() && hfv_cf.isZero())
+    if (headposition_cf.isZero() || hfv_cf.isZero())
     {
         // no face detection publish the message with 3 zero vectors
         tf::Vector3 zero_vector = tf::Vector3(0, 0, 0);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(zero_vector, gaze_pd_msg.hfv);
+        gaze_pd_msg.certainty = detection_certainty;
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
         //for head position in the robot frame
         geometry_msgs::Vector3 zero_msg;
         tf::vector3TFToMsg(zero_vector, zero_msg);
-        head_position_rf_pub.publish(zero_msg);
+
+        clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
+        head_position_rf_with_certainty.position = zero_msg;
+        head_position_rf_with_certainty.certainty = detection_certainty;
+        head_position_rf_pub.publish(head_position_rf_with_certainty);
     }
 
     else 
@@ -105,22 +140,50 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         //tf::Vector3 vector_cf2wf; //tf::Vector3((-1) * screenWidth/3, sin(screenAngle) * screenHeight, cos(screenAngle) * screenHeight);
 
         // transformation from the camera frame to the world frame
-        tf::Transform transfrom_cf2wf = tf::Transform(rotation_matrix_cf2wf, translation_vector_cf2wf);
+        // tf::Transform transfrom_cf2wf = tf::Transform(rotation_matrix_cf2wf, translation_vector_cf2wf);
+
+        cv::Matx<float,4,4> transformation_matrix_cf2wf = transformation_cf2intermediate_frame * transformation_intermediate_frame2wf;
+
+        tf::Vector3 hfv_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(hfv_cf, 0)));
+        //cout << vector3_tf2cv(hfv_cf, 0) << endl;
+
+
+        // correcting the Z element of the head fixation vector from CLM
+        hfv_wf.setZ(hfv_wf.getZ() + offset_hfv_wf_z);
+
+        // testing
+        //headposition_cf = tf::Vector3(-82, 350, 260);
+
+        // storing the head position in the camera frame
+        // /headposition_cf = tf::Vector3(0,0,500);
+
+        // adding the box size offset_head_position_cf_z
+        headposition_cf = headposition_cf + tf::Vector3(0,0,offset_head_position_cf_z);
+
+        cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
+        tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
+
+        //head position robot frame
+        tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf.inv()*vector3_tf2cv(headposition_wf, 1));
+
+        //publishing the head position in the robot frame
+        clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
+
+        geometry_msgs::Vector3 head_position_rf_msg;
+        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg); 
+
+        head_position_rf_with_certainty.position = head_position_rf_msg;
+        head_position_rf_with_certainty.certainty = detection_certainty;
+
+        head_position_rf_pub.publish(head_position_rf_with_certainty);
+
+        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
 
         //storing the locations of the lower corners of screen and the camera 
         //in world frame to establish the space where it sits
         tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
         tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3( -1 * screenWidth / 2, 0, 0);
-
-        // the location of the camera in the world frame would be equal to the translation vector
-        tf::Vector3 camera_wf = tf::Vector3(screenWidth/3, cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
-
-        tf::Vector3 hfv_wf = rotation_matrix_cf2wf.inverse() * (hfv_cf);
-
-        // storing the head position in the camera frame
-        tf::Vector3 headposition_wf = transfrom_cf2wf(headposition_cf);
-
-        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
+        tf::Vector3 upper_mid__point_of_screen_wf = tf::Vector3(0,cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
 
         // using the Line-Plane intersection formula on Wolfram link: http://mathworld.wolfram.com/Line-PlaneIntersection.html
         // ALL CALCULATIONS ARE MADE IN WORLD FRAME
@@ -128,14 +191,14 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // plus a constant times the head fixation vector -- this extra point is named randompoint_on_gazedirection_wf. 
         // with the notation from the link x4 = headposition_wf and x5 = randompoint_on_gazedirection_wf
         cv::Matx<float, 4,4> matrix1 = cv::Matx<float, 4, 4>(1, 1, 1, 1,
-            camera_wf.getX(), lower_right_corner_of_screen_wf.getX(), lower_left_corner_of_screen_wf.getX(), headposition_wf.getX(),
-            camera_wf.getY(), lower_right_corner_of_screen_wf.getY(), lower_left_corner_of_screen_wf.getY(), headposition_wf.getY(),
-            camera_wf.getZ(), lower_right_corner_of_screen_wf.getZ(), lower_left_corner_of_screen_wf.getZ(), headposition_wf.getZ());
+            upper_mid__point_of_screen_wf.getX(), lower_right_corner_of_screen_wf.getX(), lower_left_corner_of_screen_wf.getX(), headposition_wf.getX(),
+            upper_mid__point_of_screen_wf.getY(), lower_right_corner_of_screen_wf.getY(), lower_left_corner_of_screen_wf.getY(), headposition_wf.getY(),
+            upper_mid__point_of_screen_wf.getZ(), lower_right_corner_of_screen_wf.getZ(), lower_left_corner_of_screen_wf.getZ(), headposition_wf.getZ());
 
         cv::Matx<float, 4,4> matrix2 = cv::Matx<float, 4, 4>(1, 1, 1, 0,
-            camera_wf.getX(), lower_right_corner_of_screen_wf.getX(), lower_left_corner_of_screen_wf.getX(), randompoint_on_gazedirection_wf.getX() - headposition_wf.getX(),
-            camera_wf.getY(), lower_right_corner_of_screen_wf.getY(), lower_left_corner_of_screen_wf.getY(), randompoint_on_gazedirection_wf.getY() - headposition_wf.getY(),
-            camera_wf.getZ(), lower_right_corner_of_screen_wf.getZ(), lower_left_corner_of_screen_wf.getZ(), randompoint_on_gazedirection_wf.getZ() - headposition_wf.getZ());
+            upper_mid__point_of_screen_wf.getX(), lower_right_corner_of_screen_wf.getX(), lower_left_corner_of_screen_wf.getX(), randompoint_on_gazedirection_wf.getX() - headposition_wf.getX(),
+            upper_mid__point_of_screen_wf.getY(), lower_right_corner_of_screen_wf.getY(), lower_left_corner_of_screen_wf.getY(), randompoint_on_gazedirection_wf.getY() - headposition_wf.getY(),
+            upper_mid__point_of_screen_wf.getZ(), lower_right_corner_of_screen_wf.getZ(), lower_left_corner_of_screen_wf.getZ(), randompoint_on_gazedirection_wf.getZ() - headposition_wf.getZ());
 
         // following the formula, I calculate t -- check the link
         double determinant_ratio = (-1) * cv::determinant(matrix1) / cv::determinant(matrix2);
@@ -146,22 +209,20 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
+        gaze_pd_msg.certainty = detection_certainty;
         gaze_point_and_direction_pub.publish(gaze_pd_msg);
 
-        //tranforming the head position to robot frame
-        tf:: Transform transformation_wf2rf = tf::Transform(rotation_matrix_wf2rf, translation_vector_wf2rf);
-        tf::Vector3 head_position_rf = transformation_wf2rf(headposition_wf);
-
-        geometry_msgs::Vector3 head_position_rf_msg;
-        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
-
-        head_position_rf_pub.publish(head_position_rf_msg);
+        tf::Vector3 zero_vector = tf::Vector3(0,0,0);
+        headposition_cf = zero_vector;
+        hfv_cf = zero_vector;
     }
+    cout << "detection_certainty" << detection_certainty << endl;
 }
 
-void headposition_callback(const geometry_msgs::Vector3::ConstPtr& msg)
+void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr& msg)
 {
-    tf::vector3MsgToTF(*msg, headposition_cf);
+    tf::vector3MsgToTF((*msg).position, headposition_cf);
+    detection_certainty = (*msg).certainty;
 }
 
 int main(int argc, char **argv) 
@@ -175,6 +236,9 @@ int main(int argc, char **argv)
     nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
+
+    nh.getParam("offset_hfv_wf_z", offset_hfv_wf_z);
+    nh.getParam("offset_head_position_cf_z", offset_head_position_cf_z);
 
     // loading rotation matrix from cf to wf from the parameter server
     // this rotation matrix depends on the rotation of the screen
@@ -193,65 +257,42 @@ int main(int argc, char **argv)
     //     m_el[2].setValue(m[2],m[6],m[10]);
     // }
 
-    // loading rotation matrix from cf to wf from the parameter server
-    tfScalar rotation_matrix_cf2wf_array_parameter_server[12];
-
-    for (int i = 0; i < 3; i++)
-    {
-        for(int j = 0; j < 3; j++)
-        {
-            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
-            nh.getParam("translation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_cf2wf_array_parameter_server[4*j+i]);
-        }
-    }
-
-    rotation_matrix_cf2wf.setFromOpenGLSubMatrix(rotation_matrix_cf2wf_array_parameter_server);
-
-    //array to load the entries of translation_vector from the parameter server
-    tfScalar translation_vector_cf2wf_array_parameter_server[3];
-
-    for (int i = 0; i < 3; i++)
-    {
-        nh.getParam("translation_cf2wf_"+std::to_string(i+1), translation_vector_cf2wf_array_parameter_server[i]);
-    }
-
-    //constructing the translation vector object using the values from the array
-    translation_vector_cf2wf.setX(translation_vector_cf2wf_array_parameter_server[0]);
-    translation_vector_cf2wf.setY(translation_vector_cf2wf_array_parameter_server[1]);
-    translation_vector_cf2wf.setZ(translation_vector_cf2wf_array_parameter_server[2]);
+    // loading transformation matrix from cf to wf from the parameter server
+    nh.getParam("transformation_cf2intermediate_frame", transformation_matrix_cf2intermediate_frame_array_parameter_server);
     
-    // loading rotation matrix from wf to rf from the parameter server
-    tfScalar rotation_matrix_wf2rf_array_parameter_server[12];
-
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i <4; i++)
     {
-        for(int j = 0; j < 3; j++)
+        for(int j =0; j <4; j++)
         {
-            // using 4*j+i instead of 4*i+j because of setFromOpenGLSubMatrix's behavior
-            nh.getParam("rotation_wf2rf_"+std::to_string(i+1)+std::to_string(j+1), rotation_matrix_wf2rf_array_parameter_server[4*j+i]);
+            transformation_cf2intermediate_frame(i,j) = transformation_matrix_cf2intermediate_frame_array_parameter_server[4*i+j];
         }
     }
 
-    rotation_matrix_wf2rf.setFromOpenGLSubMatrix(rotation_matrix_wf2rf_array_parameter_server);
+    nh.getParam("transformation_intermediate_frame2wf", transformation_matrix_intermediate_frame2wf_array_parameter_server);
 
-    //array to load the entries of translation_vector from the parameter server
-    tfScalar translation_vector_wf2rf_array_parameter_server[3];
-
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i <4; i++)
     {
-        nh.getParam("robot_position_wf_"+std::to_string(i+1), translation_vector_wf2rf_array_parameter_server[i]);
+        for(int j =0; j <4; j++)
+        {
+            transformation_intermediate_frame2wf(i,j) = transformation_matrix_intermediate_frame2wf_array_parameter_server[4*i+j];
+        }
     }
 
-    //constructing the translation vector object using the values from the array
-    translation_vector_wf2rf.setX(translation_vector_wf2rf_array_parameter_server[0]);
-    translation_vector_wf2rf.setY(translation_vector_wf2rf_array_parameter_server[1]);
-    translation_vector_wf2rf.setZ(translation_vector_wf2rf_array_parameter_server[2]);
+    nh.getParam("transformation_wf2rf", transformation_matrix_wf2rf_array_parameter_server);
+
+    for (int i = 0; i <4; i++)
+    {
+        for(int j =0; j <4; j++)
+        {
+            transformation_wf2rf(i,j) = transformation_matrix_wf2rf_array_parameter_server[4*i+j];
+        }
+    }
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>("clm_ros_wrapper/gaze_point_and_direction", 1);
 
-    head_position_rf_pub = nh.advertise<geometry_msgs::Vector3>("clm_ros_wrapper/head_position_rf",1);
+    head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>("clm_ros_wrapper/head_position_rf",1);
 
     headposition_sub = nh.subscribe("/clm_ros_wrapper/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe("/clm_ros_wrapper/head_vector", 1, &vector_callback);

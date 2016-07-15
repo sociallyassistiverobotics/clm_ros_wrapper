@@ -1,53 +1,31 @@
 
 <launch>
-  <!-- camera frame to world frame rotation matrix 
-    rotation_cf2wf_ij refers to the entry in row i and column j-->
-   <param name="rotation_cf2wf_11" type="double" value="-0.9130"/>
-   <param name="rotation_cf2wf_12" type="double" value="0"/>
-   <param name="rotation_cf2wf_13" type="double" value="0.4078"/>
-   <param name="rotation_cf2wf_21" type="double" value="-0.4078"/>
-   <param name="rotation_cf2wf_22" type="double" value="0"/>
-   <param name="rotation_cf2wf_23" type="double" value="-0.9130"/>
-   <param name="rotation_cf2wf_31" type="double" value="0"/>
-   <param name="rotation_cf2wf_32" type="double" value="-1"/>
-   <param name="rotation_cf2wf_33" type="double" value="0"/> 
-
-   <!-- camera position in the world frame used as cf2wf translation vector 
-      translation_cf2wf_i refers to the entry i-->
-   <param name="translation_cf2wf_1" type="double" value="342"/>
-   <param name="translation_cf2wf_2" type="double" value="390"/>
-   <param name="translation_cf2wf_3" type="double" value="180"/>
+  <!-- camera frame to world frame transformation matrix row-major representation-->
+    <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
+    <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
      <!-- screen parameters - dimensions and angles -->
-    <param name="screenAngleInDegrees" type="int" value="52"/>
+    <param name="screenAngleInDegrees" type="int" value="45"/>
     <param name="screenHeight" type="double" value="380"/>
     <param name="screenWidth" type="double" value="520"/>
     <param name="screenGap" type="double" value="20"/> <!-- only used when detecting the targets on screen-->
 
     <!-- screen parameters - for inside/outside check TODO -->
 
-    <!-- world frame's origin in the robot frame used as wf2rf translation vector 
-      translation_wf2rf_i refers to the entry i UPDATE THIS-->
-    <param name="translation_wf2rf_1" type="double" value="340"/>
-    <param name="translation_wf2rf_2" type="double" value="-100"/>
-    <param name="translation_wf2rf_3" type="double" value="0"/>
-
     <!-- world frame to robot frame rotation matrix 
      rotation_wf2rf_ij refers to the entry in row i and column j 
-     rotation around Z-axis by theta+90 degrees where theta is 44.75 in degrees-->
-    <param name="rotation_wf2rf_11" type="double" value="-0.7041"/> <!-- cos(theta+90) = -sin(theta)-->
-    <param name="rotation_wf2rf_12" type="double" value="-0.7100"/> <!-- sin(theta+90) = -cos(theta)-->
-    <param name="rotation_wf2rf_13" type="double" value="0"/> 
-    <param name="rotation_wf2rf_21" type="double" value="0.7100"/> <!-- -sin(theta+90)-->
-    <param name="rotation_wf2rf_22" type="double" value="-0.7041"/> <!-- cos(theta+90)-->
-    <param name="rotation_wf2rf_23" type="double" value="0"/>
-    <param name="rotation_wf2rf_31" type="double" value="0"/>
-    <param name="rotation_wf2rf_32" type="double" value="0"/>
-    <param name="rotation_wf2rf_33" type="double" value="1"/>
+     rotation about Z-axis by -(theta+90) degrees where theta is 44.75 in degrees-->
+
+    <!-- world frame to robot frame transformation matrix row-major representation-->
+    <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
+
+    <!-- calibration -->
+    <param name="offset_hfv_wf_z" type="double" value="-0.1"/>
+    <param name="offset_head_position_cf_z" type="double" value="100"/> <!-- box size -->
 
     <!-- robot parameters - radius for inside/outside check
      FIX IT -->
-    <param name="robot_radius" type="double" value="200"/>
+    <param name="robot_radius" type="double" value="300"/> <!-- mm -->
   <!--<arg name="value" default="0"/>-->
   <!--<arg name="webcam_num"/>-->
   <!--<param name ="device" value="$(arg webcam_num)" type="int"/>-->
@@ -57,8 +35,8 @@
   
   <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
     <param name="video_device" value="/dev/video0" />
-    <param name="image_width" value="640" />
-    <param name="image_height" value="480" />
+    <param name="image_width" value="1280" /> <!-- 640 -->
+    <param name="image_height" value="720" /> <!-- 480-->
     <param name="pixel_format" value="yuyv" />
     <param name="camera_frame_id" value="usb_cam" />
     <param name="io_method" value="mmap"/>

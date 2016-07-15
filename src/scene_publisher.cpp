@@ -111,9 +111,18 @@ int main(int argc, char **argv)
     
     // Reading robot position from the parameter server
     float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
-    nh.getParam("robot_position_wf_1", robot_position_wf_x);
-    nh.getParam("robot_position_wf_2", robot_position_wf_y);
-    nh.getParam("robot_position_wf_3", robot_position_wf_z);
+
+    std::vector<float> transformation_wf2rf_param_ser;
+
+    nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
+
+    float robot_radius;
+
+    nh.getParam("robot_radius", robot_radius);
+
+    robot_position_wf_x = transformation_wf2rf_param_ser [3];
+    robot_position_wf_y = transformation_wf2rf_param_ser [7];
+    robot_position_wf_z = transformation_wf2rf_param_ser [11] + 225; // 22.5 cm above the center of the robot
 
     tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 

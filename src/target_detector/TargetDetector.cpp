@@ -40,7 +40,6 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <geometry_msgs/Vector3.h> 
 #include <limits>
 
-#define GAZE_ERROR 50
 #define max_num_objects 20
 
 int screenAngleInDegrees; 
@@ -72,6 +71,7 @@ using namespace std;
 
 void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
 {
+    double detection_certainty = (*msg).certainty;
     tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
     //checking if there is detection
@@ -79,24 +79,28 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     tf::vector3MsgToTF((*msg).head_position, head_position_wf);
     tf::vector3MsgToTF((*msg).hfv, hfv_wf);
 
-    // to make sure this callback happens after scene_callback  
-    if (num_objects_on_screen != 0 || num_free_objects != 0)
+    if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
+    {   
+        //means no detection
+        clm_ros_wrapper::DetectedTarget target_no_detection;
+        target_no_detection.certainty = detection_certainty;
+
+        target_no_detection.name = "NO DETECTION";
+        target_no_detection.distance = 0;
+
+        target_publisher.publish(target_no_detection);
+    }
+
+    else
     {
+        clm_ros_wrapper::DetectedTarget detected_target;
+        detected_target.certainty = detection_certainty;
 
-        if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
-        {   
-            //means no detection
-            clm_ros_wrapper::DetectedTarget target_no_detection;
+        int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
-            target_no_detection.name = "NO DETECTION";
-            target_no_detection.distance = 0;
-
-            target_publisher.publish(target_no_detection);
-        }
-
-        else
+        // to make sure this callback happens after scene_callback  
+        if (num_objects_on_screen != 0 || num_free_objects != 0)
         {
-            int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
             float closest_distance_screen = std::numeric_limits<double>::max();
             float closest_distance_free_object = std::numeric_limits<double>::max();
@@ -110,11 +114,14 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
 
-            //inside/outside check for the screen
-            if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-                || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            //checking for the  boundaries of the screen in Z and X axes to see
+            //if the gazepoint is outside of the screen
+            //3 *screenGap on the bottom because the gap is bigger
+            if ((3) * screenGap > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  - screenGap < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 - screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
             {
-                num_closest_object_on_screen = num_objects_on_screen;
+                num_closest_object_on_screen = num_objects_on_screen; 
+                // the index num_closest_object_on_screen refers to outside -- object named "Outside"
                 closest_distance_screen = std::numeric_limits<double>::max();
             }
 
@@ -143,7 +150,6 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                     num_closest_free_object = i;
                 }
             }
-
             // inside/outside check for the closest free object 
             if (closest_distance_free_object > free_object_radius)
             {
@@ -157,8 +163,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             // {
             // // WHAT IF THE POINT IS OUTSIDE THE SCREEN
             // // do a check to see if the point is inside
-            //     if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
-            //         || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            //     if ((-1)* screenGap > gazepoint.getZ() || screenHeight * sin(screenAngle)  + screenGap < gazepoint.getZ()
+            //         || gazepoint.getX() > screenWidth / 2 + screenGap || gazepoint.getX() < (-1) * screenWidth / 2 - screenGap)
             //     {
             //         num_closest_target = num_objects;
             //     }
@@ -167,13 +173,12 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             // // you should use the head location to estimate whether the kid is looking at the robot
             // else //num_closest_target is the index of the object named robot
             // {
-            //     if (closest_distance > 3 * GAZE_ERROR)
+            //     if (closest_distance > 3 * screenGap)
             //     {
             //         num_closest_target = num_objects;
             //     }
             // }
 
-            clm_ros_wrapper::DetectedTarget detected_target;
 
             if (screen_reference_points_names[num_closest_object_on_screen].compare("OUTSIDE") == 0
                 && free_objects_names[num_closest_free_object].compare("OUTSIDE") == 0)
@@ -196,19 +201,19 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
 
-            target_publisher.publish(detected_target);
+            //target_publisher.publish(detected_target);
             //cout << endl << num_closest_target << endl << endl;
         }
-    }
 
-    else // scene callback not called
-    {
-        clm_ros_wrapper::DetectedTarget detected_target;
+        //clm_ros_wrapper::DetectedTarget detected_target;
 
-        if ((-1)* GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-            || gaze_point_wf.getX() > screenWidth / 2 + GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+        if (num_closest_object_on_screen == num_objects_on_screen) // means the point is outside the screen
         {
             detected_target.region = detected_target.OUTSIDE;
+        }
+        else
+        {
+            detected_target.region = detected_target.SCREEN;
         }
 
         tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
@@ -219,17 +224,17 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         tf::Vector3 diff_robotpos_rand = robot_position_tf-randompoint_on_gazedirection;
 
         //using the formula from the link
-        float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))\
-            /tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
-
-        if (distance > free_object_radius && detected_target.region != detected_target.OUTSIDE)
-        {
-            detected_target.region = detected_target.SCREEN;
-        }
-        else if (distance < free_object_radius)
+        float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))/tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
+        if (distance < free_object_radius)
         {
             detected_target.region = detected_target.ROBOT;
         }
+
+        else if (detected_target.region == detected_target.SCREEN)
+        {
+            detected_target.region = detected_target.SCREEN;
+        }
+
         else
         {
             detected_target.region = detected_target.OUTSIDE;
@@ -280,12 +285,19 @@ int main(int argc, char **argv)
     nh.getParam("screenGap", screenGap);
 
     nh.getParam("robot_radius", free_object_radius);
-
-    // Reading robot position from the parameter server
     
-    nh.getParam("robot_position_wf_1", robot_position_wf_x);
-    nh.getParam("robot_position_wf_2", robot_position_wf_y);
-    nh.getParam("robot_position_wf_3", robot_position_wf_z);
+    std::vector<float> transformation_wf2rf_param_ser;
+
+    nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
+
+    float robot_radius;
+
+    nh.getParam("robot_radius", robot_radius);
+
+    //the last column in transformation matrix correspends to the robot position
+    robot_position_wf_x = transformation_wf2rf_param_ser [3];
+    robot_position_wf_y = transformation_wf2rf_param_ser [7];
+    robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 

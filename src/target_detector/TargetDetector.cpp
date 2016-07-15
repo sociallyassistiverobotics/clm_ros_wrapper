@@ -40,7 +40,6 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <geometry_msgs/Vector3.h> 
 #include <limits>
 
-#define GAZE_ERROR -20
 #define max_num_objects 20
 
 int screenAngleInDegrees; 
@@ -97,10 +96,11 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         clm_ros_wrapper::DetectedTarget detected_target;
         detected_target.certainty = detection_certainty;
 
+        int num_closest_object_on_screen = 0, num_closest_free_object = 0;
+
         // to make sure this callback happens after scene_callback  
         if (num_objects_on_screen != 0 || num_free_objects != 0)
         {
-            int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
             float closest_distance_screen = std::numeric_limits<double>::max();
             float closest_distance_free_object = std::numeric_limits<double>::max();
@@ -115,8 +115,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             }
 
             //inside/outside check for the screen
-            if ((-2) * GAZE_ERROR > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gaze_point_wf.getZ()
-                || gaze_point_wf.getX() > screenWidth / 2 + 3 * GAZE_ERROR || gaze_point_wf.getX() < (-1) * screenWidth / 2 -  GAZE_ERROR)
+            if ((2) * screenGap > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  - screenGap < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 - 3 * screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
             {
                 num_closest_object_on_screen = num_objects_on_screen;
                 closest_distance_screen = std::numeric_limits<double>::max();
@@ -160,8 +160,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             // {
             // // WHAT IF THE POINT IS OUTSIDE THE SCREEN
             // // do a check to see if the point is inside
-            //     if ((-1)* GAZE_ERROR > gazepoint.getZ() || screenHeight * sin(screenAngle)  + GAZE_ERROR < gazepoint.getZ()
-            //         || gazepoint.getX() > screenWidth / 2 + GAZE_ERROR || gazepoint.getX() < (-1) * screenWidth / 2 - GAZE_ERROR)
+            //     if ((-1)* screenGap > gazepoint.getZ() || screenHeight * sin(screenAngle)  + screenGap < gazepoint.getZ()
+            //         || gazepoint.getX() > screenWidth / 2 + screenGap || gazepoint.getX() < (-1) * screenWidth / 2 - screenGap)
             //     {
             //         num_closest_target = num_objects;
             //     }
@@ -170,7 +170,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             // // you should use the head location to estimate whether the kid is looking at the robot
             // else //num_closest_target is the index of the object named robot
             // {
-            //     if (closest_distance > 3 * GAZE_ERROR)
+            //     if (closest_distance > 3 * screenGap)
             //     {
             //         num_closest_target = num_objects;
             //     }

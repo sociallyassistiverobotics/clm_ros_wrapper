@@ -425,8 +425,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             double confidence = 0.5 * (1 - clm_model.detection_certainty);
 
-            cout << "certainty";
-
             ClmHeadMsg ros_head_msg;
             auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
             auto & ros_aus_msg = ros_head_msg.aus;

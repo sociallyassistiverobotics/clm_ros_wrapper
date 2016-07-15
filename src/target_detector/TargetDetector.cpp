@@ -114,11 +114,14 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
 
-            //inside/outside check for the screen
-            if ((2) * screenGap > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  - screenGap < gaze_point_wf.getZ()
-                || gaze_point_wf.getX() > screenWidth / 2 - 3 * screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
+            //checking for the  boundaries of the screen in Z and X axes to see
+            //if the gazepoint is outside of the screen
+            //3 *screenGap on the bottom because the gap is bigger
+            if ((3) * screenGap > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  - screenGap < gaze_point_wf.getZ()
+                || gaze_point_wf.getX() > screenWidth / 2 - screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
             {
-                num_closest_object_on_screen = num_objects_on_screen;
+                num_closest_object_on_screen = num_objects_on_screen; 
+                // the index num_closest_object_on_screen refers to outside -- object named "Outside"
                 closest_distance_screen = std::numeric_limits<double>::max();
             }
 

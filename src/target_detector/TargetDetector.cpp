@@ -117,11 +117,11 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             //checking for the  boundaries of the screen in Z and X axes to see
             //if the gazepoint is outside of the screen
             //3 *screenGap on the bottom because the gap is bigger
-            if ((3) * screenGap > gaze_point_wf.getZ() || screenHeight * sin(screenAngle)  - screenGap < gaze_point_wf.getZ()
+            if ((3) * screenGap * sin(screenAngle) > gaze_point_wf.getZ() || (screenHeight  - screenGap)*sin(screenAngle) < gaze_point_wf.getZ()
                 || gaze_point_wf.getX() > screenWidth / 2 - screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
             {
                 num_closest_object_on_screen = num_objects_on_screen; 
-                // the index num_closest_object_on_screen refers to outside -- object named "Outside"
+                // the index num_closest_object_on_screen refers to outside -- is the object named "Outside"
                 closest_distance_screen = std::numeric_limits<double>::max();
             }
 
@@ -295,6 +295,7 @@ int main(int argc, char **argv)
     nh.getParam("robot_radius", robot_radius);
 
     //the last column in transformation matrix correspends to the robot position
+    //the center of the robot's head
     robot_position_wf_x = transformation_wf2rf_param_ser [3];
     robot_position_wf_y = transformation_wf2rf_param_ser [7];
     robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 

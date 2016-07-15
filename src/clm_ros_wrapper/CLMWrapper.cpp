@@ -830,6 +830,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     verbose = true;
     images_as_video = false;
     webcam = false;
+    use_camera_plane_pose = false;
 
     vector<vector<string> > input_image_files;
 

@@ -177,12 +177,14 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
         head_position_rf_pub.publish(head_position_rf_with_certainty);
 
+
+        //Below is the calculation of the gazepoint
         tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
 
         //storing the locations of the lower corners of screen and the camera 
         //in world frame to establish the space where it sits
-        tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
-        tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3( -1 * screenWidth / 2, 0, 0);
+        tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(-1 * screenWidth / 2, 0, 0);
+        tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
         tf::Vector3 upper_mid__point_of_screen_wf = tf::Vector3(0,cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
 
         // using the Line-Plane intersection formula on Wolfram link: http://mathworld.wolfram.com/Line-PlaneIntersection.html
@@ -200,7 +202,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
             upper_mid__point_of_screen_wf.getY(), lower_right_corner_of_screen_wf.getY(), lower_left_corner_of_screen_wf.getY(), randompoint_on_gazedirection_wf.getY() - headposition_wf.getY(),
             upper_mid__point_of_screen_wf.getZ(), lower_right_corner_of_screen_wf.getZ(), lower_left_corner_of_screen_wf.getZ(), randompoint_on_gazedirection_wf.getZ() - headposition_wf.getZ());
 
-        // following the formula, I calculate t -- check the link
+        // following the formula, I calculate t, which is determinant ratio -- check the link
         double determinant_ratio = (-1) * cv::determinant(matrix1) / cv::determinant(matrix2);
 
         // finally I plug in the determinant ratio (t) to get the intersection point
@@ -216,7 +218,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         headposition_cf = zero_vector;
         hfv_cf = zero_vector;
     }
-    cout << "detection_certainty" << detection_certainty << endl;
+    //cout << "detection_certainty" << detection_certainty << endl;
 }
 
 void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr& msg)

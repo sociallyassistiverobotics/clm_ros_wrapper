@@ -42,6 +42,7 @@ int screenAngleInDegrees;
 float screenWidth;
 float screenHeight;
 float screenAngle;
+string _namespace;
 
 using namespace std;
 using namespace cv;
@@ -234,6 +235,9 @@ int main(int argc, char **argv)
     ros::Subscriber vector_sub;
     ros::NodeHandle nh;
 
+    // namespace
+    nh.getParam("ns", _namespace);
+
     // Screen parameters
     nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
     nh.getParam("screenWidth", screenWidth);
@@ -292,12 +296,12 @@ int main(int argc, char **argv)
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-    gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>("clm_ros_wrapper/gaze_point_and_direction", 1);
+    gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>(_namespace+"/gaze_point_and_direction", 1);
 
-    head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>("clm_ros_wrapper/head_position_rf",1);
+    head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>(_namespace+"/head_position_rf",1);
 
-    headposition_sub = nh.subscribe("/clm_ros_wrapper/head_position", 1, &headposition_callback);
-    vector_sub = nh.subscribe("/clm_ros_wrapper/head_vector", 1, &vector_callback);
+    headposition_sub = nh.subscribe(_namespace+"/head_position", 1, &headposition_callback);
+    vector_sub = nh.subscribe(_namespace+"/head_vector", 1, &vector_callback);
 
     ros::spin();
 }

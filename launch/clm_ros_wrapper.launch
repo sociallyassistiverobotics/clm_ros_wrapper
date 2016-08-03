@@ -1,60 +1,118 @@
-
 <launch>
-  <!-- camera frame to world frame transformation matrix row-major representation-->
-    <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
-    <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
-     <!-- screen parameters - dimensions and angles -->
-    <param name="screenAngleInDegrees" type="int" value="46"/>
-    <param name="screenHeight" type="double" value="380"/> <!-- mm -->
-    <param name="screenWidth" type="double" value="520"/><!-- mm -->
-    <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
+    <group ns="clm_ros_wrapper_1" if="true">
 
-    <!-- world frame to robot frame transformation matrix row-major representation-->
-    <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
+        <!-- camera frame to world frame transformation matrix row-major representation-->
+        <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
+        <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
-    <!-- calibration -->
-    <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
-    <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
+        <!-- screen parameters - dimensions and angles -->
+        <param name="screenAngleInDegrees" type="int" value="46"/>
+        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+        <param name="screenWidth" type="double" value="520"/><!-- mm -->
+        <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
 
-    <!-- robot parameters - radius for inside/outside check-->
-    <param name="robot_radius" type="double" value="220"/> <!-- mm -->
-  <!--<arg name="value" default="0"/>-->
-  <!--<arg name="webcam_num"/>-->
-  <!--<param name ="device" value="$(arg webcam_num)" type="int"/>-->
-  <!--<node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"></node>-->
+        <!-- world frame to robot frame transformation matrix row-major representation-->
+        <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
 
-   <!-- type="int"/> -->
-  
-  <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
-    <param name="video_device" value="/dev/video0" />
-    <param name="image_width" value="1280" /> <!-- 640 -->
-    <param name="image_height" value="720" /> <!-- 480-->
-    <param name="pixel_format" value="yuyv" />
-    <param name="camera_frame_id" value="usb_cam" />
-    <param name="io_method" value="mmap"/>
-  </node>
+        <!-- calibration -->
+        <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
+        <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
 
-  <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
-    <param name="device_test" type="int" value="0"/>
-  </node>
+        <!-- robot parameters - radius for inside/outside check-->
+        <param name="robot_radius" type="double" value="220"/> <!-- mm -->
 
-  <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
-	 <param name ="device_test" type ="int" value="0"/> 
-  </node>
+        <param name="ns" type="string" value="clm_ros_wrapper_1"/>
+        <param name="cam" type="string" value="usb_cam_1"/>
 
- <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-    <remap from="image" to="clm_ros_wrapper/face_image"/>
-    <param name="autosize" value="true" />
-  </node>
+        <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <param name="video_device" value="/dev/video0" />
+            <param name="image_width" value="640" /> <!-- 640 -->
+            <param name="image_height" value="480" /> <!-- 480-->
+            <param name="pixel_format" value="yuyv" />
+            <param name="camera_frame_id" value="usb_cam" />
+            <param name="io_method" value="mmap"/>
+        </node>
 
-  <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
-   <param name="device_test" type="int" value="0"/>
-  
-  </node>
+        <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
 
-  <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
-   <param name="device_test" type="int" value="0"/>
-  </node>
+        <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
+            <param name ="device_test" type ="int" value="0"/> 
+        </node>
+
+        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+            <remap from="image" to="clm_ros_wrapper_1/face_image"/>
+            <param name="autosize" value="true" />
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
+
+    </group>
+
+
+    <group ns="clm_ros_wrapper_2" if="true">
+
+        <!-- camera frame to world frame transformation matrix row-major representation-->
+        <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
+        <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
+
+        <!-- screen parameters - dimensions and angles -->
+        <param name="screenAngleInDegrees" type="int" value="46"/>
+        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+        <param name="screenWidth" type="double" value="520"/><!-- mm -->
+        <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
+
+        <!-- world frame to robot frame transformation matrix row-major representation-->
+        <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam>
+
+        <!-- calibration -->
+        <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
+        <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
+
+        <!-- robot parameters - radius for inside/outside check-->
+        <param name="robot_radius" type="double" value="220"/> <!-- mm -->
+
+        <param name="ns" type="string" value="clm_ros_wrapper_2"/>
+        <param name="cam" type="string" value="usb_cam_2"/>
+
+        <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <param name="video_device" value="/dev/video1" />
+            <param name="image_width" value="640" /> <!-- 640 -->
+            <param name="image_height" value="480" /> <!-- 480-->
+            <param name="pixel_format" value="yuyv" />
+            <param name="camera_frame_id" value="usb_cam" />
+            <param name="io_method" value="mmap"/>
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
+            <param name ="device_test" type ="int" value="0"/> 
+        </node>
+
+        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+            <remap from="image" to="clm_ros_wrapper_2/face_image"/>
+            <param name="autosize" value="true" />
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
+
+        <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
+            <param name="device_test" type="int" value="0"/>
+        </node>
+
+    </group>
 
 </launch>

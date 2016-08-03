@@ -771,22 +771,24 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 {
     ROS_INFO("Called constructor...");
 
+    string _cam = "/usb_cam";
+    nodeHandle.getParam("cam", _cam);
     // raw camera image
-    imageSubscriber = imageTransport.subscribe("/usb_cam/image_raw",1,&ClmWrapper::callback, this);
+    imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);
 
     //current not used
-    headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>("/clm_ros_wrapper/heads",1);
+    headsPublisher  = nodeHandle.advertise<clm_ros_wrapper::ClmHeads>(_name+"/heads",1);
 
     // publisher for the image when a face is detected
-    imagePublisher = imageTransport.advertise("/clm_ros_wrapper/face_image", 1);
+    imagePublisher = imageTransport.advertise(_name+"/face_image", 1);
 
     // publishing the gaze direction estimates
-    hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>("/clm_ros_wrapper/head_vector", 1);
+    hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>(_name+"/head_vector", 1);
 
     // publishing head position in the camera frame
-    head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorWithCertainty>("/clm_ros_wrapper/head_position", 1);
+    head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorWithCertainty>(_name+"/head_position", 1);
 
-    detection_rate_publisher = nodeHandle.advertise<std_msgs::String>("/clm_ros_wrapper/detection_rate", 1);
+    detection_rate_publisher = nodeHandle.advertise<std_msgs::String>(_name+"/detection_rate", 1);
 
     init = true;
 

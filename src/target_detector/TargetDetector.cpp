@@ -47,6 +47,7 @@ float screenWidth;
 float screenHeight;
 float screenAngle;
 float screenGap;
+string _namespace;
 
 
 int num_objects_on_screen, num_free_objects;
@@ -279,6 +280,8 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
 
+    nh.getParam("ns", _namespace);
+
     nh.getParam("screenAngleInDegrees", screenAngleInDegrees);
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
@@ -302,11 +305,11 @@ int main(int argc, char **argv)
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/clm_ros_wrapper/detect_target", 1);
+    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>(_namespace+"/detect_target", 1);
 
-    ros::Subscriber scene = nh.subscribe("/clm_ros_wrapper/scene", 1, &scene_callback);
+    ros::Subscriber scene = nh.subscribe(_namespace+"/scene", 1, &scene_callback);
 
-    ros::Subscriber gazepoint_sub = nh.subscribe("/clm_ros_wrapper/gaze_point_and_direction", 1, &gazepoint_callback);
+    ros::Subscriber gazepoint_sub = nh.subscribe(_namespace+"/gaze_point_and_direction", 1, &gazepoint_callback);
 
     ros::spin();
 }

@@ -46,6 +46,7 @@ int main(int argc, char **argv)
     float screenWidth; 
     float screenHeight;
     float screenGap;
+    string _namespace;
 
     ros::init(argc, argv, "scene_publisher");
     ros::NodeHandle nh;
@@ -59,7 +60,8 @@ int main(int argc, char **argv)
     float display_screen_height = screenHeight - 2 * screenGap;
 
     //publishing the current scene
-    ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/clm_ros_wrapper/scene", 1);
+    nh.getParam("ns", _namespace);
+    ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>(_namespace+"/scene", 1);
 
     clm_ros_wrapper::Scene current_scene;
 

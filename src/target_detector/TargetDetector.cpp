@@ -88,6 +88,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         target_no_detection.name = "NO DETECTION";
         target_no_detection.distance = 0;
+        target_no_detection.region = DetectedTarget.NONE;
 
         target_publisher.publish(target_no_detection);
     }
@@ -307,9 +308,10 @@ int main(int argc, char **argv)
 
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>(_namespace+"/detect_target", 1);
 
+    # TODO: cmhuang: there should be only one scene publisher.
     ros::Subscriber scene = nh.subscribe(_namespace+"/scene", 1, &scene_callback);
 
-    ros::Subscriber gazepoint_sub = nh.subscribe(_namespace+"/gaze_point_and_direction", 1, &gazepoint_callback);
+    ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback);
 
     ros::spin();
 }

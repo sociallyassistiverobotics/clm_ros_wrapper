@@ -180,7 +180,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 
         //Below is the calculation of the gazepoint
-        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 100 * hfv_wf;
+        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 1000 * hfv_wf;
 
         //storing the locations of the lower corners of screen and the camera 
         //in world frame to establish the space where it sits
@@ -208,6 +208,9 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
         // finally I plug in the determinant ratio (t) to get the intersection point
         tf::Vector3 gazepoint_on_screen_wf = headposition_wf + determinant_ratio * (randompoint_on_gazedirection_wf - headposition_wf);
+        //cout << "gaze x = " << gazepoint_on_screen_wf.getX() << endl;
+        //cout << "gaze y = " << gazepoint_on_screen_wf.getY() << endl;
+        //cout << "gaze z = " << gazepoint_on_screen_wf.getZ() << endl;
 
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);

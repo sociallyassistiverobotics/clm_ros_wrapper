@@ -88,7 +88,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         target_no_detection.name = "NO DETECTION";
         target_no_detection.distance = 0;
-        target_no_detection.region = DetectedTarget.NONE;
+        target_no_detection.region = target_no_detection.NONE;
 
         target_publisher.publish(target_no_detection);
     }
@@ -147,8 +147,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 //using the formula from the link
                 // float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
                 //     /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
-                float distance = tf::Vector3.length(diff_freeobj_headpos.cross(diff_freeobj_rand))\
-                    /tf::Vector3.length(randompoint_on_gazedirection - head_position_wf);
+                float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
+                    /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
 
                 if (closest_distance_free_object > distance)
                 {
@@ -193,7 +193,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             {
                 detected_target.name = "OUTSIDE";
                 detected_target.distance = 0.0;
-                detected_target.region = DetectedTarget.OUTSIDE;
+                detected_target.region = detected_target.OUTSIDE;
             }
             else
             {
@@ -202,17 +202,17 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 {
                     detected_target.name = screen_reference_points_names[num_closest_object_on_screen];
                     detected_target.distance = closest_distance_screen;
-                    detected_target.region = DetectedTarget.SCREEN;
+                    detected_target.region = detected_target.SCREEN;
                 }
                 else
                 {
                     detected_target.name = free_objects_names[num_closest_free_object];
                     detected_target.distance = closest_distance_free_object;
                     if(detected_target.name == "robot"){
-                        detected_target.region = DetectedTarget.ROBOT;
+                        detected_target.region = detected_target.ROBOT;
                     }
                     else if(detected_target.name == "parent"){
-                        detected_target.region = DetectedTarget.PARENT;
+                        detected_target.region = detected_target.PARENT;
                     }
                 }
             }

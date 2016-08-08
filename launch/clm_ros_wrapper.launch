@@ -27,6 +27,11 @@
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
         <rosparam param = "transformation_wf2rf">[-0.5963618950757587,0.8027156969323882,0,333.73577291793436,-0.8027156969323882,-0.5963618950757587,0,-92.45340584801052,0,0,1,0,0,0,0,1]</rosparam>
 
+        <!-- screen parameters - dimensions and angles -->
+        <param name="screenAngleInDegrees" type="int" value="46"/>
+        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+        <param name="screenWidth" type="double" value="520"/><!-- mm -->
+
         <!-- calibration -->
         <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
         <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
@@ -74,6 +79,11 @@
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
         <rosparam param = "transformation_wf2rf">[-0.5963618950757587,0.8027156969323882,0,333.73577291793436,-0.8027156969323882,-0.5963618950757587,0,-92.45340584801052,0,0,1,0,0,0,0,1]</rosparam>
+
+        <!-- screen parameters - dimensions and angles -->
+        <param name="screenAngleInDegrees" type="int" value="46"/>
+        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+        <param name="screenWidth" type="double" value="520"/><!-- mm -->
 
         <!-- calibration -->
         <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->

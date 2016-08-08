@@ -105,12 +105,14 @@ int main(int argc, char **argv)
 
     //FREE OBJECTS
 
-    current_scene.num_free_objects = 1;
+    current_scene.num_free_objects = 2;
 
     clm_ros_wrapper::FreeObject free_objects [current_scene.num_free_objects];
 
     free_objects[0].name = "robot";
+    free_objects[1].name = "parent";
     
+    // free object -- robot
     // Reading robot position from the parameter server
     float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
@@ -126,13 +128,19 @@ int main(int argc, char **argv)
     robot_position_wf_y = transformation_wf2rf_param_ser [7];
     robot_position_wf_z = transformation_wf2rf_param_ser [11] + 225; // 22.5 cm above the center of the robot
 
-    tf::Vector3 position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
+    tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 
     geometry_msgs::Vector3 position_msg;
 
-    tf::vector3TFToMsg(position_tf, position_msg);
+    tf::vector3TFToMsg(robot_position_tf, position_msg);
 
     free_objects[0].position = position_msg;
+
+    // free object -- parent
+    // TODO: should be tracking the parent to obtain his/her position
+    tf::Vector3 parent_position_tf = tf::Vector3(200, -450, 450); // virtual human
+    tf::vector3TFToMsg(parent_position_tf, position_msg);
+    free_objects[1].position = position_msg;
 
     // pushing the free objects back to the free_objects component of the scene message
     for (int i = 0; i < current_scene.num_free_objects; i++)

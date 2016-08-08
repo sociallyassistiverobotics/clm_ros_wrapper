@@ -100,6 +100,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
+        // TODO: cmhuang: change this..
         // to make sure this callback happens after scene_callback  
         if (num_objects_on_screen != 0 || num_free_objects != 0)
         {
@@ -107,6 +108,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             float closest_distance_screen = std::numeric_limits<double>::max();
             float closest_distance_free_object = std::numeric_limits<double>::max();
 
+            // find the closet object displayed on the screen
             for (int i = 0; i<num_objects_on_screen; i++)
             {
                 if (closest_distance_screen > gaze_point_wf.distance(screen_reference_points_wf[i]))
@@ -132,7 +134,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             // Explanation:
             // X_1: head_position_wf, X_2:randompoint_on_gazedirection X_0:free object's position
 
-            tf::Vector3 randompoint_on_gazedirection = head_position_wf + 100 * hfv_wf;
+            tf::Vector3 randompoint_on_gazedirection = head_position_wf + 1000 * hfv_wf;
 
             //dummy zero vector because the function length is defined for quaternions only ???
             tf::Vector3 zero_vector = tf::Vector3(0,0,0);
@@ -143,8 +145,10 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 tf::Vector3 diff_freeobj_rand = free_objects_positions[i]-randompoint_on_gazedirection;
 
                 //using the formula from the link
-                float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
-                    /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
+                // float distance = zero_vector.distance(diff_freeobj_headpos.cross(diff_freeobj_rand))\
+                //     /zero_vector.distance(randompoint_on_gazedirection - head_position_wf);
+                float distance = tf::Vector3.length(diff_freeobj_headpos.cross(diff_freeobj_rand))\
+                    /tf::Vector3.length(randompoint_on_gazedirection - head_position_wf);
 
                 if (closest_distance_free_object > distance)
                 {
@@ -153,6 +157,8 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 }
             }
             // inside/outside check for the closest free object 
+            // free_object_radius is the robot radius
+            // TODO: change this parameter
             if (closest_distance_free_object > free_object_radius)
             {
                 num_closest_free_object = num_free_objects;
@@ -187,6 +193,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             {
                 detected_target.name = "OUTSIDE";
                 detected_target.distance = 0.0;
+                detected_target.region = DetectedTarget.OUTSIDE;
             }
             else
             {
@@ -195,11 +202,18 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                 {
                     detected_target.name = screen_reference_points_names[num_closest_object_on_screen];
                     detected_target.distance = closest_distance_screen;
+                    detected_target.region = DetectedTarget.SCREEN;
                 }
                 else
                 {
                     detected_target.name = free_objects_names[num_closest_free_object];
                     detected_target.distance = closest_distance_free_object;
+                    if(detected_target.name == "robot"){
+                        detected_target.region = DetectedTarget.ROBOT;
+                    }
+                    else if(detected_target.name == "parent"){
+                        detected_target.region = DetectedTarget.PARENT;
+                    }
                 }
             }
 
@@ -209,38 +223,40 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 
         //clm_ros_wrapper::DetectedTarget detected_target;
 
-        if (num_closest_object_on_screen == num_objects_on_screen) // means the point is outside the screen
-        {
-            detected_target.region = detected_target.OUTSIDE;
-        }
-        else
-        {
-            detected_target.region = detected_target.SCREEN;
-        }
+        // if (num_closest_object_on_screen == num_objects_on_screen) // means the point is outside the screen
+        // {
+        //     detected_target.region = detected_target.OUTSIDE;
+        // }
+        // else
+        // {
+        //     detected_target.region = detected_target.SCREEN;
+        // }
 
-        tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
+        // TODO: the robot position should come from the scene publisher?
+        // cmhuang: I do not know why we need the following code
+        // tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 
-        tf::Vector3 randompoint_on_gazedirection = head_position_wf + 100 * hfv_wf;
+        // tf::Vector3 randompoint_on_gazedirection = head_position_wf + 1000 * hfv_wf;
 
-        tf::Vector3 diff_robotpos_headpos = robot_position_tf-head_position_wf;
-        tf::Vector3 diff_robotpos_rand = robot_position_tf-randompoint_on_gazedirection;
+        // tf::Vector3 diff_robotpos_headpos = robot_position_tf-head_position_wf;
+        // tf::Vector3 diff_robotpos_rand = robot_position_tf-randompoint_on_gazedirection;
 
-        //using the formula from the link
-        float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))/tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
-        if (distance < free_object_radius)
-        {
-            detected_target.region = detected_target.ROBOT;
-        }
+        // //using the formula from the link
+        // float distance = tf::Vector3(0,0,0).distance(diff_robotpos_headpos.cross(diff_robotpos_rand))/tf::Vector3(0,0,0).distance(randompoint_on_gazedirection - head_position_wf);
+        // if (distance < free_object_radius)
+        // {
+        //     detected_target.region = detected_target.ROBOT;
+        // }
 
-        else if (detected_target.region == detected_target.SCREEN)
-        {
-            detected_target.region = detected_target.SCREEN;
-        }
+        // else if (detected_target.region == detected_target.SCREEN)
+        // {
+        //     detected_target.region = detected_target.SCREEN;
+        // }
 
-        else
-        {
-            detected_target.region = detected_target.OUTSIDE;
-        }
+        // else
+        // {
+        //     detected_target.region = detected_target.OUTSIDE;
+        // }
 
         target_publisher.publish(detected_target);
     }
@@ -306,6 +322,7 @@ int main(int argc, char **argv)
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
+    # TODO: cmhuang: there should be only on target detector
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>(_namespace+"/detect_target", 1);
 
     # TODO: cmhuang: there should be only one scene publisher.

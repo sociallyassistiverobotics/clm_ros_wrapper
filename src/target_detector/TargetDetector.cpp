@@ -303,30 +303,23 @@ int main(int argc, char **argv)
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
     nh.getParam("screenGap", screenGap);
-
-    nh.getParam("robot_radius", free_object_radius);
     
     std::vector<float> transformation_wf2rf_param_ser;
 
     nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
 
-    float robot_radius;
+    float robot_radius = robot_position_wf_z;
+    free_object_radius = robot_radius; // TODO: need to change this parameter
 
-    nh.getParam("robot_radius", robot_radius);
-
-    //the last column in transformation matrix correspends to the robot position
-    //the center of the robot's head
-    robot_position_wf_x = transformation_wf2rf_param_ser [3];
-    robot_position_wf_y = transformation_wf2rf_param_ser [7];
-    robot_position_wf_z = transformation_wf2rf_param_ser [11] + robot_radius; 
+    nh.getParam("robot_x_wf", robot_position_wf_x);
+    nh.getParam("robot_y_wf", robot_position_wf_y);
+    nh.getParam("robot_z_wf", robot_position_wf_z);
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-    # TODO: cmhuang: there should be only on target detector
-    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>(_namespace+"/detect_target", 1);
+    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
-    # TODO: cmhuang: there should be only one scene publisher.
-    ros::Subscriber scene = nh.subscribe(_namespace+"/scene", 1, &scene_callback);
+    ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback);
 

@@ -60,8 +60,8 @@ int main(int argc, char **argv)
     float display_screen_height = screenHeight - 2 * screenGap;
 
     //publishing the current scene
-    nh.getParam("ns", _namespace);
-    ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>(_namespace+"/scene", 1);
+    //nh.getParam("ns", _namespace);
+    ros::Publisher scene_publisher = nh.advertise<clm_ros_wrapper::Scene>("/sar/perception/scene", 1);
 
     clm_ros_wrapper::Scene current_scene;
 
@@ -118,15 +118,9 @@ int main(int argc, char **argv)
 
     std::vector<float> transformation_wf2rf_param_ser;
 
-    nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
-
-    float robot_radius;
-
-    nh.getParam("robot_radius", robot_radius);
-
-    robot_position_wf_x = transformation_wf2rf_param_ser [3];
-    robot_position_wf_y = transformation_wf2rf_param_ser [7];
-    robot_position_wf_z = transformation_wf2rf_param_ser [11] + 225; // 22.5 cm above the center of the robot
+    nh.getParam("robot_x_wf", robot_position_wf_x);
+    nh.getParam("robot_y_wf", robot_position_wf_y);
+    nh.getParam("robot_z_wf", robot_position_wf_z);
 
     tf::Vector3 robot_position_tf = tf::Vector3(robot_position_wf_x, robot_position_wf_y, robot_position_wf_z);
 

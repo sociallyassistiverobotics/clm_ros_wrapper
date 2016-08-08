@@ -1,5 +1,19 @@
 <launch>
 
+    <!-- screen parameters - dimensions and angles -->
+        <param name="screenAngleInDegrees" type="int" value="46"/>
+        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+        <param name="screenWidth" type="double" value="520"/><!-- mm -->
+        <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
+
+    <param name="robot_x_wf" type="double" value="340"/> <!-- mm -->
+    <param name="robot_y_wf" type="double" value="-100"/> <!-- mm -->
+    <param name="robot_z_wf" type="double" value="225"/> <!-- mm -->
+
+    <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
+        <param name="device_test" type="int" value="0"/>
+    </node>
+
     <group ns="/sar/perception/right_cam" if="true">
 
         <!-- camera frame to world frame transformation matrix row-major representation-->
@@ -8,12 +22,6 @@
 
         <rosparam param = "transformation_cf2intermediate_frame">[-0.9055381,0,-0.42426495, 340.0,0.42426495,0,-0.9055381,385.0,0,-1,0,299.0,0,0,0,1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[0.8835728999694735,-0.468293636983821,0,0,0.468293636983821,0.8835728999694735,0,0,0,0,1,0,0,0,0,1]</rosparam>
-
-        <!-- screen parameters - dimensions and angles -->
-        <param name="screenAngleInDegrees" type="int" value="46"/>
-        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
-        <param name="screenWidth" type="double" value="520"/><!-- mm -->
-        <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
@@ -38,9 +46,6 @@
             <param name="io_method" value="mmap"/>
         </node>
 
-        <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
-            <param name="device_test" type="int" value="0"/>
-        </node>
 
         <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
             <param name ="device_test" type ="int" value="0"/> 
@@ -55,10 +60,6 @@
             <param name="device_test" type="int" value="0"/>
         </node>
 
-        <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
-            <param name="device_test" type="int" value="0"/>
-        </node>
-
     </group>
 
 
@@ -69,12 +70,6 @@
         <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
         <rosparam param = "transformation_cf2intermediate_frame">[-1,0,0,-75.0,0,0,-1,385.0,0,-1,0,384.0,0,0,0,1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[0.8835728999694735,-0.468293636983821,0,0,0.468293636983821,0.8835728999694735,0,0,0,0,1,0,0,0,0,1]</rosparam>
-
-        <!-- screen parameters - dimensions and angles -->
-        <param name="screenAngleInDegrees" type="int" value="46"/>
-        <param name="screenHeight" type="double" value="380"/> <!-- mm -->
-        <param name="screenWidth" type="double" value="520"/><!-- mm -->
-        <param name="screenGap" type="double" value="20"/><!-- border margin of the screen, mm -->
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
@@ -99,9 +94,9 @@
             <param name="io_method" value="mmap"/>
         </node>
 
-        <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
+        <!-- <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
             <param name="device_test" type="int" value="0"/>
-        </node>
+        </node> -->
 
         <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
             <param name ="device_test" type ="int" value="0"/> 
@@ -116,10 +111,14 @@
             <param name="device_test" type="int" value="0"/>
         </node>
 
-        <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
+        <!-- <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
             <param name="device_test" type="int" value="0"/>
-        </node>
+        </node> -->
 
     </group>
+
+    <node pkg="clm_ros_wrapper" type="target_detector" name="target_detector" output="screen"> 
+        <param name="device_test" type="int" value="0"/>
+    </node>
 
 </launch>

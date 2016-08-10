@@ -574,13 +574,14 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // used to check if a face is detected in this iteration    
     int faceDetected = 0;
+    double detection_certainty = 0.0;
 
     // Go through every model and visualise the results
     for(size_t model = 0; model < clm_models.size(); ++model)
     {           
         // Draw the facial landmarks on the face and the bounding box around it
         // if tracking is successful and initialized
-        double detection_certainty = clm_models[model].detection_certainty;
+        detection_certainty = clm_models[model].detection_certainty;
         global_detection_certainty = detection_certainty;
         double visualisation_boundary = -0.1;
         // Only draw if the reliability is reasonable, the value is slightly ad-hoc
@@ -643,7 +644,14 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     sprintf(active_m_C, "%d", num_active_models);
     string active_models_st("Active models:");
     active_models_st += active_m_C;
-    cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));   
+    cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
+
+    // displaying tracking certainty
+    char certainty_C[255];
+    sprintf(certainty_C, "%f", 1-detection_certainty);
+    string certainty_st("Certainty: ");
+    certainty_st += certainty_C;
+    cv::putText(disp_image, certainty_st, cv::Point(10,100), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
     if (faceDetected)
     {

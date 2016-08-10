@@ -362,18 +362,19 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             } 
 
             // Gaze tracking, absolute gaze direction
-            Point3f gazeDirection0;
-            Point3f gazeDirection1;
+            //Point3f gazeDirection0;
+            //Point3f gazeDirection1;
 
             // Gaze with respect to head rather than camera (for example if eyes are rolled up and the head is tilted or turned this will be stable)
-            Point3f gazeDirection0_head;
-            Point3f gazeDirection1_head;
+            //Point3f gazeDirection0_head;
+            //Point3f gazeDirection1_head;
 
             if (clm_parameters[model].track_gaze && detection_success)
             {
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection0, gazeDirection0_head, fx, fy, cx, cy, true);
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
             }
+            
             // Do face alignment
             //Mat sim_warped_img;     
             //Mat_<double> hog_descriptor;
@@ -607,6 +608,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             CLMTracker::DrawBox(disp_image, pose_estimate_CLM, Scalar((1-detection_certainty)*255.0,0,
 
                 detection_certainty*255), thickness, fx, fy, cx, cy);
+
+            FaceAnalysis::DrawGaze(disp_image, clm_models[model], gazeDirection0, gazeDirection1, fx, fy, cx, cy);
 
             // cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
             // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]

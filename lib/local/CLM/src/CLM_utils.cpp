@@ -1068,8 +1068,10 @@ void Draw(cv::Mat img, const Mat_<double>& shape2D, const Mat_<int>& visibilitie
 				next_point = 20;
 
 			Point nextFeaturePoint((int)shape2D.at<double>(next_point), (int)shape2D.at<double>(next_point+n));
-			if( i < 8 || i > 19)
+			if( i < 8 || i > 19){
+                                //drawing pupil and iris
 				cv::line(img, featurePoint, nextFeaturePoint, Scalar(255, 0, 0), thickness_2);
+                        }
 			else
 				cv::line(img, featurePoint, nextFeaturePoint, Scalar(0, 0, 255), thickness_2);
 
@@ -1149,6 +1151,7 @@ void Draw(cv::Mat img, const CLM& clm_model)
 	Draw(img, clm_model.detected_landmarks, clm_model.patch_experts.visibilities[0][idx]);
 
 	// If the model has hierarchical updates draw those too
+        // drawing eyes: iris and pupil
 	for(size_t i = 0; i < clm_model.hierarchical_models.size(); ++i)
 	{
 		if(clm_model.hierarchical_models[i].pdm.NumberOfPoints() != clm_model.hierarchical_mapping[i].size())

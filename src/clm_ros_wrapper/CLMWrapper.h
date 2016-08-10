@@ -59,6 +59,9 @@ private:
      // publishing head position in the camera frame
     ros::Publisher head_position_publisher;
 
+    // publishing eye gaze
+    ros::Publisher eye_gaze_publisher;
+
     ros::Publisher detection_rate_publisher;
 
     int f_n;

@@ -496,8 +496,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 ros_eyegaze_msg.gaze_direction_headref_y = static_cast<float>( gazeDirections_head[p].y );
                 ros_eyegaze_msg.gaze_direction_headref_z = static_cast<float>( gazeDirections_head[p].z );
                 ros_eyegazes_msg.emplace_back( std::move( ros_eyegaze_msg ) );
+                eye_gaze_publisher.publish(ros_eyegaze_msg);
             }
-
             //eyesMsgPublisher.publish(ros_eyegaze_msg);
             //AU01_r, AU04_r, AU06_r, AU10_r, AU12_r, AU14_r, AU17_r, AU25_r, AU02_r, AU05_r,
             //AU09_r, AU15_r, AU20_r, AU26_r, AU12_c, AU23_c, AU28_c, AU04_c, AU15_c, AU45_c
@@ -790,6 +790,9 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     detection_rate_publisher = nodeHandle.advertise<std_msgs::String>(_name+"/detection_rate", 1);
 
+    // publishing eye gaze
+    eye_gaze_publisher = nodeHandle.advertise<clm_ros_wrapper::ClmEyeGaze>(_name+"/eye_gaze", 1);
+
     init = true;
 
     // code to start a window   
@@ -819,7 +822,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     clm_params.curr_face_detector = CLMTracker::CLMParameters::HOG_SVM_DETECTOR;
 
     // TODO a command line argument
-    clm_params.track_gaze = false;
+    clm_params.track_gaze = true;
 
     //vector<CLMTracker::CLMParameters> clm_parameters;
     clm_parameters.push_back(clm_params);    
@@ -929,20 +932,19 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     //vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
     int num_faces_max = 1;
-
     CLMTracker::CLM clm_model2(clm_parameters[0].model_location);
-    clm_model = clm_model2;
-    clm_model.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
-    clm_model.face_detector_location = clm_parameters[0].face_detector_location;
+    //clm_model = clm_model2; //cmhuang: problematic...
+    clm_model2.face_detector_HAAR.load(clm_parameters[0].face_detector_location);
+    clm_model2.face_detector_location = clm_parameters[0].face_detector_location;
 
     // Will warp to scaled mean shape
-    Mat_<double> similarity_normalised_shape = clm_model.pdm.mean_shape * sim_scale;
+    Mat_<double> similarity_normalised_shape = clm_model2.pdm.mean_shape * sim_scale;
     // Discard the z component
     similarity_normalised_shape = similarity_normalised_shape(Rect(0, 0, 1, 2*similarity_normalised_shape.rows/3)).clone();
 
     clm_models.reserve(num_faces_max);
 
-    clm_models.push_back(clm_model);
+    clm_models.push_back(clm_model2);
     active_models.push_back(false);
     face_analysers.push_back(face_analyser);
 

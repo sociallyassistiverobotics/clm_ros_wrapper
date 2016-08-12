@@ -479,6 +479,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             tf::vector3TFToMsg(hfv_cf, hfv_cf_msg);
 
             tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
+            //tf::Vector3 headposition_cf = tf::Vector3(0, -60 , 450);
 
             //converting to type geometry_msgs::Vector3 and overwriting headposition_cf_msg
             tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);

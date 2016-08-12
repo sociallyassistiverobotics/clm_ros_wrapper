@@ -144,10 +144,9 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // tf::Transform transfrom_cf2wf = tf::Transform(rotation_matrix_cf2wf, translation_vector_cf2wf);
 
         cv::Matx<float,4,4> transformation_matrix_cf2wf = transformation_cf2intermediate_frame * transformation_intermediate_frame2wf;
-
+        //cout << transformation_matrix_cf2wf << endl;
         tf::Vector3 hfv_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(hfv_cf, 0)));
         //cout << vector3_tf2cv(hfv_cf, 0) << endl;
-
 
         // correcting the Z element of the head fixation vector from CLM
         hfv_wf.setZ(hfv_wf.getZ() + offset_hfv_wf_z);
@@ -159,13 +158,19 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // /headposition_cf = tf::Vector3(0,0,500);
 
         // adding the box size offset_head_position_cf_z
-        headposition_cf = headposition_cf + tf::Vector3(0,0,offset_head_position_cf_z);
+        //headposition_cf = headposition_cf + tf::Vector3(0,0,offset_head_position_cf_z);
 
         cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf * (vector3_tf2cv(headposition_cf, 1));
         tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
+        // cout << "hp wf X = " << headposition_wf.getX() << endl;
+        // cout << "hp wf Y = " << headposition_wf.getY() << endl;
+        // cout << "hp wf Z = " << headposition_wf.getZ() << endl;
 
         //head position robot frame
         tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf*vector3_tf2cv(headposition_wf, 1));
+        // cout << "hp rf X = " << head_position_rf.getX() << endl;
+        // cout << "hp rf Y = " << head_position_rf.getY() << endl;
+        // cout << "hp rf Z = " << head_position_rf.getZ() << endl;
 
         //publishing the head position in the robot frame
         clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
@@ -180,13 +185,28 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
 
         //Below is the calculation of the gazepoint
-        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 1000 * hfv_wf;
+        tf::Vector3 randompoint_on_gazedirection_wf = headposition_wf + 500 * hfv_wf;
+        // cout << "hfv wf X = " << hfv_wf.getX() << endl;
+        // cout << "hfv wf Y = " << hfv_wf.getY() << endl;
+        // cout << "hfv wf Z = " << hfv_wf.getZ() << endl;
+
+        //hacky way
+        if((hfv_wf.getX() <= 0.3) && (hfv_wf.getX() >= -0.2) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
+            cout << "SCREEN" << endl;
+        }
+        else if((hfv_wf.getX() <= 0.5) && (hfv_wf.getX() >= 0.4) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
+            cout << "ROBOT" << endl;
+        }
+        else {
+            cout << "out side" << endl;
+        }
+
 
         //storing the locations of the lower corners of screen and the camera 
         //in world frame to establish the space where it sits
-        tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(-1 * screenWidth / 2, 0, 0);
-        tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3(screenWidth / 2, 0, 0);
-        tf::Vector3 upper_mid__point_of_screen_wf = tf::Vector3(0,cos(screenAngle) * screenHeight, sin(screenAngle) * screenHeight);
+        tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(145, 25, 0);
+        tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3(452, 188, 0);
+        tf::Vector3 upper_mid__point_of_screen_wf = tf::Vector3(50,25,50);
 
         // using the Line-Plane intersection formula on Wolfram link: http://mathworld.wolfram.com/Line-PlaneIntersection.html
         // ALL CALCULATIONS ARE MADE IN WORLD FRAME
@@ -208,10 +228,11 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
         // finally I plug in the determinant ratio (t) to get the intersection point
         tf::Vector3 gazepoint_on_screen_wf = headposition_wf + determinant_ratio * (randompoint_on_gazedirection_wf - headposition_wf);
-        //cout << "gaze x = " << gazepoint_on_screen_wf.getX() << endl;
-        //cout << "gaze y = " << gazepoint_on_screen_wf.getY() << endl;
-        //cout << "gaze z = " << gazepoint_on_screen_wf.getZ() << endl;
+        // cout << "gaze x = " << gazepoint_on_screen_wf.getX() << endl;
+        // cout << "gaze y = " << gazepoint_on_screen_wf.getY() << endl;
+        // cout << "gaze z = " << gazepoint_on_screen_wf.getZ() << endl;
 
+        
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);

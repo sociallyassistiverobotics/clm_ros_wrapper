@@ -161,11 +161,11 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // adding the box size offset_head_position_cf_z
         headposition_cf = headposition_cf + tf::Vector3(0,0,offset_head_position_cf_z);
 
-        cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf.inv() * (vector3_tf2cv(headposition_cf, 1));
+        cv::Matx<float, 4, 1> headposition_wf_cv = transformation_matrix_cf2wf * (vector3_tf2cv(headposition_cf, 1));
         tf::Vector3 headposition_wf = vector3_cv2tf(headposition_wf_cv);
 
         //head position robot frame
-        tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf.inv()*vector3_tf2cv(headposition_wf, 1));
+        tf::Vector3 head_position_rf = vector3_cv2tf(transformation_wf2rf*vector3_tf2cv(headposition_wf, 1));
 
         //publishing the head position in the robot frame
         clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;

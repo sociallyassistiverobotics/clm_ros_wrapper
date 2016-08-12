@@ -20,12 +20,13 @@
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
 
-        <rosparam param = "transformation_cf2intermediate_frame">[-0.9055381,0,-0.42426495, 340.0,0.42426495,0,-0.9055381,385.0,0,-1,0,299.0,0,0,0,1]</rosparam>
-        <rosparam param = "transformation_intermediate_frame2wf">[0.8835728999694735,-0.468293636983821,0,0,0.468293636983821,0.8835728999694735,0,0,0,0,1,0,0,0,0,1]</rosparam>
+        <rosparam param = "transformation_cf2intermediate_frame">[-0.90956,0,-0.41557, 620.0,0.4155715,0,-0.90956,410.0,0,-1,0,400.0,0,0,0,1]</rosparam>
+        <rosparam param = "transformation_intermediate_frame2wf">[-1,0,0,0.0,0,0,-1,0.0,0,-1,0,0.0,0,0,0,1]</rosparam>
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
-        <rosparam param = "transformation_wf2rf">[-0.5963618950757587,0.8027156969323882,0,333.73577291793436,-0.8027156969323882,-0.5963618950757587,0,-92.45340584801052,0,0,1,0,0,0,0,1]</rosparam>
+        
+        <rosparam param = "transformation_wf2rf">[0.5178066899835262, 0.855497651550432, 0, 300, -0.855497651550432, 0.5178066899835262, 0, -590, 0, 0, 1, 0, 0, 0, 0, 1]</rosparam>
 
         <!-- screen parameters - dimensions and angles -->
         <param name="screenAngleInDegrees" type="int" value="46"/>
@@ -68,17 +69,19 @@
     </group>
 
 
-    <group ns="/sar/perception/left_cam" if="false">
+    <group ns="/sar/perception/left_cam" if="true">
 
         <!-- camera frame to world frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
-        <rosparam param = "transformation_cf2intermediate_frame">[-1,0,0,-75.0,0,0,-1,385.0,0,-1,0,384.0,0,0,0,1]</rosparam>
-        <rosparam param = "transformation_intermediate_frame2wf">[0.8835728999694735,-0.468293636983821,0,0,0.468293636983821,0.8835728999694735,0,0,0,0,1,0,0,0,0,1]</rosparam>
+        
+        <rosparam param = "transformation_cf2intermediate_frame">[-0.87274451, 0, 0.48817725,220, -0.48817725, 0, -0.87274451, 500, 0, -1, 0, 400,0,0,0,1]</rosparam>
+        <rosparam param = "transformation_intermediate_frame2wf">[-1,0,0,0.0,0,0,-1,0.0,0,-1,0,0.0,0,0,0,1]</rosparam>
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
-        <rosparam param = "transformation_wf2rf">[-0.5963618950757587,0.8027156969323882,0,333.73577291793436,-0.8027156969323882,-0.5963618950757587,0,-92.45340584801052,0,0,1,0,0,0,0,1]</rosparam>
+        
+        <rosparam param = "transformation_wf2rf">[0.5178066899835262, 0.855497651550432, 0, 300, -0.855497651550432, 0.5178066899835262, 0, -590, 0, 0, 1, 0, 0, 0, 0, 1]</rosparam>
 
         <!-- screen parameters - dimensions and angles -->
         <param name="screenAngleInDegrees" type="int" value="46"/>

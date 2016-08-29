@@ -34,6 +34,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <filesystem/fstream.hpp>
 
 #include <math.h>
+#include <vector>
 
 #include <tf/transform_datatypes.h>
 
@@ -68,96 +69,59 @@ float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
 ros::Publisher target_publisher;
 
+// a set of virtual targets in wf (mm)
+vector<tf::Vector3> virtual_targets;
+tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
+tf::Vector3 virtual_screen_top_left = tf::Vector3(0,250,300);
+tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
+tf::Vector3 virtual_screen_bottom_left = tf::Vector3(100,100,130);
+tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
+tf::Vector3 virtual_robot_top = tf::Vector3(640,170,300);
+tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
+tf::Vector3 virtual_parent = tf::Vector3(750,-300,400);
+virtual_targets.push_back(virtual_screen_center);
+virtual_targets.push_back(virtual_screen_top_left);
+virtual_targets.push_back(virtual_screen_top_right);
+virtual_targets.push_back(virtual_screen_bottom_left);
+virtual_targets.push_back(virtual_screen_bottom_right);
+virtual_targets.push_back(virtual_robot_top);
+virtual_targets.push_back(virtual_robot_bottom);
+virtual_targets.push_back(virtual_parent);
+
 using namespace std;
 
-bool is_point_inside_cone(tf::Vector3 top_point, tf::Vector3 direction_vec, float height, float radian, tf::Vector3 test_point)
-{
-    // check 1: distance to line is greater than radius of the cone
-    // http://math.harvard.edu/~ytzeng/worksheet/distance.pdf
-    tf::Vector3 p = test_point;
-    tf::Vector3 q = top_point;
-    tf::Vector3 pq = p - q;
-    float cross_value = (pq.cross(direction_vec)).length();
-    float unit_vec_length = direction_vec.length();
-    float d = cross_value / unit_vec_length;
-    float r = height * tan(radian);
-    if(d > r) return false;
-
-    // check 2: the projected point is inside the directional line
-    // http://stackoverflow.com/questions/17581738/check-if-a-point-projected-on-a-line-segment-is-not-outside-it
-    tf::Vector3 bottom_point = top_point + height * direction_vec;
-    tf::Vector3 attention_directional_line = bottom_point - top_point;
-    //tf::Vector3 pq = p - q;
-    double innerProduct = pq.dot(attention_directional_line);
-    bool inside_line = (0 <= innerProduct && innerProduct <= attention_directional_line.dot(attention_directional_line));
-    if(inside_line == false) return false;
-
-    // check 3: distance to line is within the cone triangle
-    double d_prime = innerProduct / attention_directional_line.length();
-    double r_prime = d_prime * tan(radian);
-    if(d > r_prime) return false;
-    return true;
-}
-
-float my_dot_product(tf::Vector3 a, tf::Vector3 b)
+float my_dot_product(tf::Vector3 a, tf::Vector3 b)// should be the same as dot
 {
     return a.getX()*b.getX() + a.getY()*b.getY() + a.getZ()*b.getZ();
 }
 
-float my_vec_magn(tf::Vector3 v)
+float my_vec_magn(tf::Vector3 v)// should be the same as length
 {
     return  sqrt(v.getX()*v.getX() + v.getY()*v.getY() + v.getZ()*v.getZ());
 }
 
-tf::Vector3 my_scaling_vec(float scaler, tf::Vector3 v)
+tf::Vector3 my_scaling_vec(float scaler, tf::Vector3 v)// should be the same as *
 {
     return tf::Vector3(v.getX()*scaler, v.getY()*scaler, v.getZ()*scaler);
 }
 
-bool is_point_inside_cone2(tf::Vector3 top_point, tf::Vector3 direction_vec, float height, float radian, tf::Vector3 test_point)
+bool is_point_inside_cone(tf::Vector3 top_point, tf::Vector3 direction_vec, float height, float radian, tf::Vector3 test_point)
 {
+    // http://stackoverflow.com/questions/10768142/verify-if-point-is-inside-a-cone-in-3d-space
     // check 1:
     bool is_in_infinite_cone = false;
     tf::Vector3 apex_to_point = test_point - top_point;
     tf::Vector3 apex_to_bottom = my_scaling_vec(height, direction_vec);
     double cos_point_angle = my_dot_product(apex_to_point, apex_to_bottom)/my_vec_magn(apex_to_point)/my_vec_magn(apex_to_bottom);
-    is_in_infinite_cone = (cos_point_angle > cos(0.261799));//15 degrees in radian
+    is_in_infinite_cone = (cos_point_angle > cos(radian/2.0));//15 degrees in radian: 0.261799
     if(!is_in_infinite_cone) return false;
 
     //check 2:
     bool is_under_round_cap = false;
     double projected_h = my_dot_product(apex_to_point, apex_to_bottom)/my_vec_magn(apex_to_bottom);
     is_under_round_cap = (projected_h < my_vec_magn(apex_to_bottom));
-    
+
     return is_under_round_cap;
-
-
-    /////////
-    // check 1: distance to line is greater than radius of the cone
-    // http://math.harvard.edu/~ytzeng/worksheet/distance.pdf
-    tf::Vector3 p = test_point;
-    tf::Vector3 q = top_point;
-    tf::Vector3 pq = p - q;
-    float cross_value = (pq.cross(direction_vec)).length();
-    float unit_vec_length = direction_vec.length();
-    float d = cross_value / unit_vec_length;
-    float r = height * tan(radian);
-    if(d > r) return false;
-
-    // check 2: the projected point is inside the directional line
-    // http://stackoverflow.com/questions/17581738/check-if-a-point-projected-on-a-line-segment-is-not-outside-it
-    tf::Vector3 bottom_point = top_point + height * direction_vec;
-    tf::Vector3 attention_directional_line = bottom_point - top_point;
-    //tf::Vector3 pq = p - q;
-    double innerProduct = pq.dot(attention_directional_line);
-    bool inside_line = (0 <= innerProduct && innerProduct <= attention_directional_line.dot(attention_directional_line));
-    if(inside_line == false) return false;
-
-    // check 3: distance to line is within the cone triangle
-    double d_prime = innerProduct / attention_directional_line.length();
-    double r_prime = d_prime * tan(radian);
-    if(d > r_prime) return false;
-    return true;
 }
 
 void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
@@ -374,48 +338,112 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
 
         target_publisher.publish(target_no_detection);
     }
-
     else
     {
         clm_ros_wrapper::DetectedTarget detected_target;
         detected_target.certainty = detection_certainty;
 
-        tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
-        tf::Vector3 virtual_screen_top_left = tf::Vector3(0,250,300);
-        tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
-        tf::Vector3 virtual_screen_bottom_left = tf::Vector3(100,100,130);
-        tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
-        tf::Vector3 virtual_robot_top = tf::Vector3(640,170,300);
-        tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
-        tf::Vector3 virtual_parent = tf::Vector3(750,-300,400);
+        // a set of virtual targets in wf (mm)
+        // vector<tf::Vector3> virtual_targets;
+        // tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
+        // tf::Vector3 virtual_screen_top_left = tf::Vector3(0,250,300);
+        // tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
+        // tf::Vector3 virtual_screen_bottom_left = tf::Vector3(100,100,130);
+        // tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
+        // tf::Vector3 virtual_robot_top = tf::Vector3(640,170,300);
+        // tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
+        // tf::Vector3 virtual_parent = tf::Vector3(750,-300,400);
+        // virtual_targets.push_back(virtual_screen_center);
+        // virtual_targets.push_back(virtual_screen_top_left);
+        // virtual_targets.push_back(virtual_screen_top_right);
+        // virtual_targets.push_back(virtual_screen_bottom_left);
+        // virtual_targets.push_back(virtual_screen_bottom_right);
+        // virtual_targets.push_back(virtual_robot_top);
+        // virtual_targets.push_back(virtual_robot_bottom);
+        // virtual_targets.push_back(virtual_parent);
+
+        //bool insideout[virtual_targets.size()] = {};
+        //float distance_to_ray[virtual_targets.size()] = {};
+        float current_dist = 100000000.0;
+
         float _height = 1000;
-        float _radian = 0.523599; //30 degree
-        //std::cout << "head pos wf " << head_position_wf << std::endl;
-        //std::cout << "head direction wf " << hfv_wf << std::endl;
-        //std::cout << "bottom pos wf " << head_position_wf + _height*hfv_wf << std::endl;
-        if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_parent))
-            std::cout << "..parent" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_robot_top))
-            std::cout << "..robot" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_robot_bottom))
-            std::cout << "..robot" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_screen_center))
-            std::cout << "..screen" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_screen_top_right))
-            std::cout << "..screen" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_screen_top_left))
-            std::cout << "..screen" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_screen_bottom_right))
-            std::cout << "..screen" << std::endl;
-        else if(is_point_inside_cone2(head_position_wf, hfv_wf, _height, _radian, virtual_screen_bottom_left))
-            std::cout << "..screen" << std::endl;
-        else
+        float _radian = 0.523599; //30 degree in radian
+        int estimated_region = detected_target.NONE;
+        float shortest_dist = 100000000.0;
+        int shortest_target = -1;
+        bool found_a_match = false;
+        for (int _index = 0; _index < virtual_targets.size(); _index++){
+            if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, &current_dist)){
+                found_a_match = true;
+                if(current_dist < shortest_dist){
+                    shortest_dist = current_dist;
+                    shortest_target = _index;
+                }
+            }
+
+        }
+
+        if(found_a_match){
+            if((shortest_target == 0) || (shortest_target == 1) || (shortest_target == 2)
+                || (shortest_target == 3) || (shortest_target == 4)){
+                std::cout << "..screen" << std::endl;
+                estimated_region = detected_target.SCREEN;
+            }
+            else if((shortest_target == 5) || (shortest_target == 6)){
+                std::cout << "..robot" << std::endl;
+                estimated_region = detected_target.ROBOT;
+            }
+            else if(shortest_target == 7){
+                std::cout << "..parent" << std::endl;
+                estimated_region = detected_target.PARENT;
+            }
+        }
+        else{
             std::cout << "..others" << std::endl;
+            estimated_region = detected_target.OUTSIDE;
+        }
 
 
+        // TODO: need to compare the distance when multiple virtual points are inside the attentional cone
+        // if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_parent)){
+        //     std::cout << "..parent" << std::endl;
+        //     estimated_region = detected_target.PARENT;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_robot_top)){
+        //     std::cout << "..robot" << std::endl;
+        //     estimated_region = detected_target.ROBOT;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_robot_bottom)){
+        //     std::cout << "..robot" << std::endl;
+        //     estimated_region = detected_target.ROBOT;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen_center)){
+        //     std::cout << "..screen" << std::endl;
+        //     estimated_region = detected_target.SCREEN;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen_top_right)){
+        //     std::cout << "..screen" << std::endl;
+        //     estimated_region = detected_target.SCREEN;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen_top_left)){
+        //     std::cout << "..screen" << std::endl;
+        //     estimated_region = detected_target.SCREEN;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen_bottom_right)){
+        //     std::cout << "..screen" << std::endl;
+        //     estimated_region = detected_target.SCREEN;
+        // }
+        // else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen_bottom_left)){
+        //     std::cout << "..screen" << std::endl;
+        //     estimated_region = detected_target.SCREEN;
+        // }
+        // else{
+        //     std::cout << "..others" << std::endl;
+        //     estimated_region = detected_target.OUTSIDE;
+        // }
 
-
-        //target_publisher.publish(detected_target);
+        detected_target.region = estimated_region;
+        target_publisher.publish(detected_target);
     }
 }
 

@@ -104,14 +104,19 @@ bool is_point_inside_cone2(tf::Vector3 top_point, tf::Vector3 direction_vec, flo
     // check 1:
     bool is_in_infinite_cone = false;
     tf::Vector3 apex_to_point = test_point - top_point;
-    tf::Vector3 apex_to_bottom = height*direction_vec - top_point;
-    double cos_point_angle = apex_to_point.dot(apex_to_bottom)/apex_to_point.length()/apex_to_bottom.length();
-    is_in_infinite_cone = (cos_point_angle < cos(radian));
-    if(!is_in_infinite_cone) return false;
+    tf::Vector3 apex_to_bottom = height*direction_vec;
+    double cos_point_angle = (apex_to_point.dot(apex_to_bottom))/apex_to_point.length()/apex_to_bottom.length();
+    //std::cout << "cos_point_angle = " << cos_point_angle << std::endl;
+    is_in_infinite_cone = (cos_point_angle > cos(30.0));
+    //std::cout << "cos30 = " << cos(30.0) <<  std::endl;
+    if(!is_in_infinite_cone) {
+        //std::cout << "not in the infinite virtual cone" << std::endl;
+        return false;
+    }
 
     //check 2:
     bool is_under_round_cap = false;
-    double projected_h = apex_to_point.dot(apex_to_bottom)/apex_to_bottom.length();
+    double projected_h = (apex_to_point.dot(apex_to_bottom))/apex_to_bottom.length();
     is_under_round_cap = (projected_h < apex_to_bottom.length());
 
     return is_under_round_cap;

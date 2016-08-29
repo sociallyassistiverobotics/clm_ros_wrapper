@@ -16,7 +16,7 @@ void ClmWrapper::create_directory_from_file(string output_path)
     // First get rid of the file
     auto p = path(path(output_path).parent_path());
 
-    if(!p.empty() && !boost::filesystem::exists(p))   
+    if(!p.empty() && !boost::filesystem::exists(p))
     {
         if(!boost::filesystem::create_directories(p))
         {
@@ -61,19 +61,19 @@ void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_ali
     // (so that videos and outputs could be defined more easily)
     for(size_t i = 0; i < arguments.size(); ++i)
     {
-        if (arguments[i].compare("-root") == 0) 
-        {                    
+        if (arguments[i].compare("-root") == 0)
+        {
             input_root = arguments[i + 1];
             output_root = arguments[i + 1];
             i++;
         }
-        if (arguments[i].compare("-inroot") == 0) 
-        {                    
+        if (arguments[i].compare("-inroot") == 0)
+        {
             input_root = arguments[i + 1];
             i++;
         }
-        if (arguments[i].compare("-outroot") == 0) 
-        {                    
+        if (arguments[i].compare("-outroot") == 0)
+        {
             output_root = arguments[i + 1];
             i++;
         }
@@ -81,24 +81,24 @@ void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_ali
 
     for(size_t i = 0; i < arguments.size(); ++i)
     {
-        if (arguments[i].compare("-simalignvid") == 0) 
-        {                    
+        if (arguments[i].compare("-simalignvid") == 0)
+        {
             output_similarity_aligned.push_back(output_root + arguments[i + 1]);
             create_directory_from_file(output_root + arguments[i + 1]);
             vid_output = true;
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
-        }   
-        else if (arguments[i].compare("-oaus") == 0) 
-        {                    
+        }
+        else if (arguments[i].compare("-oaus") == 0)
+        {
             output_au_files.push_back(output_root + arguments[i + 1]);
             create_directory_from_file(output_root + arguments[i + 1]);
             vid_output = true;
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
-        } 
+        }
         else if (arguments[i].compare("-ogaze") == 0)
         {
             output_gaze_files.push_back(output_root + arguments[i + 1]);
@@ -107,61 +107,61 @@ void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_ali
             valid[i + 1] = false;
             i++;
         }
-        else if (arguments[i].compare("-simaligndir") == 0) 
-        {                    
+        else if (arguments[i].compare("-simaligndir") == 0)
+        {
             output_similarity_aligned.push_back(output_root + arguments[i + 1]);
             create_directory(output_root + arguments[i + 1]);
             vid_output = false;
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
-        }   
-        else if(arguments[i].compare("-hogalign") == 0) 
+        }
+        else if(arguments[i].compare("-hogalign") == 0)
         {
             output_hog_aligned_files.push_back(output_root + arguments[i + 1]);
             create_directory_from_file(output_root + arguments[i + 1]);
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
         }
-        else if(arguments[i].compare("-verbose") == 0) 
+        else if(arguments[i].compare("-verbose") == 0)
         {
             verbose = true;
         }
-        else if(arguments[i].compare("-oparams") == 0) 
+        else if(arguments[i].compare("-oparams") == 0)
         {
             output_model_param_files.push_back(output_root + arguments[i + 1]);
             create_directory_from_file(output_root + arguments[i + 1]);
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
         }
-        else if(arguments[i].compare("-rigid") == 0) 
+        else if(arguments[i].compare("-rigid") == 0)
         {
             rigid = true;
         }
-        else if(arguments[i].compare("-g") == 0) 
+        else if(arguments[i].compare("-g") == 0)
         {
             grayscale = true;
             valid[i] = false;
         }
-        else if (arguments[i].compare("-simscale") == 0) 
-        {                    
+        else if (arguments[i].compare("-simscale") == 0)
+        {
             similarity_scale = stod(arguments[i + 1]);
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
-        }   
-        else if (arguments[i].compare("-simsize") == 0) 
-        {                    
+        }
+        else if (arguments[i].compare("-simsize") == 0)
+        {
             similarity_size = stoi(arguments[i + 1]);
             valid[i] = false;
-            valid[i+1] = false;     
+            valid[i+1] = false;
             i++;
-        }   
+        }
         else if (arguments[i].compare("-help") == 0)
         {
-            cout << "Output features are defined as: -simalign <outputfile>\n"; // Inform the user of how to use the program        
+            cout << "Output features are defined as: -simalign <outputfile>\n"; // Inform the user of how to use the program
         }
     }
 
@@ -181,7 +181,7 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
     {
         // See if the detections intersect
         Rect_<double> model_rect = clm_models[model].GetBoundingBox();
-        
+
         for(int detection = face_detections.size()-1; detection >=0; --detection)
         {
             double intersection_area = (model_rect & face_detections[detection]).area();
@@ -206,7 +206,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // Convert the ROS image to OpenCV image format
     // BUG : For CLM, OpenCV 3.* is needed, but cv_bridge segfaults with openCV 3.0
     // when asked to convert images with BGR encoding. The solution has been to convert them
-    // without a specified encoding (I think it falls back to RGB) and then manually convert 
+    // without a specified encoding (I think it falls back to RGB) and then manually convert
     // them to BGR
     cv_bridge::CvImageConstPtr cv_ptr;
     try
@@ -224,12 +224,12 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // cv::imshow("output", captured_image);
     // cv::waitKey(5);
     // return;
-    
+
     // Stuff to run on the first frame
     if (init == true )
     {
         // Approximate camera parameters TODO : read them from the parameter server
-        // If cx (optical axis centre) is undefined will use 
+        // If cx (optical axis centre) is undefined will use
         // the image size/2 as an estimate (i.e. the center of the image)
         if(cx_undefined)
         {
@@ -245,7 +245,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             fx = (fx + fy) / 2.0;
             fy = fx;
         }
-        
+
         init = false;
     }
 
@@ -263,7 +263,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     Mat_<uchar> grayscale_image;
     Mat disp_image = captured_image.clone();
 
-    if(captured_image.channels() == 3) cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);       
+    if(captured_image.channels() == 3) cvtColor(captured_image, grayscale_image, CV_BGR2GRAY);
     else                               grayscale_image = captured_image.clone();
 
     // where the current face detections are stored
@@ -281,11 +281,11 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
     if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
-    {       
+    {
         if(clm_parameters[0].curr_face_detector == CLMTracker::CLMParameters::HOG_SVM_DETECTOR)
         {
             vector<double> confidences;
-            CLMTracker::DetectFacesHOG(face_detections, grayscale_image, clm_models[0].face_detector_HOG, confidences);       
+            CLMTracker::DetectFacesHOG(face_detections, grayscale_image, clm_models[0].face_detector_HOG, confidences);
         }
         else
         {
@@ -308,7 +308,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
         // If the current model has failed more than 4 times in a row, remove it
         if(clm_models[model].failures_in_a_row > 4)
-        {       
+        {
             active_models[model] = false;
             clm_models[model].Reset();
         }
@@ -347,7 +347,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 }
             }
         }
-        
+
         else
         {
             //IGNORE STANDALONE IMAGES
@@ -359,7 +359,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             {
                 ROS_FATAL_STREAM("Standalone images cannot be used in this release");
                 //detection_success = CLMTracker::DetectLandmarksInImage(grayscale_image, clm_model, clm_params);
-            } 
+            }
 
             // Gaze tracking, absolute gaze direction
             //Point3f gazeDirection0;
@@ -374,35 +374,35 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection0, gazeDirection0_head, fx, fy, cx, cy, true);
                 FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
             }
-            
+
             // Do face alignment
-            //Mat sim_warped_img;     
+            //Mat sim_warped_img;
             //Mat_<double> hog_descriptor;
 
             // But only if needed in output
-            // std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " << 
+            // std::cout << "not empty: output_similarity_align " << !output_similarity_align.empty() << " is open: hog_output_file " <<
             //              hog_output_file.is_open() << " not empty: output_au_files " << !output_au_files.empty() << std::endl;
             // if(!output_similarity_align.empty() || hog_output_file.is_open() || !output_au_files.empty()) START CHECK
             // {
             // face_analysers[model].AddNextFrame(captured_image, clm_models[model], time_stamp, webcam, !clm_parameters[model].quiet_mode);
             // face_analysers[model].GetLatestAlignedFace(sim_warped_img);
 
-            //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);      
+            //FaceAnalysis::AlignFaceMask(sim_warped_img, captured_image, clm_model, triangulation, rigid, sim_scale, sim_size, sim_size);
             // if(!clm_parameters[model].quiet_mode)
             // {
-            //     //cv::imshow("sim_warp", sim_warped_img); 
-            //     //cv::waitKey(1);    
+            //     //cv::imshow("sim_warp", sim_warped_img);
+            //     //cv::waitKey(1);
             // }
 
             // if(hog_output_file.is_open())
             // {
-            //     FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);            
+            //     FaceAnalysis::Extract_FHOG_descriptor(hog_descriptor, sim_warped_img, num_hog_rows, num_hog_cols);
 
             //     if(visualise_hog && !clm_parameters[model].quiet_mode)
             //     {
             //         Mat_<double> hog_descriptor_vis;
             //         FaceAnalysis::Visualise_FHOG(hog_descriptor, num_hog_rows, num_hog_cols, hog_descriptor_vis);
-            //         cv::imshow("hog", hog_descriptor_vis);  
+            //         cv::imshow("hog", hog_descriptor_vis);
             //     }
             // }
             // } END CHECK
@@ -440,13 +440,13 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             ros_head_msg.headpose.z = static_cast<float>( pose_estimate_CLM[2] );
             ros_head_msg.headpose.pitch = static_cast<float>( pose_estimate_CLM[3] );
             ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
-            ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] ); 
+            ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
 
 
             // using the matrix we found in clm_utils.cpp
             Matx33d headRotationMatrixCLM_cf = CLMTracker::Euler2RotationMatrix(Vec3d(pose_estimate_CLM[3], pose_estimate_CLM[4], pose_estimate_CLM[5]));
 
-            // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array and 
+            // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array and
             // load the values in the array to a matrix of type tf::Matrix3x3
 
             // setFromOPenGLSubMatrix (used below) is defined as follows and skips one element i.e. m[3] (the code might have an error)
@@ -491,7 +491,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             {
                 ClmEyeGazeMsg ros_eyegaze_msg;
                 ros_eyegaze_msg.eye_id = p;
-                ros_eyegaze_msg.gaze_direction_cameraref_x = static_cast<float>( gazeDirections[p].x ); 
+                ros_eyegaze_msg.gaze_direction_cameraref_x = static_cast<float>( gazeDirections[p].x );
                 ros_eyegaze_msg.gaze_direction_cameraref_y = static_cast<float>( gazeDirections[p].y );
                 ros_eyegaze_msg.gaze_direction_cameraref_z = static_cast<float>( gazeDirections[p].z );
                 ros_eyegaze_msg.gaze_direction_headref_x = static_cast<float>( gazeDirections_head[p].x ); //lateral gaze
@@ -574,13 +574,13 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     headsPublisher.publish( ros_heads_msg );
 
-    // used to check if a face is detected in this iteration    
+    // used to check if a face is detected in this iteration
     int faceDetected = 0;
     double detection_certainty = 0.0;
 
     // Go through every model and visualise the results
     for(size_t model = 0; model < clm_models.size(); ++model)
-    {           
+    {
         // Draw the facial landmarks on the face and the bounding box around it
         // if tracking is successful and initialized
         detection_certainty = clm_models[model].detection_certainty;
@@ -622,7 +622,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     int fps_tracker;
 
     if(frame_count % 10 == 0)
-    {      
+    {
        double t1 = cv::getTickCount();
        fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
        t0 = t1;
@@ -632,7 +632,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     string fpsSt("FPS:");
     fpsSt += fpsC;
-    cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));    
+    cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
     int num_active_models = 0;
 
@@ -681,16 +681,16 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // e: don't need to work out framerate
     // Work out the framerate
     //if(frame_count % 10 == 0)
-    //{      
+    //{
     //  double t1 = cv::getTickCount();
     //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
     //  t0 = t1;
     //}
 
-    
+
     // if(!clm_parameters[0].quiet_mode)
     // {
-    //      namedWindow("tracking_result",1);   
+    //      namedWindow("tracking_result",1);
     //      cv::imshow("tracking_result", disp_image);
     // }
 
@@ -708,7 +708,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // e: don't need to work out framerate
     // Work out the framerate
     //if(frame_count % 10 == 0)
-    //{      
+    //{
     //  double t1 = cv::getTickCount();
     //  fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
     //  t0 = t1;
@@ -717,7 +717,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // if(!clm_parameters[0].quiet_mode)
     // {
-    //      namedWindow("tracking_result",1);   
+    //      namedWindow("tracking_result",1);
     //      cv::imshow("tracking_result", disp_image);
     // }
 
@@ -794,7 +794,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     // publisher for the image when a face is detected
     imagePublisher = imageTransport.advertise(_name+"/face_image", 1);
 
-    // publishing the gaze direction estimates
+    // publishing head direction in cf
     hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>(_name+"/head_vector", 1);
 
     // publishing head position in the camera frame
@@ -807,7 +807,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     init = true;
 
-    // code to start a window   
+    // code to start a window
 
     //cv::namedWindow("output", cv::WINDOW_NORMAL);
     //cv::startWindowThread();
@@ -820,7 +820,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     vector<string> arguments;
     arguments.push_back(executable_location);
-    // Some initial parameters that can be overriden from command line  
+    // Some initial parameters that can be overriden from command line
     vector<string> files, depth_directories, pose_output_files, landmark_output_files, landmark_3D_output_files;
 
     // Initialize node parameters from launch file or command line.
@@ -829,7 +829,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     // ERICNOTE: this stuff doesn't look too useful - don't know what HOG is though
     CLMTracker::CLMParameters clm_params(arguments);
-    clm_params.use_face_template = true;    
+    clm_params.use_face_template = true;
     clm_params.reinit_video_every = -1;   // This is to avoid the model to try re-initialising itself
     clm_params.curr_face_detector = CLMTracker::CLMParameters::HOG_SVM_DETECTOR;
 
@@ -837,10 +837,10 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     clm_params.track_gaze = true;
 
     //vector<CLMTracker::CLMParameters> clm_parameters;
-    clm_parameters.push_back(clm_params);    
+    clm_parameters.push_back(clm_params);
 
     // Get the input output file parameters
-    
+
     // ERICNOTE: the following section deals with image files
     // Indicates that rotation should be with respect to camera plane or with respect to camera
     video_input = true;
@@ -855,7 +855,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     fx = 0, fy = 0;
     cx = 0, cy = 0;
-    
+
     cx_undefined = true;
     fx_undefined = true;
 
@@ -868,9 +868,9 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     double sim_scale = 0.7;
     int sim_size = 112;
-    bool grayscale = false; 
+    bool grayscale = false;
     video_output = false;
-    bool rigid = false; 
+    bool rigid = false;
     get_output_feature_params(output_similarity_align, video_output, gaze_output_files,
       output_hog_align_files, params_output_files, output_au_files,
       sim_scale, sim_size, grayscale, rigid, verbose, arguments);
@@ -907,10 +907,10 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
             ROS_ERROR("[ClmWrapper] Could not find triangulation files (i.e. %s), exiting.", tri_name.c_str());
             return;
         }
-    } 
+    }
 
     // If multiple video files are tracked, use this to indicate if we are done
-    bool done = false;  
+    bool done = false;
     f_n = -1;
     int curr_img = -1;
     string au_loc  = "";
@@ -932,8 +932,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
         {
             ROS_ERROR("[ClmWrapper] Could not find AU prediction files (i.e. %s), exiting.", au_name.c_str());
             return;
-        } 
-    } 
+        }
+    }
 
     // Creating a  face analyser that will be used for AU extraction
     FaceAnalysis::FaceAnalyser face_analyser(vector<Vec3d>(), 0.7, 112, 112, au_loc, tri_loc);

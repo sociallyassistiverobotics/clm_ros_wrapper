@@ -1,6 +1,6 @@
 
 /*
-This ros node subscribes to "/clm_ros_wrapper/gaze_point" and finds the target on the screen where this 
+This ros node subscribes to "/clm_ros_wrapper/gaze_point" and finds the target on the screen where this
 gaze point falls into. It then publishes this information with publisher topic "/clm_ros_wrapper/detect_target"
 */
 #include "CLM_core.h"
@@ -37,13 +37,13 @@ gaze point falls into. It then publishes this information with publisher topic "
 
 #include <tf/transform_datatypes.h>
 
-#include <geometry_msgs/Vector3.h> 
+#include <geometry_msgs/Vector3.h>
 #include <limits>
 
 #define max_num_objects 20
 
-int screenAngleInDegrees; 
-float screenWidth; 
+int screenAngleInDegrees;
+float screenWidth;
 float screenHeight;
 float screenAngle;
 float screenGap;
@@ -81,7 +81,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     tf::vector3MsgToTF((*msg).hfv, hfv_wf);
 
     if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
-    {   
+    {
         //means no detection
         clm_ros_wrapper::DetectedTarget target_no_detection;
         target_no_detection.certainty = detection_certainty;
@@ -101,7 +101,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
         int num_closest_object_on_screen = 0, num_closest_free_object = 0;
 
         // TODO: cmhuang: change this..
-        // to make sure this callback happens after scene_callback  
+        // to make sure this callback happens after scene_callback
         if (num_objects_on_screen != 0 || num_free_objects != 0)
         {
 
@@ -124,7 +124,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             if ((3) * screenGap * sin(screenAngle) > gaze_point_wf.getZ() || (screenHeight  - screenGap)*sin(screenAngle) < gaze_point_wf.getZ()
                 || gaze_point_wf.getX() > screenWidth / 2 - screenGap || gaze_point_wf.getX() < (-1) * screenWidth / 2 +  screenGap)
             {
-                num_closest_object_on_screen = num_objects_on_screen; 
+                num_closest_object_on_screen = num_objects_on_screen;
                 // the index num_closest_object_on_screen refers to outside -- is the object named "Outside"
                 closest_distance_screen = std::numeric_limits<double>::max();
             }
@@ -140,7 +140,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
             tf::Vector3 zero_vector = tf::Vector3(0,0,0);
 
             for (int i = 0; i < num_free_objects; i++)
-            {   
+            {
                 tf::Vector3 diff_freeobj_headpos = free_objects_positions[i]-head_position_wf;
                 tf::Vector3 diff_freeobj_rand = free_objects_positions[i]-randompoint_on_gazedirection;
 
@@ -156,7 +156,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
                     num_closest_free_object = i;
                 }
             }
-            // inside/outside check for the closest free object 
+            // inside/outside check for the closest free object
             // free_object_radius is the robot radius
             // TODO: change this parameter
             if (closest_distance_free_object > free_object_radius)
@@ -262,6 +262,84 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
     }
 }
 
+void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
+{
+    double detection_certainty = (*msg).certainty;
+    tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
+
+    //checking if there is detection
+    tf::vector3MsgToTF((*msg).gaze_point, gaze_point_wf);
+    tf::vector3MsgToTF((*msg).head_position, head_position_wf);
+    tf::vector3MsgToTF((*msg).hfv, hfv_wf);
+
+    if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
+    {
+        //means no detection
+        clm_ros_wrapper::DetectedTarget target_no_detection;
+        target_no_detection.certainty = detection_certainty;
+
+        target_no_detection.name = "NO DETECTION";
+        target_no_detection.distance = 0;
+        target_no_detection.region = target_no_detection.NONE;
+
+        target_publisher.publish(target_no_detection);
+    }
+
+    else
+    {
+        clm_ros_wrapper::DetectedTarget detected_target;
+        detected_target.certainty = detection_certainty;
+
+        tf::Vector3 virtual_screen = tf::Vector3(270,250,240);
+        tf::Vector3 virtual_robot = tf::Vector3(640,170,300);
+        tf::Vector3 virtual_parent = tf::Vector3(750,-300,400);
+        float _height = 500;
+        float _radian = 0.523599; //30 degree
+        if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_parent))
+            std::cout << "parent" << std::endl;
+        else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_robot))
+            std::cout << "robot" << std::endl;
+        else if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_screen))
+            std::cout << "screen" << std::endl;
+        else
+            std::cout << "others" << std::endl;
+
+
+
+
+        //target_publisher.publish(detected_target);
+    }
+}
+
+bool is_point_inside_cone(tf::Vector3 top_point, tf::Vector3 direction_vec, float height, float radian, tf::Vector3 test_point)
+{
+    // check 1: distance to line is greater than radius of the cone
+    // http://math.harvard.edu/~ytzeng/worksheet/distance.pdf
+    tf::Vector3 p = test_point;
+    tf::Vector3 q = top_point;
+    tf::Vector3 pq = q - p;
+    float cross_value = (pq.cross(direction_vec)).length();
+    float unit_vec_length = direction_vec.length()
+    float d = cross_value / unit_vec_length;
+    float r = height * tan(radian);
+    if(d > r) return false;
+
+    // check 2: the projected point is inside the directional line
+    // http://stackoverflow.com/questions/17581738/check-if-a-point-projected-on-a-line-segment-is-not-outside-it
+    bottom_point = top_point + height * direction_vec;
+    tf::Vector3 attention_directional_line = bottom_point - top_point;
+    tf::Vector3 pq = p - q;
+    double innerProduct = pq.dot(attention_directional_line);
+    bool inside_line = (0 <= innerProduct && innerProduct <= attention_directional_line.dot(attention_directional_line));
+    if(inside_line == false) return false;
+
+    // check 3: distance to line is within the cone triangle
+    double d_prime = innerProduct / attention_directional_line.length();
+    double r_prime = d_prime * tan(radian);
+    if(d > r_prime) return false;
+    return true;
+}
+
 void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
 {
     num_objects_on_screen = (*msg).screen.num_objects_on_screen;
@@ -291,7 +369,7 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
     free_objects_names[(*msg).num_free_objects] =  "OUTSIDE";
 }
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "target_detector");
 
@@ -303,7 +381,7 @@ int main(int argc, char **argv)
     nh.getParam("screenWidth", screenWidth);
     nh.getParam("screenHeight", screenHeight);
     nh.getParam("screenGap", screenGap);
-    
+
     std::vector<float> transformation_wf2rf_param_ser;
 
     nh.getParam("transformation_wf2rf", transformation_wf2rf_param_ser);
@@ -321,7 +399,7 @@ int main(int argc, char **argv)
 
     ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 
-    ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback);
+    ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback2);
 
     ros::spin();
 }

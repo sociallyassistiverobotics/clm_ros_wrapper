@@ -191,15 +191,15 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // cout << "hfv wf Z = " << hfv_wf.getZ() << endl;
 
         //hacky way
-        if((hfv_wf.getX() <= 0.3) && (hfv_wf.getX() >= -0.2) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
-            cout << "SCREEN" << endl;
-        }
-        else if((hfv_wf.getX() <= 0.5) && (hfv_wf.getX() >= 0.4) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
-            cout << "ROBOT" << endl;
-        }
-        else {
-            cout << "out side" << endl;
-        }
+        // if((hfv_wf.getX() <= 0.3) && (hfv_wf.getX() >= -0.2) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
+        //     cout << "SCREEN" << endl;
+        // }
+        // else if((hfv_wf.getX() <= 0.5) && (hfv_wf.getX() >= 0.4) && (hfv_wf.getZ() >= -0.25) && ( hfv_wf.getZ()<=0)){
+        //     cout << "ROBOT" << endl;
+        // }
+        // else {
+        //     cout << "out side" << endl;
+        // }
 
 
         //storing the locations of the lower corners of screen and the camera 

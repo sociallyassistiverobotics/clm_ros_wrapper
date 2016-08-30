@@ -257,10 +257,15 @@ void gaze_callback(const clm_ros_wrapper::ClmEyeGaze::ConstPtr& msg)
     // TODO?: detection certainty. does not seem like clm provides this info
     int eye_id = (*msg).eye_id; //0: left, 1: right
     tf::Vector3 gaze_direction_cf = tf::Vector3((*msg).gaze_direction_cameraref_x, (*msg).gaze_direction_cameraref_y, (*msg).gaze_direction_cameraref_z);
-    tf::Vector3 gaze_direction_hf = tf::Vector3((*msg).gaze_direction_headref_x, (*msg).gaze_direction_headref_y, (*msg).gaze_direction_headref_z);
+    // don't use the hf for now
+    //tf::Vector3 gaze_direction_hf = tf::Vector3((*msg).gaze_direction_headref_x, (*msg).gaze_direction_headref_y, (*msg).gaze_direction_headref_z);
 
-    // TODO: cf -> wf
+    // cf -> wf
+    cv::Matx<float,4,4> transformation_matrix_cf2wf = transformation_cf2intermediate_frame * transformation_intermediate_frame2wf;
+    tf::Vector3 gaze_direction_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(gaze_direction_cf, 0)));
     // TODO: publish wf
+    // TODO: change msg format:vector3 left and right....
+    //gaze_direction_wf_pub
 }
 
 int main(int argc, char **argv)
@@ -332,7 +337,7 @@ int main(int argc, char **argv)
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>(_namespace+"/gaze_point_and_direction", 1);
-
+    gaze_direction_wf_pub = nh.advertise<clm_ros_wrapper::ClmEyeGaze>("/sar/perception/gaze_direction_wf", 1);
     head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>(_namespace+"/head_position_rf",1);
 
     headposition_sub = nh.subscribe(_namespace+"/head_position", 1, &headposition_callback);

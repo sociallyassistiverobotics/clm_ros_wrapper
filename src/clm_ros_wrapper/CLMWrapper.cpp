@@ -253,6 +253,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     typedef clm_ros_wrapper::ClmHead ClmHeadMsg;
     typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
     typedef clm_ros_wrapper::ClmFacialActionUnit ClmFacialActionUnitMsg;
+    typedef clm_ros_wrapper::GazeDirection GazeDirectionMsg;
 
     // Set the timestamp
     int64 curr_time = cv::getTickCount();
@@ -485,6 +486,21 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};// left, right
             std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
+
+            //new gaze direction message
+            GazeDirectionMsg ros_gaze_direction_msg;
+            geometry_msgs::Vector3 lefe_gaze_direction_cf;
+            lefe_gaze_direction_cf.x = gazeDirection0.x;
+            lefe_gaze_direction_cf.y = gazeDirection0.y;
+            lefe_gaze_direction_cf.z = gazeDirection0.z;
+            geometry_msgs::Vector3 right_gaze_direction_cf;
+            right_gaze_direction_cf.x = gazeDirection1.x;
+            right_gaze_direction_cf.y = gazeDirection1.y;
+            right_gaze_direction_cf.z = gazeDirection1.z;
+
+            ros_gaze_direction_msg.left_gaze_diection = lefe_gaze_direction_cf;
+            ros_gaze_direction_msg.right_gaze_diection = right_gaze_direction_cf;
+            gaze_direction_publisher.publish(ros_gaze_direction_msg);
 
             for (size_t p = 0; p < gazeDirections_head.size(); p++)
             {
@@ -803,6 +819,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     // publishing eye gaze
     eye_gaze_publisher = nodeHandle.advertise<clm_ros_wrapper::ClmEyeGaze>(_name+"/eye_gaze", 1);
+
+    gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirection>(_name+"/gaze_direction", 1);
 
     init = true;
 

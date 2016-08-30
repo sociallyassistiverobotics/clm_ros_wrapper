@@ -69,6 +69,7 @@ add_message_files(
    DetectedTarget.msg
    GazePointAndDirection.msg
    VectorWithCertainty.msg
+   GazeDirection.msg
 )
 
 ## Generate services in the 'srv' folder

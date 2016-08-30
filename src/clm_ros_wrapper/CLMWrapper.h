@@ -25,6 +25,7 @@
 
 #include <clm_ros_wrapper/ClmHeads.h>
 #include <clm_ros_wrapper/ClmEyeGaze.h>
+#include <clm_ros_wrapper/GazeDirection.h>
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/VectorWithCertainty.h>
 
@@ -61,6 +62,8 @@ private:
 
     // publishing eye gaze
     ros::Publisher eye_gaze_publisher;
+
+    ros::Publisher gaze_direction_publisher;
 
     // Gaze tracking, absolute gaze direction
     Point3f gazeDirection0;

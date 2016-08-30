@@ -25,6 +25,7 @@ Yunus
 
 #include <clm_ros_wrapper/ClmHeads.h>
 #include <clm_ros_wrapper/ClmEyeGaze.h>
+#include <clm_ros_wrapper/GazeDirection.h>
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/GazePointAndDirection.h>
 #include <clm_ros_wrapper/VectorWithCertainty.h>
@@ -52,8 +53,12 @@ using std::vector;
 
 ros::Publisher gaze_point_and_direction_pub;
 ros::Publisher head_position_rf_pub;
+ros::Publisher gaze_direction_wf_pub;
 
 tf::Vector3 headposition_cf;
+
+tf::Vector3 left_gaze_direction_cf_tf;
+tf::Vector3 right_gaze_direction_cf_tf;
 
 cv::Matx<float, 4, 4> transformation_cf2intermediate_frame;
 cv::Matx<float, 4, 4> transformation_intermediate_frame2wf;
@@ -252,20 +257,34 @@ void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr&
     detection_certainty = (*msg).certainty;
 }
 
-void gaze_callback(const clm_ros_wrapper::ClmEyeGaze::ConstPtr& msg)
+void gaze_direction_callback(const clm_ros_wrapper::GazeDirection::ConstPtr& msg)
 {
     // TODO?: detection certainty. does not seem like clm provides this info
-    int eye_id = (*msg).eye_id; //0: left, 1: right
-    tf::Vector3 gaze_direction_cf = tf::Vector3((*msg).gaze_direction_cameraref_x, (*msg).gaze_direction_cameraref_y, (*msg).gaze_direction_cameraref_z);
-    // don't use the hf for now
-    //tf::Vector3 gaze_direction_hf = tf::Vector3((*msg).gaze_direction_headref_x, (*msg).gaze_direction_headref_y, (*msg).gaze_direction_headref_z);
+    tf::vector3MsgToTF((*msg).left_gaze_diection, left_gaze_direction_cf_tf);
+    tf::vector3MsgToTF((*msg).right_gaze_diection, right_gaze_direction_cf_tf);
+
+    // don't use the hf, head frame, for now
 
     // cf -> wf
     cv::Matx<float,4,4> transformation_matrix_cf2wf = transformation_cf2intermediate_frame * transformation_intermediate_frame2wf;
-    tf::Vector3 gaze_direction_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(gaze_direction_cf, 0)));
-    // TODO: publish wf
-    // TODO: change msg format:vector3 left and right....
-    //gaze_direction_wf_pub
+    tf::Vector3 left_gaze_direction_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(left_gaze_direction_cf_tf, 0)));
+    tf::Vector3 right_gaze_direction_wf = vector3_cv2tf(transformation_matrix_cf2wf * (vector3_tf2cv(right_gaze_direction_cf_tf, 0)));
+
+    // publish wf
+    clm_ros_wrapper::GazeDirection ros_gaze_direction_msg;
+    geometry_msgs::Vector3 lefe_gaze_direction_wf_msg;
+    lefe_gaze_direction_wf_msg.x = left_gaze_direction_wf.getX();
+    lefe_gaze_direction_wf_msg.y = left_gaze_direction_wf.getY();
+    lefe_gaze_direction_wf_msg.z = left_gaze_direction_wf.getZ();
+    ros_gaze_direction_msg.left_gaze_diection = lefe_gaze_direction_wf_msg;
+    geometry_msgs::Vector3 right_gaze_direction_wf_msg;
+    right_gaze_direction_wf_msg.x = right_gaze_direction_wf.getX();
+    right_gaze_direction_wf_msg.y = right_gaze_direction_wf.getY();
+    right_gaze_direction_wf_msg.z = right_gaze_direction_wf.getZ();
+
+    ros_gaze_direction_msg.right_gaze_diection = right_gaze_direction_wf_msg;
+
+    gaze_direction_wf_pub.publish(ros_gaze_direction_msg);
 }
 
 int main(int argc, char **argv)
@@ -273,6 +292,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "find_gazepoint");
     ros::Subscriber headposition_sub;
     ros::Subscriber vector_sub;
+    ros::Subscriber gaze_direction_sub;
     ros::NodeHandle nh;
 
     // namespace
@@ -337,12 +357,12 @@ int main(int argc, char **argv)
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     gaze_point_and_direction_pub = nh.advertise<clm_ros_wrapper::GazePointAndDirection>(_namespace+"/gaze_point_and_direction", 1);
-    gaze_direction_wf_pub = nh.advertise<clm_ros_wrapper::ClmEyeGaze>("/sar/perception/gaze_direction_wf", 1);
+    gaze_direction_wf_pub = nh.advertise<clm_ros_wrapper::GazeDirection>("/sar/perception/gaze_direction_wf", 1);
     head_position_rf_pub = nh.advertise<clm_ros_wrapper::VectorWithCertainty>(_namespace+"/head_position_rf",1);
 
     headposition_sub = nh.subscribe(_namespace+"/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe(_namespace+"/head_vector", 1, &vector_callback);
-    gaze_sub = nh.subscribe(_namespace+"/eye_gaze", 1, &gaze_callback);
+    gaze_direction_sub = nh.subscribe(_namespace+"/gaze_direction", 1, &gaze_direction_callback);
 
     ros::spin();
 }

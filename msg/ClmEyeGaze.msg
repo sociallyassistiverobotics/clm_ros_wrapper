@@ -1,5 +1,5 @@
-uint8 RIGHT_EYE = 0
-uint8 LEFT_EYE = 1
+uint8 RIGHT_EYE = 1
+uint8 LEFT_EYE = 0
 
 uint8 eye_id
 

@@ -371,8 +371,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             if (clm_parameters[model].track_gaze && detection_success)
             {
-                FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection0, gazeDirection0_head, fx, fy, cx, cy, true);
-                FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false);
+                FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection0, gazeDirection0_head, fx, fy, cx, cy, true); //left
+                FaceAnalysis::EstimateGaze(clm_models[model], gazeDirection1, gazeDirection1_head, fx, fy, cx, cy, false); //right
             }
 
             // Do face alignment
@@ -442,7 +442,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             ros_head_msg.headpose.yaw = static_cast<float>( pose_estimate_CLM[4] );
             ros_head_msg.headpose.roll = static_cast<float>( pose_estimate_CLM[5] );
 
-
             // using the matrix we found in clm_utils.cpp
             Matx33d headRotationMatrixCLM_cf = CLMTracker::Euler2RotationMatrix(Vec3d(pose_estimate_CLM[3], pose_estimate_CLM[4], pose_estimate_CLM[5]));
 
@@ -484,13 +483,13 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             //converting to type geometry_msgs::Vector3 and overwriting headposition_cf_msg
             tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);
 
-            std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};
+            std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};// left, right
             std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
 
             for (size_t p = 0; p < gazeDirections_head.size(); p++)
             {
                 ClmEyeGazeMsg ros_eyegaze_msg;
-                ros_eyegaze_msg.eye_id = p;
+                ros_eyegaze_msg.eye_id = p;// 0: left, 1: right
                 ros_eyegaze_msg.gaze_direction_cameraref_x = static_cast<float>( gazeDirections[p].x );
                 ros_eyegaze_msg.gaze_direction_cameraref_y = static_cast<float>( gazeDirections[p].y );
                 ros_eyegaze_msg.gaze_direction_cameraref_z = static_cast<float>( gazeDirections[p].z );

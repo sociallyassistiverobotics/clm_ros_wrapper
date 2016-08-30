@@ -36,9 +36,9 @@ Yunus
 
 #include <tf/transform_datatypes.h>
 
-#include <geometry_msgs/Vector3.h> 
+#include <geometry_msgs/Vector3.h>
 
-int screenAngleInDegrees; 
+int screenAngleInDegrees;
 float screenWidth;
 float screenHeight;
 float screenAngle;
@@ -95,7 +95,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
 
     tf::vector3MsgToTF(*msg, hfv_cf);
 
-    //Message to publish pd -> point and direction 
+    //Message to publish pd -> point and direction
     clm_ros_wrapper::GazePointAndDirection gaze_pd_msg;
 
     //checking if there is a detection
@@ -119,11 +119,11 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         head_position_rf_pub.publish(head_position_rf_with_certainty);
     }
 
-    else 
+    else
     {
 
         // rotation matrix from camera frame to world frame
-        
+
         // rotation_matrix_cf2wf.setValue(-1, 0, 0, 0, 0, -1, 0, -1, 0);
 
         // tf::Matrix3x3 matrix_cf2wf_rotate_axis;
@@ -131,10 +131,10 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // // in the new setting, the screen is slightly rotated, so
         // // I use this new matrix to do an extra rotation of the axis cf2wf
         // rotation_matrix_cf2wf_rotate_axis.setValue(0.897904, 0.0145582, -0.439951,
-        //     -0.067152, 0.992285,  -0.104216, 
+        //     -0.067152, 0.992285,  -0.104216,
         //     0.43504, 0.12312, 0.891954);
 
-        //applying the extra rotation 
+        //applying the extra rotation
         // matrix_cf2wf = matrix_cf2wf_rotate_axis * matrix_cf2wf;
 
         // translation vector from cf to wf
@@ -176,7 +176,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         clm_ros_wrapper::VectorWithCertainty head_position_rf_with_certainty;
 
         geometry_msgs::Vector3 head_position_rf_msg;
-        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg); 
+        tf::vector3TFToMsg(head_position_rf, head_position_rf_msg);
 
         head_position_rf_with_certainty.position = head_position_rf_msg;
         head_position_rf_with_certainty.certainty = detection_certainty;
@@ -202,7 +202,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // }
 
 
-        //storing the locations of the lower corners of screen and the camera 
+        //storing the locations of the lower corners of screen and the camera
         //in world frame to establish the space where it sits
         tf::Vector3 lower_left_corner_of_screen_wf = tf::Vector3(145, 25, 0);
         tf::Vector3 lower_right_corner_of_screen_wf = tf::Vector3(452, 188, 0);
@@ -211,7 +211,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // using the Line-Plane intersection formula on Wolfram link: http://mathworld.wolfram.com/Line-PlaneIntersection.html
         // ALL CALCULATIONS ARE MADE IN WORLD FRAME
         // Explanation: To construct the line to intersect, I take two points in the gaze direction, the camera location and another point that is equal to camera point
-        // plus a constant times the head fixation vector -- this extra point is named randompoint_on_gazedirection_wf. 
+        // plus a constant times the head fixation vector -- this extra point is named randompoint_on_gazedirection_wf.
         // with the notation from the link x4 = headposition_wf and x5 = randompoint_on_gazedirection_wf
         cv::Matx<float, 4,4> matrix1 = cv::Matx<float, 4, 4>(1, 1, 1, 1,
             upper_mid__point_of_screen_wf.getX(), lower_right_corner_of_screen_wf.getX(), lower_left_corner_of_screen_wf.getX(), headposition_wf.getX(),
@@ -232,7 +232,7 @@ void vector_callback(const geometry_msgs::Vector3::ConstPtr& msg)
         // cout << "gaze y = " << gazepoint_on_screen_wf.getY() << endl;
         // cout << "gaze z = " << gazepoint_on_screen_wf.getZ() << endl;
 
-        
+
         tf::vector3TFToMsg(gazepoint_on_screen_wf, gaze_pd_msg.gaze_point);
         tf::vector3TFToMsg(headposition_wf, gaze_pd_msg.head_position);
         tf::vector3TFToMsg(hfv_wf, gaze_pd_msg.hfv);
@@ -252,7 +252,18 @@ void headposition_callback(const clm_ros_wrapper::VectorWithCertainty::ConstPtr&
     detection_certainty = (*msg).certainty;
 }
 
-int main(int argc, char **argv) 
+void gaze_callback(const clm_ros_wrapper::ClmEyeGaze::ConstPtr& msg)
+{
+    // TODO?: detection certainty. does not seem like clm provides this info
+    int eye_id = (*msg).eye_id; //0: left, 1: right
+    tf::Vector3 gaze_direction_cf = tf::Vector3((*msg).gaze_direction_cameraref_x, (*msg).gaze_direction_cameraref_y, (*msg).gaze_direction_cameraref_z);
+    tf::Vector3 gaze_direction_hf = tf::Vector3((*msg).gaze_direction_headref_x, (*msg).gaze_direction_headref_y, (*msg).gaze_direction_headref_z);
+
+    // TODO: cf -> wf
+    // TODO: publish wf
+}
+
+int main(int argc, char **argv)
 {
     ros::init(argc, argv, "find_gazepoint");
     ros::Subscriber headposition_sub;
@@ -273,7 +284,7 @@ int main(int argc, char **argv)
     // loading rotation matrix from cf to wf from the parameter server
     // this rotation matrix depends on the rotation of the screen
 
-    // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array and 
+    // here I load the values in headRotationMatrixCLM_cf of type Matx33d to an array and
     // load the values in the array to a matrix of type tf::Matrix3x3
 
     // setFromOPenGLSubMatrix (used below) is defined as follows and skips one element i.e. m[3] (the code might have an error)
@@ -289,7 +300,7 @@ int main(int argc, char **argv)
 
     // loading transformation matrix from cf to wf from the parameter server
     nh.getParam("transformation_cf2intermediate_frame", transformation_matrix_cf2intermediate_frame_array_parameter_server);
-    
+
     for (int i = 0; i <4; i++)
     {
         for(int j =0; j <4; j++)
@@ -326,6 +337,7 @@ int main(int argc, char **argv)
 
     headposition_sub = nh.subscribe(_namespace+"/head_position", 1, &headposition_callback);
     vector_sub = nh.subscribe(_namespace+"/head_vector", 1, &vector_callback);
+    gaze_sub = nh.subscribe(_namespace+"/eye_gaze", 1, &gaze_callback);
 
     ros::spin();
 }

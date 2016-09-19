@@ -353,20 +353,20 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target == 0) || (shortest_target == 1) || (shortest_target == 2)
                 || (shortest_target == 3) || (shortest_target == 4)){
-                std::cout << "..screen" << std::endl;
+                //std::cout << "..screen" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 5) || (shortest_target == 6)){
-                std::cout << "..robot" << std::endl;
+                //std::cout << "..robot" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
             else if(shortest_target == 7){
-                std::cout << "..parent" << std::endl;
+                //std::cout << "..parent" << std::endl;
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
-            std::cout << "..others" << std::endl;
+            //std::cout << "..others" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 

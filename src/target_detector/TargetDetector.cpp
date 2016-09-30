@@ -353,20 +353,20 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target == 0) || (shortest_target == 1) || (shortest_target == 2)
                 || (shortest_target == 3) || (shortest_target == 4)){
-                //std::cout << "..screen" << std::endl;
+                std::cout << "..screen" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 5) || (shortest_target == 6)){
-                //std::cout << "..robot" << std::endl;
+                std::cout << "..robot" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
-            else if(shortest_target == 7){
-                //std::cout << "..parent" << std::endl;
+            else if((shortest_target == 7) || (shortest_target == 8)){
+                std::cout << "..parent" << std::endl;
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
-            //std::cout << "..others" << std::endl;
+            std::cout << "..others" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 
@@ -438,13 +438,17 @@ int main(int argc, char **argv)
 
     // initialize virtual targets
     tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_top_left = tf::Vector3(0,250,300);
-    tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
-    tf::Vector3 virtual_screen_bottom_left = tf::Vector3(100,100,130);
-    tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
+    tf::Vector3 virtual_screen_top_left = tf::Vector3(50,140,340);
+    // tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
+    tf::Vector3 virtual_screen_top_right = tf::Vector3(370,350,340);
+    // tf::Vector3 virtual_screen_bottom_left = tf::Vector3(100,100,130);
+    tf::Vector3 virtual_screen_bottom_left = tf::Vector3(50,140,150);
+    // tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
+    tf::Vector3 virtual_screen_bottom_right s= tf::Vector3(420,310,150);
     tf::Vector3 virtual_robot_top = tf::Vector3(640,170,300);
     tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
-    tf::Vector3 virtual_parent = tf::Vector3(750,-300,400);
+    tf::Vector3 virtual_parent_1 = tf::Vector3(750,-100,300);
+    tf::Vector3 virtual_parent_2 = tf::Vector3(750, 0,300);
 
     virtual_targets.push_back(virtual_screen_center);
     virtual_targets.push_back(virtual_screen_top_left);
@@ -453,7 +457,8 @@ int main(int argc, char **argv)
     virtual_targets.push_back(virtual_screen_bottom_right);
     virtual_targets.push_back(virtual_robot_top);
     virtual_targets.push_back(virtual_robot_bottom);
-    virtual_targets.push_back(virtual_parent);
+    virtual_targets.push_back(virtual_parent_1);
+    virtual_targets.push_back(virtual_parent_2);
 
     ros::spin();
 }

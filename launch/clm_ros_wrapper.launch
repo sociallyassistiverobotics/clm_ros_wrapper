@@ -136,7 +136,7 @@
     </node>
 
     <!-- rosbag for recording interactions -->
-    <group if="true">
+    <group if="false">
         <node pkg="rosbag" type="record" name="rosbag_record_image"
            args="-o $(find sar_core)/logs/rosbags/rosbag_image /sar/perception/left_cam/usb_cam_2/image_raw "/> <!-- TODO: include topics -->
     </group>

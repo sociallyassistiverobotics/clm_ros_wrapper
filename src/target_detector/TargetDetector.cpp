@@ -351,7 +351,7 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
 
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
-            if((shortest_target >= 0) && (shortest_target <= 11){
+            if((shortest_target >= 0) && (shortest_target <= 11)){
                 // std::cout << "..screen" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
@@ -437,18 +437,21 @@ int main(int argc, char **argv)
 
     // initialize virtual targets
     // tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r1_c1 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r2_c1 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r3_c1 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r1_c2 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r2_c2 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r3_c2 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r1_c3 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r2_c3 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r3_c3 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r1_c4 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r2_c4 = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r3_c4 = tf::Vector3(270,250,240);
+    tf::Vector3 virtual_screen_r1_c1 = tf::Vector3(30,190,260);
+    tf::Vector3 virtual_screen_r2_c1 = tf::Vector3(60,135,175);
+    tf::Vector3 virtual_screen_r3_c1 = tf::Vector3(90,80,90);
+
+    tf::Vector3 virtual_screen_r1_c2 = tf::Vector3(140,245,260);
+    tf::Vector3 virtual_screen_r2_c2 = tf::Vector3(175,195,175);
+    tf::Vector3 virtual_screen_r3_c2 = tf::Vector3(210,145,90);
+
+    tf::Vector3 virtual_screen_r1_c3 = tf::Vector3(250,300,260);
+    tf::Vector3 virtual_screen_r2_c3 = tf::Vector3(290,255,175);
+    tf::Vector3 virtual_screen_r3_c3 = tf::Vector3(330,210,90);
+
+    tf::Vector3 virtual_screen_r1_c4 = tf::Vector3(360,360,260);
+    tf::Vector3 virtual_screen_r2_c4 = tf::Vector3(405,320,175);
+    tf::Vector3 virtual_screen_r3_c4 = tf::Vector3(450,280,90);
 
     //tf::Vector3 virtual_screen_top_left = tf::Vector3(50,200,340);
     // tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);

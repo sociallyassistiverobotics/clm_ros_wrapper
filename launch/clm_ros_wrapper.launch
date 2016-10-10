@@ -14,7 +14,7 @@
         <param name="device_test" type="int" value="0"/>
     </node>
 
-    <group ns="/sar/perception/right_cam" if="false">
+    <group ns="/sar/perception/right_cam" if="true">
 
         <!-- camera frame to world frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>

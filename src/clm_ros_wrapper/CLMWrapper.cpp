@@ -979,7 +979,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     for (int i = 1; i < num_faces_max; ++i)
     {
-      clm_models.push_back(clm_model);
+      clm_models.push_back(clm_model2);
       active_models.push_back(false);
       clm_parameters.push_back(clm_params);
       face_analysers.push_back(face_analyser);

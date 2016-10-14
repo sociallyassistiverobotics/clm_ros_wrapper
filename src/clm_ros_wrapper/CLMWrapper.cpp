@@ -627,7 +627,21 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             FaceAnalysis::DrawGaze(disp_image, clm_models[model], gazeDirection0, gazeDirection1, fx, fy, cx, cy);
 
-            // cout << fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
+            // displaying tracking certainty
+            char certainty_C[255];
+            sprintf(certainty_C, "%f", 1-detection_certainty);
+            string certainty_st("Certainty: ");
+            certainty_st += certainty_C;
+            cv::Point certainty_pos;
+            vector<std::pair<Point,Point>> certainty_pos_vec = CLMTracker::CalculateBox(pose_estimate_CLM, fx, fy, cx, cy);
+            if (12 == certainty_pos_vec.size()) {
+                certainty_pos = certainty_pos_vec[10].second; // certainty on the head
+            } else {
+                certainty_pos = cv::Point(10, 100); // default position on the left top corner
+            }
+            cv::putText(disp_image, certainty_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
+
+            // cout << model << " "<< fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
             // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
             // << " " << pose_estimate_CLM[3] << " " << pose_estimate_CLM[4] << " " << pose_estimate_CLM[5] << endl;
         }
@@ -664,13 +678,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     string active_models_st("Active models:");
     active_models_st += active_m_C;
     cv::putText(disp_image, active_models_st, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
-
-    // displaying tracking certainty
-    char certainty_C[255];
-    sprintf(certainty_C, "%f", 1-detection_certainty);
-    string certainty_st("Certainty: ");
-    certainty_st += certainty_C;
-    cv::putText(disp_image, certainty_st, cv::Point(10,100), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
     if (faceDetected)
     {
@@ -960,7 +967,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     //vector<bool> active_models;
     //vector<FaceAnalysis::FaceAnalyser> face_analysers;
 
-    int num_faces_max = 1;
+    int num_faces_max = 2;
     CLMTracker::CLM clm_model2(clm_parameters[0].model_location);
     //clm_model = clm_model2; //cmhuang: problematic...
     clm_model2.face_detector_HAAR.load(clm_parameters[0].face_detector_location);

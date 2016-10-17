@@ -281,7 +281,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
-    if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
+    if(frame_count % 4 == 0 && !all_models_active) //(frame_count % 4 == 0 && !all_models_active)
     {
         if(clm_parameters[0].curr_face_detector == CLMTracker::CLMParameters::HOG_SVM_DETECTOR)
         {
@@ -661,6 +661,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     string fpsSt("FPS:");
     fpsSt += fpsC;
+
     cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
     int num_active_models = 0;

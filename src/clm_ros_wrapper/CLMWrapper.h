@@ -29,6 +29,11 @@
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/VectorWithCertainty.h>
 
+#include <clm_ros_wrapper/ClmEyeGazes.h>
+#include <clm_ros_wrapper/GazeDirections.h>
+#include <clm_ros_wrapper/VectorsWithCertainty.h>
+#include <clm_ros_wrapper/ClmHeadVectors.h>
+
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 

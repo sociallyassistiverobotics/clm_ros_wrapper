@@ -70,6 +70,12 @@ add_message_files(
    GazePointAndDirection.msg
    VectorWithCertainty.msg
    GazeDirection.msg
+   VectorsWithCertainty.msg
+   ClmEyeGazes.msg
+   ClmHeadVectors.msg
+   GazeDirections.msg
+   GazePointsAndDirections.msg
+   VectorsWithCertaintyWithGazePointsAndDirections.msg
 )
 
 ## Generate services in the 'srv' folder

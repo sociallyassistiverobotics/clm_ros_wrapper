@@ -254,6 +254,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     typedef clm_ros_wrapper::ClmEyeGaze ClmEyeGazeMsg;
     typedef clm_ros_wrapper::ClmFacialActionUnit ClmFacialActionUnitMsg;
     typedef clm_ros_wrapper::GazeDirection GazeDirectionMsg;
+    typedef clm_ros_wrapper::GazeDirections GazeDirectionsMsg;
 
     // Set the timestamp
     int64 curr_time = cv::getTickCount();
@@ -302,10 +303,28 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     ClmHeadsMsg ros_heads_msg;
 
+    GazeDirectionsMsg ros_gaze_directions_msg;
+    ros_gaze_directions_msg.directions.resize((int)clm_models.size());
+    clm_ros_wrapper::ClmHeadVectors hfvs_cf_msg;
+    hfvs_cf_msg.head_vectors.resize((int)clm_models.size());
+    clm_ros_wrapper::VectorsWithCertainty headpos_certainty_msgs;
+    headpos_certainty_msgs.vectors.resize((int)clm_models.size());
+
+    //vector<geometry_msgs::Vector3> headposition_cf_msgs(clm_models.size());
+    //vector<geometry_msgs::Vector3> hfv_cf_msgs(clm_models.size());
+    //vector<GazeDirectionMsg> ros_gaze_direction_msgs(clm_models.size());
+
     // Go through every model and update the tracking TODO pull out as a separate parallel/non-parallel method
     tbb::parallel_for(0, (int)clm_models.size(), [&](int model)
     {
         bool detection_success = false;
+
+        //geometry_msgs::Vector3 new_headposition_cf_msg;
+        //geometry_msgs::Vector3 new_hfv_cf_msg;
+        tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
+        tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
+        tf::vector3TFToMsg(no_face_detection_head_position, headpos_certainty_msgs.vectors[model].position);
+        tf::vector3TFToMsg(no_face_detection_head_vector, hfvs_cf_msg.head_vectors[model]);
 
         // If the current model has failed more than 4 times in a row, remove it
         if(clm_models[model].failures_in_a_row > 4)
@@ -317,6 +336,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         // If the model is inactive reactivate it with new detections
         if(!active_models[model])
         {
+            headpos_certainty_msgs.vectors[model].certainty = 0.0;
             for(size_t detection_ind = 0; detection_ind < face_detections.size(); ++detection_ind)
             {
                 // if it was not taken by another tracker take it
@@ -424,7 +444,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             //{
             //  output_HOG_frame(&hog_output_file, detection_success, hog_descriptor, num_hog_rows, num_hog_cols);
             //}
-
+            headpos_certainty_msgs.vectors[model].certainty = 1 - clm_model.detection_certainty;
             double confidence = 0.5 * (1 - clm_model.detection_certainty);
 
             ClmHeadMsg ros_head_msg;
@@ -476,13 +496,21 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             tf::Vector3 hfv_cf = head_rotation_cf * tf::Vector3(0, 0, -1);
 
             //converting to type geometry_msgs::Vector3 and overwriting hfv_cf_msg
-            tf::vector3TFToMsg(hfv_cf, hfv_cf_msg);
+            //tf::vector3TFToMsg(hfv_cf, hfv_cf_msg);
+            tf::vector3TFToMsg(hfv_cf, hfvs_cf_msg.head_vectors[model]);
+            //hfvs_cf_msg.head_vectors[model] = new_hfv_cf_msg;
 
             tf::Vector3 headposition_cf = tf::Vector3(ros_head_msg.headpose.x, ros_head_msg.headpose.y , ros_head_msg.headpose.z);
             //tf::Vector3 headposition_cf = tf::Vector3(0, -60 , 450);
 
             //converting to type geometry_msgs::Vector3 and overwriting headposition_cf_msg
-            tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);
+            //tf::vector3TFToMsg(headposition_cf, headposition_cf_msg);
+            tf::vector3TFToMsg(headposition_cf, headpos_certainty_msgs.vectors[model].position);
+            //cout << "[CLMWrapper] in loop positionX" << headposition_cf.getX() << endl;
+            //cout << "[CLMWrapper] in loop positionY" << headposition_cf.getY() << endl;
+            //cout << "[CLMWrapper] in loop positionZ" << headposition_cf.getZ() << endl;
+            //headpos_certainty_msgs.vectors[model] = new_headposition_cf_msg;
+            //headposition_cf_msgs[model] = new_headposition_cf_msg;
 
             std::vector<Point3f> gazeDirections = {gazeDirection0, gazeDirection1};// left, right
             std::vector<Point3f> gazeDirections_head = {gazeDirection0_head, gazeDirection1_head};
@@ -498,9 +526,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             right_gaze_direction_cf.y = gazeDirection1.y;
             right_gaze_direction_cf.z = gazeDirection1.z;
 
-            ros_gaze_direction_msg.left_gaze_diection = lefe_gaze_direction_cf;
-            ros_gaze_direction_msg.right_gaze_diection = right_gaze_direction_cf;
-            gaze_direction_publisher.publish(ros_gaze_direction_msg);
+            ros_gaze_directions_msg.directions[model].left_gaze_diection = lefe_gaze_direction_cf;
+            ros_gaze_directions_msg.directions[model].right_gaze_diection = right_gaze_direction_cf;
+            //gaze_direction_publisher.publish(ros_gaze_direction_msg);
 
             for (size_t p = 0; p < gazeDirections_head.size(); p++)
             {
@@ -578,6 +606,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
 
     });
+
+    //GazeDirectionsMsg ros_gaze_directions_msg;
+    //ros_gaze_directions_msg.directions = ros_gaze_direction_msgs;
+    gaze_direction_publisher.publish(ros_gaze_directions_msg);
 
     std_msgs::String rate;
 
@@ -688,15 +720,15 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     }
     else
     {
-        publishImage(captured_image, "bgr8");\
+        publishImage(captured_image, "bgr8");
 
         //creating dummy vectors to make hfv_publisher and head_position_publisher publish
         //some vector regardless of whether something is detected
-        tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
-        tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
+        //tf::Vector3 no_face_detection_head_vector = tf::Vector3(0,0,0);
+        //tf::Vector3 no_face_detection_head_position = tf::Vector3(0, 0, 0);
 
-        tf::vector3TFToMsg(no_face_detection_head_position, headposition_cf_msg);
-        tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
+        //tf::vector3TFToMsg(no_face_detection_head_position, headposition_cf_msg);
+        //tf::vector3TFToMsg(no_face_detection_head_vector, hfv_cf_msg);
     }
      //publishing the image usign the cv pointer
 
@@ -717,15 +749,29 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // }
 
     // head fixation vector and the head position publisher (both in camera frame)
-    hfv_publisher.publish(hfv_cf_msg);
+    //hfv_publisher.publish(hfv_cf_msg);
+    hfv_publisher.publish(hfvs_cf_msg);
 
-    clm_ros_wrapper::VectorWithCertainty headpos_certainty_msg;
-    headpos_certainty_msg.position = headposition_cf_msg;
+    //clm_ros_wrapper::VectorWithCertainty headpos_certainty_msg;
+    //headpos_certainty_msg.position = headposition_cf_msg;
 
     //global_detection_certainty between 0 and 1 and decreases as the detection gets certain
-    headpos_certainty_msg.certainty = 1- global_detection_certainty;
+    //headpos_certainty_msg.certainty = 1- global_detection_certainty;
 
-    head_position_publisher.publish(headpos_certainty_msg);
+    //head_position_publisher.publish(headpos_certainty_msg);
+
+    //clm_ros_wrapper::VectorsWithCertainty headpos_certainty_msgs;
+    //headpos_certainty_msgs.vectors = new vector<clm_ros_wrapper::VectorWithCertainty>(headposition_cf_msgs.size());
+    //for(int loop = 0; loop < headpos_certainty_msgs.vectors.size(); loop++){
+        //clm_ros_wrapper::VectorWithCertainty headpos_certainty_msg;
+        //headpos_certainty_msg.position = headposition_cf_msgs[loop];
+
+        //global_detection_certainty between 0 and 1 and decreases as the detection gets certain
+        //headpos_certainty_msgs.vectors[loop].certainty = 1 - global_detection_certainty;
+        //cout << "[clmWrapper] certainty " << 1 - global_detection_certainty << endl;
+        //headpos_certainty_msgs.vectors[loop] = headpos_certainty_msg;
+    //}
+    head_position_publisher.publish(headpos_certainty_msgs);
 
     // e: don't need to work out framerate
     // Work out the framerate
@@ -817,17 +863,21 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     imagePublisher = imageTransport.advertise(_name+"/face_image", 1);
 
     // publishing head direction in cf
-    hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>(_name+"/head_vector", 1);
+    //hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>(_name+"/head_vector", 1);
+    hfv_publisher = nodeHandle.advertise<clm_ros_wrapper::ClmHeadVectors>(_name+"/head_vectors", 1);
 
     // publishing head position in the camera frame
-    head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorWithCertainty>(_name+"/head_position", 1);
+    //head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorWithCertainty>(_name+"/head_position", 1);
+    head_position_publisher = nodeHandle.advertise<clm_ros_wrapper::VectorsWithCertainty>(_name+"/head_positions", 1);
 
     detection_rate_publisher = nodeHandle.advertise<std_msgs::String>(_name+"/detection_rate", 1);
 
-    // publishing eye gaze
+    // NOTE: need to change to 1)vector of gazes for multiple faces ; 2)the left, right gazes need to combined
+    // publishing eye gaze currently not used.
     eye_gaze_publisher = nodeHandle.advertise<clm_ros_wrapper::ClmEyeGaze>(_name+"/eye_gaze", 1);
 
-    gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirection>(_name+"/gaze_direction", 1);
+    //gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirection>(_name+"/gaze_direction", 1);
+    gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirections>(_name+"/gaze_directions", 1);
 
     init = true;
 

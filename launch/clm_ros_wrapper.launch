@@ -14,7 +14,7 @@
         <param name="device_test" type="int" value="0"/>
     </node>
 
-    <group ns="/sar/perception/right_cam" if="true">
+    <group ns="/sar/perception/right_cam" if="false">
 
         <!-- camera frame to world frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
@@ -45,7 +45,7 @@
         <param name="cam" type="string" value="usb_cam_1"/>
 
         <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video0" />
+            <param name="video_device" value="/dev/video1" />
             <param name="image_width" value="640" /> <!-- 640 -->
             <param name="image_height" value="480" /> <!-- 480-->
             <param name="pixel_format" value="yuyv" />
@@ -100,7 +100,7 @@
         <param name="cam" type="string" value="usb_cam_2"/>
 
         <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video1" />
+            <param name="video_device" value="/dev/video0" />
             <param name="image_width" value="640" /> <!-- 640 -->
             <param name="image_height" value="480" /> <!-- 480-->
             <param name="pixel_format" value="yuyv" />

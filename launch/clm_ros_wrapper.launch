@@ -45,7 +45,7 @@
         <param name="cam" type="string" value="usb_cam_1"/>
 
         <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video1" />
+            <param name="video_device" value="/dev/video0" />
             <param name="image_width" value="640" /> <!-- 640 -->
             <param name="image_height" value="480" /> <!-- 480-->
             <param name="pixel_format" value="yuyv" />
@@ -76,8 +76,9 @@
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
         
-        <rosparam param = "transformation_cf2intermediate_frame">[1,0,0,220, 0,1,0, 500, 0,0,1, 400,0,0,0,1]</rosparam>
         <rosparam param = "transformation_intermediate_frame2wf">[-1,0,0,0.0,0,0,-1,0.0,0,-1,0,0.0,0,0,0,1]</rosparam>
+
+        <rosparam param = "transformation_cf2intermediate_frame">[1,0,0,400, 0,1,0, 450, 0,0,1, 410,0,0,0,1]</rosparam>
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
@@ -100,9 +101,9 @@
         <param name="cam" type="string" value="usb_cam_2"/>
 
         <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video0" />
-            <param name="image_width" value="640" /> <!-- 640 -->
-            <param name="image_height" value="480" /> <!-- 480-->
+            <param name="video_device" value="/dev/video1" />
+            <param name="image_width" value="1280" /> <!-- 1280 -->
+            <param name="image_height" value="720" /> <!-- 720-->
             <param name="pixel_format" value="yuyv" />
             <param name="camera_frame_id" value="usb_cam" />
             <param name="io_method" value="mmap"/>

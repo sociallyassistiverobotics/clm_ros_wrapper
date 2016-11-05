@@ -41,7 +41,6 @@
 
 #include <tf/transform_datatypes.h>
 
-
 class ClmWrapper
 {
 private:
@@ -130,7 +129,7 @@ private:
     float cx, cy;
     bool  cx_undefined;
 
-    float global_detection_certainty = 0;
+    // float global_detection_certainty = 0;
 
     bool init;
 

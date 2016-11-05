@@ -4,11 +4,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "CLMWrapper.h"
+#include <mutex>
 
 using namespace std;
 using namespace cv;
 
 using namespace boost::filesystem;
+
+std::mutex m;
 
 // Useful utility for creating directories for storing the output files
 void ClmWrapper::create_directory_from_file(string output_path)
@@ -203,6 +206,7 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
+    m.lock();
     // Convert the ROS image to OpenCV image format
     // BUG : For CLM, OpenCV 3.* is needed, but cv_bridge segfaults with openCV 3.0
     // when asked to convert images with BGR encoding. The solution has been to convert them
@@ -282,7 +286,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // eric: we do the frame detection earlier in the code base
     // Get the detections (every 8th frame and when there are free models available for tracking)
-    if(!all_models_active) //(frame_count % 4 == 0 && !all_models_active)
+    if(!all_models_active && frame_count % 3 == 0) //(frame_count % 4 == 0 && !all_models_active)
     {
         if(clm_parameters[0].curr_face_detector == CLMTracker::CLMParameters::HOG_SVM_DETECTOR)
         {
@@ -631,7 +635,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         // Draw the facial landmarks on the face and the bounding box around it
         // if tracking is successful and initialized
         detection_certainty = clm_models[model].detection_certainty;
-        global_detection_certainty = detection_certainty;
+        // global_detection_certainty = detection_certainty;
         double visualisation_boundary = -0.1;
         // Only draw if the reliability is reasonable, the value is slightly ad-hoc
         if(detection_certainty < visualisation_boundary)
@@ -644,7 +648,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
 
-            global_detection_certainty = detection_certainty;
+            // global_detection_certainty = detection_certainty;
 
             // A rough heuristic for box around the face width
             int thickness = (int)std::ceil(2.0* ((double)captured_image.cols) / 640.0);
@@ -844,7 +848,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
      //{
      //  done = true;
      //}
-
+    m.unlock();
 }
 
 ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle)

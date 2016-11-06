@@ -69,6 +69,8 @@ float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
 ros::Publisher target_publisher;
 
+ros::Publisher parent_target_publisher;
+
 using namespace std;
 using std::vector;
 
@@ -352,25 +354,97 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target >= 0) && (shortest_target <= 11)){
-                // std::cout << "..screen" << std::endl;
+                std::cout << "..SCREEN" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 12) || (shortest_target == 13)){
-                // std::cout << "..robot" << std::endl;
+                std::cout << "..ROBOT" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
             else if((shortest_target == 14) || (shortest_target == 15)){
-                // std::cout << "..parent" << std::endl;
+                std::cout << "..PARENT" << std::endl;
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
-            // std::cout << "..others" << std::endl;
+            std::cout << "..OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 
         detected_target.region = estimated_region;
         target_publisher.publish(detected_target);
+    }
+}
+
+void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
+{
+    double detection_certainty = (*msg).certainty;
+    tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
+
+    //checking if there is detection
+    tf::vector3MsgToTF((*msg).gaze_point, gaze_point_wf);
+    tf::vector3MsgToTF((*msg).head_position, head_position_wf);
+    tf::vector3MsgToTF((*msg).hfv, hfv_wf);
+
+    if (gaze_point_wf.isZero() && head_position_wf.isZero() && hfv_wf.isZero())
+    {
+        //means no detection
+        clm_ros_wrapper::DetectedTarget target_no_detection;
+        target_no_detection.certainty = detection_certainty;
+
+        target_no_detection.name = "NO DETECTION";
+        target_no_detection.distance = 0;
+        target_no_detection.region = target_no_detection.NONE;
+
+        cout << "parent  - no detection" << endl;
+        parent_target_publisher.publish(target_no_detection);
+    }
+    else
+    {
+        clm_ros_wrapper::DetectedTarget detected_target;
+        detected_target.certainty = detection_certainty;
+        float _height = 1000;
+        float _radian = 0.523599; //30 degree in radian
+        
+        double current_dist = 100000000.0;
+        int estimated_region = detected_target.NONE;
+        double shortest_dist = 100000000.0;
+        int shortest_target = -1;
+        bool found_a_match = false;
+
+        for (int _index = 0; _index < virtual_targets.size(); _index++){
+            if(is_point_inside_cone(head_position_wf, hfv_wf, _height, _radian, virtual_targets.at(_index), current_dist)){
+                found_a_match = true;
+                if(current_dist < shortest_dist){
+                    shortest_dist = current_dist;
+                    shortest_target = _index;
+                }
+            }
+
+        }
+
+        if(found_a_match){
+            //cout << "shortest distance = " << shortest_dist << endl;
+            if((shortest_target >= 0) && (shortest_target <= 11)){
+                std::cout << "..parent..screen" << std::endl;
+                estimated_region = detected_target.SCREEN;
+            }
+            else if((shortest_target == 12) || (shortest_target == 13)){
+                std::cout << "..parent..robot" << std::endl;
+                estimated_region = detected_target.ROBOT;
+            }
+            else if((shortest_target == 16) || (shortest_target == 17)){
+                std::cout << "..parent..child" << std::endl;
+                estimated_region = detected_target.CHILD;
+            }
+        }
+        else{
+            std::cout << "..parent..others" << std::endl;
+            estimated_region = detected_target.OUTSIDE;
+        }
+
+        detected_target.region = estimated_region;
+        parent_target_publisher.publish(detected_target);
     }
 }
 
@@ -431,9 +505,13 @@ int main(int argc, char **argv)
 
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
+    parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
+
     ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback2);
+
+    ros::Subscriber parent_gazepoint_sub = nh.subscribe("/sar/perception/parent_gaze_point_and_direction_wf", 1, &parent_gazepoint_callback2);
 
     // initialize virtual targets
     // tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
@@ -464,6 +542,8 @@ int main(int argc, char **argv)
     tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
     tf::Vector3 virtual_parent_1 = tf::Vector3(750,-100,300);
     tf::Vector3 virtual_parent_2 = tf::Vector3(750, 0,300);
+    tf::Vector3 virtual_child_1 = tf::Vector3(250,-100,300);
+    tf::Vector3 virtual_child_2 = tf::Vector3(250,-100,200);
 
     // virtual_targets.push_back(virtual_screen_center);
     // virtual_targets.push_back(virtual_screen_top_left);
@@ -486,6 +566,9 @@ int main(int argc, char **argv)
     virtual_targets.push_back(virtual_robot_bottom);
     virtual_targets.push_back(virtual_parent_1);
     virtual_targets.push_back(virtual_parent_2);
+    virtual_targets.push_back(virtual_child_1);
+    virtual_targets.push_back(virtual_child_2);
+
 
     ros::spin();
 }

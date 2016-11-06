@@ -29,13 +29,17 @@
 #include <clm_ros_wrapper/ClmFacialActionUnit.h>
 #include <clm_ros_wrapper/VectorWithCertainty.h>
 
+#include <clm_ros_wrapper/ClmEyeGazes.h>
+#include <clm_ros_wrapper/GazeDirections.h>
+#include <clm_ros_wrapper/VectorsWithCertainty.h>
+#include <clm_ros_wrapper/ClmHeadVectors.h>
+
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 
 #include <math.h>
 
 #include <tf/transform_datatypes.h>
-
 
 class ClmWrapper
 {
@@ -125,7 +129,7 @@ private:
     float cx, cy;
     bool  cx_undefined;
 
-    float global_detection_certainty = 0;
+    // float global_detection_certainty = 0;
 
     bool init;
 

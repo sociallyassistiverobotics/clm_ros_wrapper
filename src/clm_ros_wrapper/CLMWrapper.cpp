@@ -697,6 +697,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     string fpsSt("FPS:");
     fpsSt += fpsC;
+
     cv::putText(disp_image, fpsSt, cv::Point(10,20), CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
     int num_active_models = 0;

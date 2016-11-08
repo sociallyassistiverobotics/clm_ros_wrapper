@@ -136,10 +136,19 @@
         <param name="device_test" type="int" value="0"/>
     </node>
 
-    <!-- rosbag for recording interactions -->
-    <group if="false">
-        <node pkg="rosbag" type="record" name="rosbag_record_image"
-           args="-o $(find sar_core)/logs/rosbags/rosbag_image /sar/perception/left_cam/usb_cam_2/image_raw "/> <!-- TODO: include topics -->
+    <group if="true">
+        <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <param name="video_device" value="/dev/video0" />
+            <param name="image_width" value="1280" /> <!-- 640 -->
+            <param name="image_height" value="720" /> <!-- 480-->
+            <param name="pixel_format" value="yuyv" />
+            <param name="camera_frame_id" value="usb_cam" />
+            <param name="io_method" value="mmap"/>
+        </node>
+        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+            <remap from="image" to="/usb_cam_1/image_raw"/>
+            <param name="autosize" value="true" />
+        </node>
     </group>
 
 </launch>

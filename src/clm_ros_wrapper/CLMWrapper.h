@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/face.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -136,6 +137,11 @@ private:
     geometry_msgs::Vector3 hfv_cf_msg;
     geometry_msgs::Vector3 headposition_cf_msg;
 
+    // parameters needed for face recognition
+    vector<Mat> faces_train;
+    vector<int> labels_train;
+    Ptr<cv::face::FaceRecognizer> face_recognizer;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
     bool publishImage(cv::Mat &mat, const std::string encoding);
@@ -155,6 +161,9 @@ private:
     * @param msgIn an RGB image
     */
     void callback(const sensor_msgs::ImageConstPtr& msgIn);
+
+    // get face image
+    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence);
 
 public:
     ClmWrapper(std::string _name, std::string _loc);

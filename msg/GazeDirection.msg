@@ -1,2 +1,3 @@
 geometry_msgs/Vector3 left_gaze_diection
 geometry_msgs/Vector3 right_gaze_diection
+int8 role

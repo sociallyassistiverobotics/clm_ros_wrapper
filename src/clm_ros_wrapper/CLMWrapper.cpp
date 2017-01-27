@@ -311,6 +311,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     ros_gaze_directions_msg.directions.resize((int)clm_models.size());
     clm_ros_wrapper::ClmHeadVectors hfvs_cf_msg;
     hfvs_cf_msg.head_vectors.resize((int)clm_models.size());
+    hfvs_cf_msg.roles.resize((int)clm_models.size());
+    hfvs_cf_msg.role_confidences.resize((int)clm_models.size());
     clm_ros_wrapper::VectorsWithCertainty headpos_certainty_msgs;
     headpos_certainty_msgs.vectors.resize((int)clm_models.size());
 
@@ -611,10 +613,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     });
 
-    //GazeDirectionsMsg ros_gaze_directions_msg;
-    //ros_gaze_directions_msg.directions = ros_gaze_direction_msgs;
-    gaze_direction_publisher.publish(ros_gaze_directions_msg);
-
     std_msgs::String rate;
 
     std::stringstream ss;
@@ -642,10 +640,17 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         {
             faceDetected = 1;
 
+            int label = -1;
+            double confidence = 1000;
+            retrieveFaceImage(disp_image, clm_models[model], label, confidence);
+            headpos_certainty_msgs.vectors[model].role = label;
+            hfvs_cf_msg.roles[model] = label;
+            hfvs_cf_msg.role_confidences[model] = confidence;
+            ros_gaze_directions_msg.directions[model].role = label;
+
             CLMTracker::Draw(disp_image, clm_models[model]);
             if(detection_certainty > 1)     detection_certainty =  1;
             if(detection_certainty < -1)    detection_certainty = -1;
-
             detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
 
             // global_detection_certainty = detection_certainty;
@@ -663,10 +668,19 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             FaceAnalysis::DrawGaze(disp_image, clm_models[model], gazeDirection0, gazeDirection1, fx, fy, cx, cy);
 
-            // displaying tracking certainty
+            // displaying tracking certainty and who
             char certainty_C[255];
             sprintf(certainty_C, "%f", 1-detection_certainty);
             string certainty_st("Certainty: ");
+            string role;
+            if (1 == label) {
+                role = "CHILD";
+            } else if (2 == label) {
+                role = "PARENT";
+            } else {
+                role = "OTHER";
+            }
+            certainty_st = role + " " + certainty_st;
             certainty_st += certainty_C;
             cv::Point certainty_pos;
             vector<std::pair<Point,Point>> certainty_pos_vec = CLMTracker::CalculateBox(pose_estimate_CLM, fx, fy, cx, cy);
@@ -778,6 +792,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     //}
     head_position_publisher.publish(headpos_certainty_msgs);
 
+    //GazeDirectionsMsg ros_gaze_directions_msg;
+    //ros_gaze_directions_msg.directions = ros_gaze_direction_msgs;
+    gaze_direction_publisher.publish(ros_gaze_directions_msg);
+
     // e: don't need to work out framerate
     // Work out the framerate
     //if(frame_count % 10 == 0)
@@ -852,9 +870,80 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     m.unlock();
 }
 
+void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence)
+{
+    int idx = clm_model.patch_experts.GetViewIdx(clm_model.params_global, 0);
+    int n = clm_model.detected_landmarks.rows/2;
+
+    if (clm_model.detected_landmarks.rows > 0 && clm_model.detected_landmarks.cols > 0) {
+        int x_min = (int)clm_model.detected_landmarks.at<double>(0);
+        int x_max = (int)clm_model.detected_landmarks.at<double>(0);
+        int y_min = (int)clm_model.detected_landmarks.at<double>(n);
+        int y_max = (int)clm_model.detected_landmarks.at<double>(n);
+
+        for( int i = 0; i < n; ++i)
+        {       
+            if(clm_model.patch_experts.visibilities[0][idx].at<int>(i))
+            {
+                int x = (int)clm_model.detected_landmarks.at<double>(i);
+                int y = (int)clm_model.detected_landmarks.at<double>(i + n);
+                
+                x_min = (x_min > x) ? x : x_min;
+                x_max = (x_max < x) ? x : x_max;
+                y_min = (y_min > y) ? y : y_min;
+                y_max = (y_max < y) ? y : y_max;        
+            }
+        }
+
+        cv::Rect face_contour;
+        int width = x_max - x_min;
+        int height = y_max - y_min;
+        face_contour.x = x_min;
+        if (width < height) {
+            face_contour.x -= (int)(height - width) / 2;
+        }
+        face_contour.y = y_min;
+        if (height < width) {
+            face_contour.y -= (int)(width - height) / 2;
+        }
+        face_contour.width = (width > height) ? width : height;
+        face_contour.height = (width > height) ? width : height;
+
+        // cout << "==============================" << endl;
+        // cout << "x_min = " << x_min << endl;
+        // cout << "width = " << width << endl;
+        // cout << "x = " << face_contour.x << endl;
+        // cout << "y_min = " << y_min << endl;
+        // cout << "height = " << height << endl;
+        // cout << "y = " << face_contour.y << endl;
+        // cout << "width = " << face_contour.width << endl;
+        // cout << "height = " << face_contour.height << endl;
+
+        if (face_contour.x >= 0 && face_contour.y >= 0 && face_contour.width >= 100 && face_contour.height >= 100 && face_contour.x + face_contour.width <= img.cols && face_contour.y + face_contour.height <= img.rows) {
+            cv::Mat face = img(face_contour);
+            cv::Size size(100, 100);
+            cv::Mat rescaled_face;
+            cv::resize(face, rescaled_face, size);
+            cv::cvtColor(rescaled_face, rescaled_face, CV_RGB2GRAY); // the method needs grey scale
+
+            face_recognizer->predict(rescaled_face, label, confidence);
+            // cout << "predict: " << label << " with confidence: " << confidence << endl;
+            if (confidence > 1500) {
+                label = -1;
+            }
+
+            cv::imshow("face", rescaled_face);
+            cv::waitKey(1);
+        }
+    }
+}
+
 ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle)
 {
     ROS_INFO("Called constructor...");
+
+    face_recognizer = cv::face::createEigenFaceRecognizer();
+    face_recognizer->load("/home/sar/Meiying/face_recognizer_model.xml");
 
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);

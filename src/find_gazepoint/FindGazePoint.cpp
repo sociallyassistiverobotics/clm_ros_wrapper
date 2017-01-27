@@ -116,6 +116,8 @@ void vector_callback(const clm_ros_wrapper::ClmHeadVectors::ConstPtr& msg)
         geometry_msgs::Vector3 head_vector_msg;
         head_vector_msg = msg->head_vectors[loop];
         tf::vector3MsgToTF(head_vector_msg, hfv_cf);
+        publish_msg.gazes[loop].role = msg->roles[loop];
+        publish_msg.gazes[loop].role_confidence = msg->role_confidences[loop];
 
         //checking if there is a detection
         if (headpositions_cf.size() == 0 || headpositions_cf[loop].isZero() || hfv_cf.isZero())

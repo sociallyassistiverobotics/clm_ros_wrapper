@@ -166,6 +166,7 @@ add_executable(clm_ros_wrapper src/clm_ros_wrapper/CLMWrapper.h src/clm_ros_wrap
 add_executable(find_gazepoint src/find_gazepoint/FindGazePoint.cpp)
 add_executable(target_detector src/target_detector/TargetDetector.cpp)
 add_executable(scene_publisher src/scene_publisher.cpp)
+add_executable(face_recognition_initializer src/face_recognition_initializer/FaceRecognizeInitiallizer.cpp src/face_recognition_initializer/InitializerHelper.cpp src/face_recognition_initializer/InitializerHelper.h)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
@@ -173,6 +174,7 @@ add_dependencies(clm_ros_wrapper clm_ros_wrapper_generate_messages_cpp ${${PROJE
 add_dependencies(find_gazepoint find_gazepoint_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(target_detector target_detector_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(scene_publisher scene_publisher_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(face_recognition_initializer face_recognition_initializer_generate_messages_cpp ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(clm_ros_wrapper 
@@ -196,6 +198,14 @@ target_link_libraries(target_detector
                       ${TBB_LIBRARIES}
                       ${catkin_LIBRARIES})
 target_link_libraries(scene_publisher 
+                      dlib
+                      ${OpenCV_LIBS}
+                      ${Boost_LIBRARIES}
+                      ${TBB_LIBRARIES}
+                      ${catkin_LIBRARIES})
+target_link_libraries(face_recognition_initializer
+                      CLM
+                      FaceAnalyser
                       dlib
                       ${OpenCV_LIBS}
                       ${Boost_LIBRARIES}
@@ -238,6 +248,11 @@ install(TARGETS target_detector
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )
 install(TARGETS scene_publisher
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+install(TARGETS face_recognition_initializer
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

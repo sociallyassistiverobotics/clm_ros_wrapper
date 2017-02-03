@@ -15,51 +15,36 @@ static void mouse_callback(int event, int x, int y, int flags, void* userdata)
     InitializerHelper * helper = (InitializerHelper *)userdata;
     if (event == EVENT_LBUTTONUP)
     {
-        if (!helper->is_training("CHILD") && !helper->is_training("PARENT")) { // not during the training phase
-            if (!helper->is_training_done("CHILD")) {
-                helper->set_is_training("CHILD", true);
-            } else if (!helper->is_training_done("PARENT")) {
-                helper->set_is_training("PARENT", true);
-            }
-        } else { // during the training phase
-            if (helper->is_training("CHILD")) {
-                helper->set_is_training("CHILD", false);
-                helper->set_is_training_done("CHILD", true);
-            } else if (helper->is_training("PARENT")) {
-                helper->set_is_training("PARENT", false);
-                helper->set_is_training_done("PARENT", true);
-                helper->train();
-            }
+        if (helper->is_training()) {
+            helper->stopTraining();
+        } else if (helper->is_training_done()) {
+            helper->train();
+        } else {
+            helper->startNewTraining();
         }
     }
 }
 
-bool InitializerHelper::is_training(string role)
+bool InitializerHelper::is_training()
 {
-    return role == "CHILD" ? is_train_child : is_train_parent;
+    return is_train;
 }
 
-bool InitializerHelper::is_training_done(string role)
+bool InitializerHelper::is_training_done()
 {
-    return role == "CHILD" ? is_train_child_done : is_train_parent_done;
+    return !is_train && 10 == train_stage;
 }
 
-void InitializerHelper::set_is_training(string role, bool state)
+void InitializerHelper::stopTraining()
 {
-    if ("CHILD" == role) {
-        is_train_child = state;
-    } else if ("PARENT" == role) {
-        is_train_parent = state;
-    }
+    is_train = false;
+    train_stage++;
+    num_train_samples = 0;
 }
 
-void InitializerHelper::set_is_training_done(string role, bool state)
+void InitializerHelper::startNewTraining()
 {
-    if ("CHILD" == role) {
-        is_train_child_done = state;
-    } else if ("PARENT" == role) {
-        is_train_parent_done = state;
-    }
+    is_train = true;
 }
 
 void InitializerHelper::publishImage(cv::Mat &mat)
@@ -70,8 +55,20 @@ void InitializerHelper::publishImage(cv::Mat &mat)
 
 void InitializerHelper::train()
 {
+    string location = save_location + "/train_images/";
+
+    for(auto & folder : boost::make_iterator_range(directory_iterator(location), {})) {
+        string parent_path = folder.path().parent_path().string();
+        string current_path = folder.path().string();
+        int label = std::stoi(current_path.substr(parent_path.length() + 1, current_path.length()));
+        for (auto & image : boost::make_iterator_range(directory_iterator(folder), {})) {
+            faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
+            labels_train.push_back(label);
+        }
+    }
     face_recognizer->train(faces_train, labels_train);
-    face_recognizer->save("/home/sar/Meiying/face_recognizer_model.xml");
+    face_recognizer->save(save_location + "/face_recognizer_model.xml");
+    is_model_trained = true;
 }
 
 void InitializerHelper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_models, vector<Rect_<double> >& face_detections)
@@ -286,20 +283,20 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
     }
 
-    string training = "";
-    if (is_train_child) {
-        training = "Child training: " + to_string(train_child_num);
-    }
-    else if (is_train_parent) {
-        training = "Parent training: " + to_string(train_parent_num);
-    } else {
-        if (!is_train_child_done) {
-            training = "Click on the image to start training for CHILD";
-        } else if (!is_train_parent_done) {
-            training = "Click on the image to start training for PARENT";
+    string training_text = "";
+    if (is_training()) {
+        string target = train_stage < 5 ? "CHILD" : "PARENT";
+        training_text = target + " training at stage " + to_string(train_stage) + " (" + get_stage_task(train_stage) + "): " + to_string(num_train_samples);
+    } else if (!is_model_trained) {
+        if (is_training_done()) { // finish training
+            training_text = "Click on the image to start training the model";
+        } else {
+            string target = train_stage < 5 ? "CHILD" : "PARENT";
+            training_text = "Click on the image to start training for " + target + " at stage " + to_string(train_stage) + ": look " + get_stage_task(train_stage);
         }
     }
-    cv::putText(disp_image, training, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
+
+    cv::putText(disp_image, training_text, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
 
     if (faceDetected)
     {
@@ -320,6 +317,23 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             reported_completion = reported_completion + 1;
         }
     }
+}
+
+string InitializerHelper::get_stage_task(int stage)
+{
+    string task = "";
+    if (0 == stage % 5) {
+        task = "STRAIGHT FORWARD";
+    } else if (1 == stage % 5) {
+        task = "LEFT";
+    } else if (2 == stage % 5) {
+        task = "RIGHT";
+    } else if (3 == stage % 5) {
+        task = "UP";
+    } else if (4 == stage % 5) {
+        task = "DOWN";
+    }
+    return task;
 }
 
 void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model)
@@ -361,16 +375,6 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
         face_contour.width = (width > height) ? width : height;
         face_contour.height = (width > height) ? width : height;
 
-        // cout << "==============================" << endl;
-        // cout << "x_min = " << x_min << endl;
-        // cout << "width = " << width << endl;
-        // cout << "x = " << face_contour.x << endl;
-        // cout << "y_min = " << y_min << endl;
-        // cout << "height = " << height << endl;
-        // cout << "y = " << face_contour.y << endl;
-        // cout << "width = " << face_contour.width << endl;
-        // cout << "height = " << face_contour.height << endl;
-
         if (face_contour.x >= 0 && face_contour.y >= 0 && face_contour.width >= 100 && face_contour.height >= 100 && face_contour.x + face_contour.width <= img.cols && face_contour.y + face_contour.height <= img.rows) {
             cv::Mat face = img(face_contour);
             cv::Size size(100, 100);
@@ -380,29 +384,28 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
             cv::imshow("face", rescaled_face);
             cv::waitKey(1);
 
-            if (is_train_child) {
-                faces_train.push_back(rescaled_face);
-                labels_train.push_back(1); // 1 is child, 2 is parent
-                train_child_num++;
-            } else if (is_train_parent) {
-                faces_train.push_back(rescaled_face);
-                labels_train.push_back(2); // 1 is child, 2 is parent
-                train_parent_num++;
-            } else if (is_train_child_done && is_train_parent_done) { // finish training
-                // predict model
+            if (is_training()) {
+                string image_location = save_location + "/train_images/" + to_string(train_stage + 1) + "/" + to_string(num_train_samples) + ".jpg";
+                if (!exists(save_location + "/train_images")) {
+                    create_directory(save_location + "/train_images");
+                }
+                if (!exists(save_location + "/train_images/" + to_string(train_stage + 1))) {
+                    create_directory(save_location + "/train_images/" + to_string(train_stage + 1));
+                }
+                imwrite(image_location, rescaled_face);
+                num_train_samples++;
+            } else if (is_model_trained) {
                 int predicted_label = 0;
                 double predicted_confidence = 0;
                 face_recognizer->predict(rescaled_face, predicted_label, predicted_confidence);
-                // cout << "predict: " << predicted_label << " with confidence: " << predicted_confidence << endl;
 
                 string role;
-                if (1 == predicted_label) {
+                if (predicted_label <= 5) {
                     role = "CHILD";
-                } else if (2 == predicted_label) {
-                    role = "PARENT";
                 } else {
-                    role = "OTHER";
+                    role = "PARENT";
                 }
+
                 string result = "predict: " + role + " with confidence: " + to_string(predicted_confidence);
                 cv::putText(img, result, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
             }
@@ -413,12 +416,10 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
 InitializerHelper::InitializerHelper(string _name, string _loc) : 
     executable_location(_loc), 
     imageTransport(nodeHandle),
-    train_child_num(0),
-    is_train_child(false),
-    is_train_child_done(false),
-    train_parent_num(0),
-    is_train_parent(false),
-    is_train_parent_done(false),
+    is_train(false),
+    is_model_trained(false),
+    train_stage(0),
+    num_train_samples(0),
     face_recognizer(cv::face::createEigenFaceRecognizer())
 {
     ROS_INFO("Called constructor...");
@@ -430,9 +431,6 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
 
     namedWindow("Face Recognition Training");
     setMouseCallback("Face Recognition Training", mouse_callback, this);
-
-    // publisher for the image when a face is detected
-    // imagePublisher = imageTransport.advertise(_name+"/face_image", 1);
 
     vector<string> arguments;
     arguments.push_back(executable_location);

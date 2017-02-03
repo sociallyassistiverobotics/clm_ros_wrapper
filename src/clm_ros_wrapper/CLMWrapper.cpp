@@ -927,10 +927,12 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
             cv::cvtColor(rescaled_face, rescaled_face, CV_RGB2GRAY); // the method needs grey scale
 
             face_recognizer->predict(rescaled_face, label, confidence);
-            // cout << "predict: " << label << " with confidence: " << confidence << endl;
-            if (confidence > 1500) {
+            if (confidence > 2000) {
                 label = -1;
+            } else if (label >= 1) {
+                label = label / 5 + 1;
             }
+            cout << "predict: " << label << " with confidence: " << confidence << endl;
 
             cv::imshow("face", rescaled_face);
             cv::waitKey(1);

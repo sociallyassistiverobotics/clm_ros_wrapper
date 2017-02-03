@@ -48,6 +48,8 @@ static void mouse_callback(int event, int x, int y, int flags, void* userdata);
 class InitializerHelper
 {
 private:
+    const string save_location = "/home/sar/Meiying";
+
     std::string executable_location;
 
     ros::NodeHandle nodeHandle;
@@ -83,12 +85,10 @@ private:
     vector<Mat> faces_train;
     vector<int> labels_train;
     Ptr<cv::face::FaceRecognizer> face_recognizer;
-    int train_child_num;
-    bool is_train_child;
-    bool is_train_child_done;
-    int train_parent_num;
-    bool is_train_parent;
-    bool is_train_parent_done;
+    bool is_train;
+    bool is_model_trained;
+    int train_stage;
+    int num_train_samples;
 
     void publishImage(cv::Mat &mat);
 
@@ -104,12 +104,14 @@ private:
     // get face image
     void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model);
 
+    string get_stage_task(int stage);
+
 public:
     InitializerHelper(std::string _name, std::string _loc);
     ~InitializerHelper() {};
-    bool is_training(string role);
-    bool is_training_done(string role);
-    void set_is_training(string role, bool state);
-    void set_is_training_done(string role, bool state);
+    bool is_training();
+    bool is_training_done();
+    void stopTraining();
+    void startNewTraining();
     void train();
 };

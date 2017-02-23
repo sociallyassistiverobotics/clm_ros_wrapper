@@ -34,8 +34,7 @@
         <param name="screenHeight" type="double" value="380"/> <!-- mm -->
         <param name="screenWidth" type="double" value="520"/><!-- mm -->
 
-        <!-- calibration -->
-        <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
+       <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
         <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
 
         <!-- robot parameters - radius for inside/outside check-->
@@ -70,7 +69,7 @@
     </group>
 
 
-    <group ns="/sar/perception/left_cam" if="true">
+    <group ns="/sar/perception/left_cam" if="true"> <!-- tracking cam -->
 
         <!-- camera frame to world frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
@@ -97,11 +96,11 @@
         <!-- robot parameters - radius for inside/outside check-->
         <param name="robot_radius" type="double" value="220"/> <!-- mm -->
 
-        <param name="ns" type="string" value="clm_ros_wrapper_2"/>
-        <param name="cam" type="string" value="usb_cam_2"/>
+        <param name="ns" type="string" value="clm_ros_wrapper_0"/>
+        <param name="cam" type="string" value="usb_cam_0"/>
 
-        <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video1" />
+        <node name="usb_cam_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
+            <param name="video_device" value="/dev/video0" />
             <param name="image_width" value="1280" /> <!-- 1280 -->
             <param name="image_height" value="720" /> <!-- 720-->
             <param name="pixel_format" value="yuyv" />
@@ -117,10 +116,12 @@
             <param name ="device_test" type ="int" value="0"/> 
         </node>
 
+        <!-- DO NOT SHOW IMAGE: tracking view -->
         <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-            <remap from="image" to="clm_ros_wrapper_2/face_image"/>
+            <remap from="image" to="clm_ros_wrapper_0/face_image"/>
             <param name="autosize" value="true" />
         </node>
+        
 
         <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
             <param name="device_test" type="int" value="0"/>
@@ -138,17 +139,19 @@
 
     <group if="true">
         <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video0" />
+            <param name="video_device" value="/dev/video1" />
             <param name="image_width" value="1280" /> <!-- 640 -->
             <param name="image_height" value="720" /> <!-- 480-->
             <param name="pixel_format" value="yuyv" />
             <param name="camera_frame_id" value="usb_cam" />
             <param name="io_method" value="mmap"/>
         </node>
+        <!-- DO NOT SHOW IMAGE: recording cam -->
         <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
             <remap from="image" to="/usb_cam_1/image_raw"/>
             <param name="autosize" value="true" />
         </node>
+        
     </group>
 
 </launch>

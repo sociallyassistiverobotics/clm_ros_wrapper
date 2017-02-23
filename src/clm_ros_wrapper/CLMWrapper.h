@@ -163,7 +163,7 @@ private:
     void callback(const sensor_msgs::ImageConstPtr& msgIn);
 
     // get face image
-    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence);
+    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model);
 
 public:
     ClmWrapper(std::string _name, std::string _loc);

@@ -10,6 +10,8 @@ using namespace cv;
 
 using namespace boost::filesystem;
 
+int static num_stages = 7;
+
 static void mouse_callback(int event, int x, int y, int flags, void* userdata)
 {
     InitializerHelper * helper = (InitializerHelper *)userdata;
@@ -32,7 +34,7 @@ bool InitializerHelper::is_training()
 
 bool InitializerHelper::is_training_done()
 {
-    return !is_train && 10 == train_stage;
+    return !is_train && num_stages * 2 == train_stage;
 }
 
 void InitializerHelper::stopTraining()
@@ -285,14 +287,14 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     string training_text = "";
     if (is_training()) {
-        string target = train_stage < 5 ? "CHILD" : "PARENT";
+        string target = train_stage < num_stages ? "CHILD" : "PARENT";
         training_text = target + " training at stage " + to_string(train_stage) + " (" + get_stage_task(train_stage) + "): " + to_string(num_train_samples);
     } else if (!is_model_trained) {
         if (is_training_done()) { // finish training
             training_text = "Click on the image to start training the model";
         } else {
-            string target = train_stage < 5 ? "CHILD" : "PARENT";
-            training_text = "Click on the image to start training for " + target + " at stage " + to_string(train_stage) + ": look " + get_stage_task(train_stage);
+            string target = train_stage < num_stages ? "CHILD" : "PARENT";
+            training_text = "Click on the image to start training for " + target + " at stage " + to_string(train_stage) + ": " + get_stage_task(train_stage);
         }
     }
 
@@ -322,16 +324,20 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 string InitializerHelper::get_stage_task(int stage)
 {
     string task = "";
-    if (0 == stage % 5) {
+    if (0 == stage % num_stages) {
         task = "STRAIGHT FORWARD";
-    } else if (1 == stage % 5) {
-        task = "LEFT";
-    } else if (2 == stage % 5) {
-        task = "RIGHT";
-    } else if (3 == stage % 5) {
-        task = "UP";
-    } else if (4 == stage % 5) {
-        task = "DOWN";
+    } else if (1 == stage % num_stages) {
+        task = "TURN LEFT";
+    } else if (2 == stage % num_stages) {
+        task = "TURN RIGHT";
+    } else if (3 == stage % num_stages) {
+        task = "TURN UP";
+    } else if (4 == stage % num_stages) {
+        task = "TURN DOWN";
+    } else if (5 == stage % num_stages) {
+        task = "LEAN LEFT";
+    } else if (6 == stage % num_stages) {
+        task = "LEAN RIGHT";
     }
     return task;
 }
@@ -400,7 +406,7 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
                 face_recognizer->predict(rescaled_face, predicted_label, predicted_confidence);
 
                 string role;
-                if (predicted_label <= 5) {
+                if (predicted_label <= num_stages) {
                     role = "CHILD";
                 } else {
                     role = "PARENT";
@@ -408,6 +414,7 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
 
                 string result = "predict: " + role + " with confidence: " + to_string(predicted_confidence);
                 cv::putText(img, result, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
+
             }
         }
     }

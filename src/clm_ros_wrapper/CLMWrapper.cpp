@@ -13,6 +13,12 @@ using namespace boost::filesystem;
 
 std::mutex m;
 
+int static child = 1;
+int static parent = 2;
+int static other = -1;
+int static num_stages = 7;
+int static confidence_threshold = 2100;
+
 // Useful utility for creating directories for storing the output files
 void ClmWrapper::create_directory_from_file(string output_path)
 {
@@ -642,7 +648,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             int label = -1;
             double confidence = 1000;
-            retrieveFaceImage(disp_image, clm_models[model], label, confidence);
+            retrieveFaceImage(disp_image, clm_models[model], label, confidence, model);
             headpos_certainty_msgs.vectors[model].role = label;
             hfvs_cf_msg.roles[model] = label;
             hfvs_cf_msg.role_confidences[model] = confidence;
@@ -870,7 +876,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     m.unlock();
 }
 
-void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence)
+void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model)
 {
     int idx = clm_model.patch_experts.GetViewIdx(clm_model.params_global, 0);
     int n = clm_model.detected_landmarks.rows/2;
@@ -927,15 +933,18 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
             cv::cvtColor(rescaled_face, rescaled_face, CV_RGB2GRAY); // the method needs grey scale
 
             face_recognizer->predict(rescaled_face, label, confidence);
-            if (confidence > 2000) {
-                label = -1;
-            } else if (label >= 1) {
-                label = label / 5 + 1;
+            // cout << "predict: " << label << " with confidence: " << confidence << endl;
+            if (confidence > confidence_threshold) {
+                label = other;
+            } else if (label <= num_stages) {
+                // label = label;
+                label = child;
+            } else {
+                label = parent;
             }
-            cout << "predict: " << label << " with confidence: " << confidence << endl;
 
-            cv::imshow("face", rescaled_face);
-            cv::waitKey(1);
+            // cv::imshow("face_" + to_string(model), rescaled_face);
+            // cv::waitKey(1);
         }
     }
 }

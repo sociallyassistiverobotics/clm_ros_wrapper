@@ -325,6 +325,7 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
         target_no_detection.distance = 0;
         target_no_detection.region = target_no_detection.NONE;
 
+        // cout << "CHILD  - no detection" << endl;
         target_publisher.publish(target_no_detection);
     }
     else
@@ -354,20 +355,20 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target >= 0) && (shortest_target <= 11)){
-                // std::cout << "..SCREEN" << std::endl;
+                std::cout << "CHILD..SCREEN" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 12) || (shortest_target == 13)){
-                // std::cout << "..ROBOT" << std::endl;
+                std::cout << "CHILD...ROBOT" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
             else if((shortest_target == 14) || (shortest_target == 15)){
-                // std::cout << "..PARENT" << std::endl;
+                std::cout << "CHILD...PARENT" << std::endl;
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
-            // std::cout << "..OTHERS" << std::endl;
+            std::cout << "CHILD...OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 
@@ -426,20 +427,20 @@ void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::Co
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target >= 0) && (shortest_target <= 11)){
-                // std::cout << "..parent..screen" << std::endl;
+                std::cout << "..parent..screen" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 12) || (shortest_target == 13)){
-                // std::cout << "..parent..robot" << std::endl;
+                std::cout << "..parent..robot" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
             else if((shortest_target == 16) || (shortest_target == 17)){
-                // std::cout << "..parent..child" << std::endl;
+                std::cout << "..parent..child" << std::endl;
                 estimated_region = detected_target.CHILD;
             }
         }
         else{
-            // std::cout << "..parent..others" << std::endl;
+            std::cout << "..parent..others" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 

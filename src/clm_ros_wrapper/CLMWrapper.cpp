@@ -13,11 +13,11 @@ using namespace boost::filesystem;
 
 std::mutex m;
 
-int static child = 1;
-int static parent = 2;
-int static other = -1;
-int static num_stages = 7;
-int static confidence_threshold = 2100;
+int static const child = 1;
+int static const parent = 2;
+int static const other = -1;
+int static const num_stages = 14;
+// int static confidence_threshold = 3000; // need to be customized for each setting.
 
 // Useful utility for creating directories for storing the output files
 void ClmWrapper::create_directory_from_file(string output_path)
@@ -934,14 +934,21 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
 
             face_recognizer->predict(rescaled_face, label, confidence);
             // cout << "predict: " << label << " with confidence: " << confidence << endl;
-            if (confidence > confidence_threshold) {
-                label = other;
-            } else if (label <= num_stages) {
-                // label = label;
+            if (label <= num_stages && confidence <= child_confidence_threshold) {
                 label = child;
-            } else {
+            } else if (label > num_stages && confidence <=parent_confidence_threshold) {
                 label = parent;
+            } else {
+                label = other;
             }
+            // if (confidence > confidence_threshold) {
+            //     label = other;
+            // } else if (label <= num_stages) {
+            //     // label = label;
+            //     label = child;
+            // } else {
+            //     label = parent;
+            // }
 
             // cv::imshow("face_" + to_string(model), rescaled_face);
             // cv::waitKey(1);
@@ -954,10 +961,14 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     ROS_INFO("Called constructor...");
 
     face_recognizer = cv::face::createEigenFaceRecognizer();
-    face_recognizer->load("/home/sar/Meiying/face_recognizer_model.xml");
+    face_recognizer->load("/home/sar/face_analyzer_data/face_recognizer_model.xml");
 
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
+
+    nodeHandle.getParam("child_confidence_threshold", child_confidence_threshold);
+    nodeHandle.getParam("parent_confidence_threshold", parent_confidence_threshold);
+
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);
 

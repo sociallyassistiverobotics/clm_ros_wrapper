@@ -114,6 +114,8 @@ private:
     vector<CLMTracker::CLM> clm_models;
     vector<bool> active_models;
     vector<FaceAnalysis::FaceAnalyser> face_analysers;
+    int child_confidence_threshold;
+    int parent_confidence_threshold;
 
     std::ofstream hog_output_file;
 

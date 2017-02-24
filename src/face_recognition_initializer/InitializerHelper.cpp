@@ -10,7 +10,22 @@ using namespace cv;
 
 using namespace boost::filesystem;
 
-int static num_stages = 7;
+vector<string> const tasks = {"STRAIGHT FORWARD", 
+                              "TURN LEFT", 
+                              "TURN RIGHT", 
+                              "TURN UP", 
+                              "TURN DOWN", 
+                              "LEAN LEFT", 
+                              "LEAN RIGHT", 
+                              "TOP LEFT CORNER OF SCREEN", 
+                              "TOP RIGHT CORNER OF SCREEN",
+                              "BOTTOM LEFT CORNER OF SCREEN",
+                              "BOTTOM RIGHT CORNER OF SCREEN",
+                              "CENTER OF SCREEN",
+                              "ROBOT",
+                              "PARENT/CHILD"};
+int static const num_stages = tasks.size();
+
 
 static void mouse_callback(int event, int x, int y, int flags, void* userdata)
 {
@@ -323,7 +338,8 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
 string InitializerHelper::get_stage_task(int stage)
 {
-    string task = "";
+    return tasks.at(stage % num_stages);
+    /*
     if (0 == stage % num_stages) {
         task = "STRAIGHT FORWARD";
     } else if (1 == stage % num_stages) {
@@ -338,8 +354,23 @@ string InitializerHelper::get_stage_task(int stage)
         task = "LEAN LEFT";
     } else if (6 == stage % num_stages) {
         task = "LEAN RIGHT";
+    } else if (7 == stage % num_stages) {
+        task = "TOP LEFT CORNER OF SCREEN";
+    } else if (8 == stage % num_stages) {
+        task = "TOP RIGHT CORNER OF SCREEN";
+    } else if (9 == stage % num_stages) {
+        task = "BOTTOM LEFT CORNER OF SCREEN";
+    } else if (10 == stage % num_stages) {
+        task = "BOTTOM RIGHT CORNER OF SCREEN";
+    } else if (11 == stage % num_stages) {
+        task = "CENTER OF SCREEN";
+    } else if (12 == stage % num_stages) {
+        task = "ROBOT";
+    } else if (13 == stage % num_stages) {
+        task = "PARENT/CHILD";
     }
     return task;
+    */
 }
 
 void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model)

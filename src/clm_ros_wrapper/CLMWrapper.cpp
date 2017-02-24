@@ -675,19 +675,25 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             FaceAnalysis::DrawGaze(disp_image, clm_models[model], gazeDirection0, gazeDirection1, fx, fy, cx, cy);
 
             // displaying tracking certainty and who
+            string summary_st = "";
             char certainty_C[255];
             sprintf(certainty_C, "%f", 1-detection_certainty);
-            string certainty_st("Certainty: ");
+            string certainty_st("Detect Certainty: ");
+            char confidence_C[255];
+            sprintf(confidence_C, "%f", confidence);
+            string confidence_st("Match Distance: ");
+
             string role;
             if (1 == label) {
-                role = "CHILD";
+                role = "CHILD: ";
             } else if (2 == label) {
-                role = "PARENT";
+                role = "PARENT: ";
             } else {
-                role = "OTHER";
+                role = "OTHER: ";
             }
-            certainty_st = role + " " + certainty_st;
-            certainty_st += certainty_C;
+            summary_st = role;
+            summary_st += " " +  confidence_st + confidence_C;
+            summary_st += " " + certainty_st + certainty_C;
             cv::Point certainty_pos;
             vector<std::pair<Point,Point>> certainty_pos_vec = CLMTracker::CalculateBox(pose_estimate_CLM, fx, fy, cx, cy);
             if (12 == certainty_pos_vec.size()) {
@@ -695,7 +701,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             } else {
                 certainty_pos = cv::Point(10, 100); // default position on the left top corner
             }
-            cv::putText(disp_image, certainty_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
+            cv::putText(disp_image, summary_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
             // cout << model << " "<< fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
             // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]

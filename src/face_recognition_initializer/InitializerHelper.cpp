@@ -72,7 +72,7 @@ void InitializerHelper::publishImage(cv::Mat &mat)
 
 void InitializerHelper::train()
 {
-    string location = save_location + "/train_images/";
+    string location = face_recognizer_file_location + "train_images/";
 
     for(auto & folder : boost::make_iterator_range(directory_iterator(location), {})) {
         string parent_path = folder.path().parent_path().string();
@@ -84,7 +84,7 @@ void InitializerHelper::train()
         }
     }
     face_recognizer->train(faces_train, labels_train);
-    face_recognizer->save(save_location + "/face_recognizer_model.xml");
+    face_recognizer->save(face_recognizer_file_location + "face_recognizer_model.xml");
     is_model_trained = true;
 }
 
@@ -422,12 +422,12 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
             cv::waitKey(1);
 
             if (is_training()) {
-                string image_location = save_location + "/train_images/" + to_string(train_stage + 1) + "/" + to_string(num_train_samples) + ".jpg";
-                if (!exists(save_location + "/train_images")) {
-                    create_directory(save_location + "/train_images");
+                string image_location = face_recognizer_file_location + "train_images/" + to_string(train_stage + 1) + "/" + to_string(num_train_samples) + ".jpg";
+                if (!exists(face_recognizer_file_location + "train_images")) {
+                    create_directories(face_recognizer_file_location + "train_images");
                 }
-                if (!exists(save_location + "/train_images/" + to_string(train_stage + 1))) {
-                    create_directory(save_location + "/train_images/" + to_string(train_stage + 1));
+                if (!exists(face_recognizer_file_location + "train_images/" + to_string(train_stage + 1))) {
+                    create_directories(face_recognizer_file_location + "train_images/" + to_string(train_stage + 1));
                 }
                 imwrite(image_location, rescaled_face);
                 num_train_samples++;
@@ -464,6 +464,14 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
 
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
+    nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
+    if (exists(face_recognizer_file_location + "train_images")) {
+        remove_all(face_recognizer_file_location + "train_images");
+    }
+    if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
+        remove(face_recognizer_file_location + "face_recognizer_model.xml");
+    }
+
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&InitializerHelper::callback, this);
 

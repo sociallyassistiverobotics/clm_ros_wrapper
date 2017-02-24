@@ -960,14 +960,16 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 {
     ROS_INFO("Called constructor...");
 
-    face_recognizer = cv::face::createEigenFaceRecognizer();
-    face_recognizer->load("/home/sar/face_analyzer_data/face_recognizer_model.xml");
-
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
 
     nodeHandle.getParam("child_confidence_threshold", child_confidence_threshold);
     nodeHandle.getParam("parent_confidence_threshold", parent_confidence_threshold);
+
+    string face_recognizer_file_location = "";
+    nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
+    face_recognizer = cv::face::createEigenFaceRecognizer();
+    face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);

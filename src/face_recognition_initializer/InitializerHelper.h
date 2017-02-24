@@ -48,8 +48,7 @@ static void mouse_callback(int event, int x, int y, int flags, void* userdata);
 class InitializerHelper
 {
 private:
-    const string save_location = "/home/sar/face_analyzer_data";
-
+    std::string face_recognizer_file_location;
     std::string executable_location;
 
     ros::NodeHandle nodeHandle;

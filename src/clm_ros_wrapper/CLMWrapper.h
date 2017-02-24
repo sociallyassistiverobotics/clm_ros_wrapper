@@ -94,7 +94,6 @@ private:
 
     int64_t t_initial;
     double time_stamp;
-    double t0;
 
     bool webcam;
     bool use_camera_plane_pose;

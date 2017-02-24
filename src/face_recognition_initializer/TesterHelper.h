@@ -42,10 +42,7 @@
 
 #include <tf/transform_datatypes.h>
 
-// call back on the mouse click event on the image
-static void mouse_callback(int event, int x, int y, int flags, void* userdata);
-
-class InitializerHelper
+class TesterHelper
 {
 private:
     std::string face_recognizer_file_location;
@@ -92,23 +89,16 @@ private:
     void NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_models,
       vector<cv::Rect_<double> >& face_detections);
 
+    // get face image
+    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model);
+
     /**
     * Callback on the subscriber's topic.
     * @param msgIn an RGB image
     */
     void callback(const sensor_msgs::ImageConstPtr& msgIn);
 
-    // get face image
-    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model);
-
-    string get_stage_task(int stage);
-
 public:
-    InitializerHelper(std::string _name, std::string _loc);
-    ~InitializerHelper() {};
-    bool is_training();
-    bool is_training_done();
-    void stopTraining();
-    void startNewTraining();
-    void train();
+    TesterHelper(std::string _name, std::string _loc);
+    ~TesterHelper() {};
 };

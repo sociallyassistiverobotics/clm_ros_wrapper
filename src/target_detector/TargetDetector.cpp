@@ -69,7 +69,7 @@ float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
 ros::Publisher target_publisher;
 
-ros::Publisher parent_target_publisher;
+// ros::Publisher parent_target_publisher;
 
 using namespace std;
 using std::vector;
@@ -308,6 +308,7 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
 {
     double detection_certainty = (*msg).certainty;
+    double match_distance = (*msg).role_confidence;
     tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
     //checking if there is detection
@@ -320,6 +321,8 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
         //means no detection
         clm_ros_wrapper::DetectedTarget target_no_detection;
         target_no_detection.certainty = detection_certainty;
+        target_no_detection.match_distance = match_distance;
+        target_no_detection.role = target_no_detection.CHILD_ROLE;
 
         target_no_detection.name = "NO DETECTION";
         target_no_detection.distance = 0;
@@ -332,6 +335,8 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
     {
         clm_ros_wrapper::DetectedTarget detected_target;
         detected_target.certainty = detection_certainty;
+        detected_target.match_distance = match_distance;
+        detected_target.role = detected_target.CHILD_ROLE;
         float _height = 1000;
         float _radian = 0.523599; //30 degree in radian
         
@@ -380,6 +385,7 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr&
 void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& msg)
 {
     double detection_certainty = (*msg).certainty;
+    double match_distance = (*msg).role_confidence;
     tf::Vector3 gaze_point_wf, head_position_wf, hfv_wf;
 
     //checking if there is detection
@@ -392,18 +398,21 @@ void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::Co
         //means no detection
         clm_ros_wrapper::DetectedTarget target_no_detection;
         target_no_detection.certainty = detection_certainty;
-
+        target_no_detection.role = target_no_detection.PARENT_ROLE;
+        target_no_detection.match_distance = match_distance;
         target_no_detection.name = "NO DETECTION";
         target_no_detection.distance = 0;
         target_no_detection.region = target_no_detection.NONE;
 
         // cout << "parent  - no detection" << endl;
-        parent_target_publisher.publish(target_no_detection);
+        target_publisher.publish(target_no_detection);
     }
     else
     {
         clm_ros_wrapper::DetectedTarget detected_target;
         detected_target.certainty = detection_certainty;
+        detected_target.match_distance = match_distance;
+        detected_target.role = detected_target.PARENT_ROLE;
         float _height = 1000;
         float _radian = 0.523599; //30 degree in radian
         
@@ -445,7 +454,7 @@ void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::Co
         }
 
         detected_target.region = estimated_region;
-        parent_target_publisher.publish(detected_target);
+        target_publisher.publish(detected_target);
     }
 }
 
@@ -506,7 +515,7 @@ int main(int argc, char **argv)
 
     target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
-    parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
+    // parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
 
     ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 

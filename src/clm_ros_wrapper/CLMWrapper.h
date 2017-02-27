@@ -106,7 +106,7 @@ private:
     vector<std::string> params_output_files;
     vector<std::string> gaze_output_files;
 
-    CLMTracker::CLM clm_model;
+    // CLMTracker::CLM clm_model;
     vector<CLMTracker::CLMParameters> clm_parameters;
 
     // The modules that are being used for tracking

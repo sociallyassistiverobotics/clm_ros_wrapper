@@ -456,8 +456,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             //{
             //  output_HOG_frame(&hog_output_file, detection_success, hog_descriptor, num_hog_rows, num_hog_cols);
             //}
-            headpos_certainty_msgs.vectors[model].certainty = 1 - clm_model.detection_certainty;
-            double confidence = 0.5 * (1 - clm_model.detection_certainty);
+            headpos_certainty_msgs.vectors[model].certainty = 1 - clm_models[model].detection_certainty;
+            double confidence = 0.5 * (1 - clm_models[model].detection_certainty);
 
             ClmHeadMsg ros_head_msg;
             auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
@@ -658,6 +658,9 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             if(detection_certainty > 1)     detection_certainty =  1;
             if(detection_certainty < -1)    detection_certainty = -1;
             detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
+            headpos_certainty_msgs.vectors[model].certainty = 1 - detection_certainty;
+
+            headpos_certainty_msgs.vectors[model].distance = confidence;
 
             // global_detection_certainty = detection_certainty;
 

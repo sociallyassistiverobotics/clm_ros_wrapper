@@ -28,10 +28,9 @@
     <param name="ns" type="string" value="clm_ros_wrapper_2"/>
     <param name="cam" type="string" value="usb_cam_2"/>
 
-    <param name="is_get_data" type="boolean" value="true"/>
-    <param name="is_train" type="boolean" value="false"/>
-
     <param name="face_recognizer_file_location" type="string" value="/home/sar/meiying/"/>
+    <param name="is_get_data" type="boolean" value="false"/>
+    <param name="is_train" type="boolean" value="false"/>
 
     <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
         <param name="video_device" value="/dev/video1" />

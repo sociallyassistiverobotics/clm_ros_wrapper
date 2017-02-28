@@ -458,12 +458,29 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
-    if (exists(face_recognizer_file_location + "train_images")) {
-        remove_all(face_recognizer_file_location + "train_images");
-    }
-    if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
-        remove(face_recognizer_file_location + "face_recognizer_model.xml");
-    }
+
+    bool is_get_data;
+    nodeHandle.getParam("is_get_data", is_get_data);
+
+    bool is_to_train;
+    nodeHandle.getParam("is_train", is_to_train);
+
+    if (is_get_data) {
+        if (exists(face_recognizer_file_location + "train_images")) {
+            remove_all(face_recognizer_file_location + "train_images");
+        }
+        if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
+            remove(face_recognizer_file_location + "face_recognizer_model.xml");
+        }
+    } else {
+        is_train = false;
+        train_stage = num_stages * 2;
+        is_model_trained = !is_to_train;
+        if (is_model_trained) {
+            face_recognizer = cv::face::createEigenFaceRecognizer();
+            face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+        }
+    } 
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&InitializerHelper::callback, this);

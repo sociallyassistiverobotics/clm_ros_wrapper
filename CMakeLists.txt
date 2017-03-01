@@ -67,6 +67,7 @@ add_message_files(
    Scene.msg
    FreeObject.msg
    DetectedTarget.msg
+   DetectedTargets.msg
    GazePointAndDirection.msg
    VectorWithCertainty.msg
    GazeDirection.msg

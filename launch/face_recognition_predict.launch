@@ -28,7 +28,7 @@
     <param name="ns" type="string" value="clm_ros_wrapper_2"/>
     <param name="cam" type="string" value="usb_cam_2"/>
 
-    <param name="face_recognizer_file_location" type="string" value="/home/sar/meiying/"/>
+    <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
     <param name="is_get_data" type="boolean" value="false"/>
     <param name="is_train" type="boolean" value="false"/>
 

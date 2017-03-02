@@ -31,7 +31,7 @@
     <param name="is_get_data" type="boolean" value="true"/>
     <param name="is_train" type="boolean" value="false"/>
 
-    <param name="face_recognizer_file_location" type="string" value="/home/sar/meiying/"/>
+    <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
 
     <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
         <param name="video_device" value="/dev/video1" />

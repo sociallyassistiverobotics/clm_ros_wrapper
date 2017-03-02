@@ -91,7 +91,7 @@
         <param name="screenWidth" type="double" value="520"/><!-- mm -->
 
         <!-- face recognition parameters-->
-        <param name="face_recognizer_file_location" type="string" value="/home/sar/meiying/"/>
+        <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
         <param name="child_confidence_threshold" type="int" value="3000"/>
         <param name="parent_confidence_threshold" type="int" value="3000"/>
 

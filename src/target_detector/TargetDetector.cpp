@@ -69,6 +69,7 @@ float free_object_radius;
 
 float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
+ros::Publisher targets_publisher;
 ros::Publisher target_publisher;
 
 // ros::Publisher parent_target_publisher;
@@ -392,9 +393,13 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
         }
         matchTarget(msg->gazes[loop], detected_target);
         detected_targets.targets[loop] = detected_target;
+
+        if (msg->gazes[loop].CHILD_ROLE == msg->gazes[loop].role) {
+            target_publisher.publish(detected_target);
+        }
     }
 
-    target_publisher.publish(detected_targets);
+    targets_publisher.publish(detected_targets);
 
     // double detection_certainty = (*msg).certainty;
     // double match_distance = (*msg).role_confidence;
@@ -602,7 +607,8 @@ int main(int argc, char **argv)
 
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
-    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTargets>("/sar/perception/detect_target", 1);
+    targets_publisher = nh.advertise<clm_ros_wrapper::DetectedTargets>("/sar/perception/detect_targets", 1);
+    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
     // parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
 

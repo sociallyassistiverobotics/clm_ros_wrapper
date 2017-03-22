@@ -89,6 +89,11 @@
         <param name="screenHeight" type="double" value="380"/> <!-- mm -->
         <param name="screenWidth" type="double" value="520"/><!-- mm -->
 
+        <!-- face recognition parameters-->
+        <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
+        <param name="child_confidence_threshold" type="int" value="3000"/>
+        <param name="parent_confidence_threshold" type="int" value="3000"/>
+
         <!-- calibration -->
         <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
         <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->

@@ -1,0 +1,46 @@
+<launch>
+
+    <!-- camera frame to world frame transformation matrix row-major representation-->
+    <!-- <rosparam param = "transformation_cf2intermediate_frame">[-1, 0, 0, 280, 0, 0, -1, 410, 0, -1, 0, 340, 0, 0 , 0, 1]</rosparam>
+    <rosparam param = "transformation_intermediate_frame2wf">[0.9130, -0.4078, 0, 0, 0.4078, 0.9130, 0, 0, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
+    
+    <rosparam param = "transformation_intermediate_frame2wf">[-1,0,0,0.0,0,0,-1,0.0,0,-1,0,0.0,0,0,0,1]</rosparam>
+
+    <rosparam param = "transformation_cf2intermediate_frame">[1,0,0,400, 0,1,0, 450, 0,0,1, 410,0,0,0,1]</rosparam>
+
+    <!-- world frame to robot frame transformation matrix row-major representation-->
+    <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->
+    
+    <rosparam param = "transformation_wf2rf">[-0.23313, -0.97244, 0, 315.57679, 0.97244, -0.23313, 0, -586.38482, 0, 0, 1, 0, 0 , 0, 0, 1]</rosparam>
+
+    <!-- screen parameters - dimensions and angles -->
+    <param name="screenAngleInDegrees" type="int" value="46"/>
+    <param name="screenHeight" type="double" value="380"/> <!-- mm -->
+    <param name="screenWidth" type="double" value="520"/><!-- mm -->
+
+    <!-- calibration -->
+    <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->
+    <param name="offset_head_position_cf_z" type="double" value="200"/> <!-- box size -->
+
+    <!-- robot parameters - radius for inside/outside check-->
+    <param name="robot_radius" type="double" value="220"/> <!-- mm -->
+
+    <param name="ns" type="string" value="clm_ros_wrapper_2"/>
+    <param name="cam" type="string" value="usb_cam_2"/>
+
+    <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
+    <param name="is_get_data" type="boolean" value="false"/>
+    <param name="is_train" type="boolean" value="false"/>
+
+    <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
+        <param name="video_device" value="/dev/video1" />
+        <param name="image_width" value="1280" /> <!-- 1280 -->
+        <param name="image_height" value="720" /> <!-- 720-->
+        <param name="pixel_format" value="yuyv" />
+        <param name="camera_frame_id" value="usb_cam" />
+        <param name="io_method" value="mmap"/>
+    </node>
+
+    <node pkg="clm_ros_wrapper" type="face_recognition_initializer" name="face_recognition_initializer" output="screen" />
+
+</launch>

@@ -13,6 +13,12 @@ using namespace boost::filesystem;
 
 std::mutex m;
 
+int static const child = 1;
+int static const parent = 2;
+int static const other = -1;
+int static const num_stages = 14;
+// int static confidence_threshold = 3000; // need to be customized for each setting.
+
 // Useful utility for creating directories for storing the output files
 void ClmWrapper::create_directory_from_file(string output_path)
 {
@@ -311,6 +317,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     ros_gaze_directions_msg.directions.resize((int)clm_models.size());
     clm_ros_wrapper::ClmHeadVectors hfvs_cf_msg;
     hfvs_cf_msg.head_vectors.resize((int)clm_models.size());
+    hfvs_cf_msg.roles.resize((int)clm_models.size());
+    hfvs_cf_msg.role_confidences.resize((int)clm_models.size());
     clm_ros_wrapper::VectorsWithCertainty headpos_certainty_msgs;
     headpos_certainty_msgs.vectors.resize((int)clm_models.size());
 
@@ -448,8 +456,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             //{
             //  output_HOG_frame(&hog_output_file, detection_success, hog_descriptor, num_hog_rows, num_hog_cols);
             //}
-            headpos_certainty_msgs.vectors[model].certainty = 1 - clm_model.detection_certainty;
-            double confidence = 0.5 * (1 - clm_model.detection_certainty);
+            headpos_certainty_msgs.vectors[model].certainty = 1 - clm_models[model].detection_certainty;
+            double confidence = 0.5 * (1 - clm_models[model].detection_certainty);
 
             ClmHeadMsg ros_head_msg;
             auto & ros_eyegazes_msg = ros_head_msg.eyegazes;
@@ -611,10 +619,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     });
 
-    //GazeDirectionsMsg ros_gaze_directions_msg;
-    //ros_gaze_directions_msg.directions = ros_gaze_direction_msgs;
-    gaze_direction_publisher.publish(ros_gaze_directions_msg);
-
     std_msgs::String rate;
 
     std::stringstream ss;
@@ -642,11 +646,21 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         {
             faceDetected = 1;
 
+            int label = -1;
+            double confidence = 1000;
+            retrieveFaceImage(disp_image, clm_models[model], label, confidence, model);
+            headpos_certainty_msgs.vectors[model].role = label;
+            hfvs_cf_msg.roles[model] = label;
+            hfvs_cf_msg.role_confidences[model] = confidence;
+            ros_gaze_directions_msg.directions[model].role = label;
+
             CLMTracker::Draw(disp_image, clm_models[model]);
             if(detection_certainty > 1)     detection_certainty =  1;
             if(detection_certainty < -1)    detection_certainty = -1;
-
             detection_certainty = (detection_certainty + 1)/(visualisation_boundary +1);
+            headpos_certainty_msgs.vectors[model].certainty = 1 - detection_certainty;
+
+            headpos_certainty_msgs.vectors[model].distance = confidence;
 
             // global_detection_certainty = detection_certainty;
 
@@ -663,11 +677,26 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             FaceAnalysis::DrawGaze(disp_image, clm_models[model], gazeDirection0, gazeDirection1, fx, fy, cx, cy);
 
-            // displaying tracking certainty
+            // displaying tracking certainty and who
+            string summary_st = "";
             char certainty_C[255];
             sprintf(certainty_C, "%f", 1-detection_certainty);
-            string certainty_st("Certainty: ");
-            certainty_st += certainty_C;
+            string certainty_st("Detect Certainty: ");
+            char confidence_C[255];
+            sprintf(confidence_C, "%f", confidence);
+            string confidence_st("Match Distance: ");
+
+            string role;
+            if (1 == label) {
+                role = "CHILD: ";
+            } else if (2 == label) {
+                role = "PARENT: ";
+            } else {
+                role = "OTHER: ";
+            }
+            summary_st = role;
+            summary_st += " " +  confidence_st + confidence_C;
+            summary_st += " " + certainty_st + certainty_C;
             cv::Point certainty_pos;
             vector<std::pair<Point,Point>> certainty_pos_vec = CLMTracker::CalculateBox(pose_estimate_CLM, fx, fy, cx, cy);
             if (12 == certainty_pos_vec.size()) {
@@ -675,7 +704,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             } else {
                 certainty_pos = cv::Point(10, 100); // default position on the left top corner
             }
-            cv::putText(disp_image, certainty_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
+            cv::putText(disp_image, summary_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
             // cout << model << " "<< fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
             // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
@@ -685,13 +714,6 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     // Write out the framerate on the image before displaying it
     char fpsC[255];
     int fps_tracker;
-
-    if(frame_count % 10 == 0)
-    {
-       double t1 = cv::getTickCount();
-       fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
-       t0 = t1;
-    }
 
     sprintf(fpsC, "%d", (int)fps_tracker);
 
@@ -778,6 +800,10 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     //}
     head_position_publisher.publish(headpos_certainty_msgs);
 
+    //GazeDirectionsMsg ros_gaze_directions_msg;
+    //ros_gaze_directions_msg.directions = ros_gaze_direction_msgs;
+    gaze_direction_publisher.publish(ros_gaze_directions_msg);
+
     // e: don't need to work out framerate
     // Work out the framerate
     //if(frame_count % 10 == 0)
@@ -852,12 +878,101 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     m.unlock();
 }
 
+void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model)
+{
+    int idx = clm_model.patch_experts.GetViewIdx(clm_model.params_global, 0);
+    int n = clm_model.detected_landmarks.rows/2;
+
+    if (clm_model.detected_landmarks.rows > 0 && clm_model.detected_landmarks.cols > 0) {
+        int x_min = (int)clm_model.detected_landmarks.at<double>(0);
+        int x_max = (int)clm_model.detected_landmarks.at<double>(0);
+        int y_min = (int)clm_model.detected_landmarks.at<double>(n);
+        int y_max = (int)clm_model.detected_landmarks.at<double>(n);
+
+        for( int i = 0; i < n; ++i)
+        {       
+            if(clm_model.patch_experts.visibilities[0][idx].at<int>(i))
+            {
+                int x = (int)clm_model.detected_landmarks.at<double>(i);
+                int y = (int)clm_model.detected_landmarks.at<double>(i + n);
+                
+                x_min = (x_min > x) ? x : x_min;
+                x_max = (x_max < x) ? x : x_max;
+                y_min = (y_min > y) ? y : y_min;
+                y_max = (y_max < y) ? y : y_max;        
+            }
+        }
+
+        cv::Rect face_contour;
+        int width = x_max - x_min;
+        int height = y_max - y_min;
+        face_contour.x = x_min;
+        if (width < height) {
+            face_contour.x -= (int)(height - width) / 2;
+        }
+        face_contour.y = y_min;
+        if (height < width) {
+            face_contour.y -= (int)(width - height) / 2;
+        }
+        face_contour.width = (width > height) ? width : height;
+        face_contour.height = (width > height) ? width : height;
+
+        // cout << "==============================" << endl;
+        // cout << "x_min = " << x_min << endl;
+        // cout << "width = " << width << endl;
+        // cout << "x = " << face_contour.x << endl;
+        // cout << "y_min = " << y_min << endl;
+        // cout << "height = " << height << endl;
+        // cout << "y = " << face_contour.y << endl;
+        // cout << "width = " << face_contour.width << endl;
+        // cout << "height = " << face_contour.height << endl;
+
+        if (face_contour.x >= 0 && face_contour.y >= 0 && face_contour.width >= 100 && face_contour.height >= 100 && face_contour.x + face_contour.width <= img.cols && face_contour.y + face_contour.height <= img.rows) {
+            cv::Mat face = img(face_contour);
+            cv::Size size(100, 100);
+            cv::Mat rescaled_face;
+            cv::resize(face, rescaled_face, size);
+            cv::cvtColor(rescaled_face, rescaled_face, CV_RGB2GRAY); // the method needs grey scale
+
+            face_recognizer->predict(rescaled_face, label, confidence);
+            // cout << "predict: " << label << " with confidence: " << confidence << endl;
+            if (label <= num_stages && confidence <= child_confidence_threshold) {
+                label = child;
+            } else if (label > num_stages && confidence <=parent_confidence_threshold) {
+                label = parent;
+            } else {
+                label = other;
+            }
+            // if (confidence > confidence_threshold) {
+            //     label = other;
+            // } else if (label <= num_stages) {
+            //     // label = label;
+            //     label = child;
+            // } else {
+            //     label = parent;
+            // }
+
+            // cv::imshow("face_" + to_string(model), rescaled_face);
+            // cv::waitKey(1);
+        }
+    }
+}
+
 ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle)
 {
     ROS_INFO("Called constructor...");
 
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
+
+    nodeHandle.getParam("child_confidence_threshold", child_confidence_threshold);
+    nodeHandle.getParam("parent_confidence_threshold", parent_confidence_threshold);
+
+    string face_recognizer_file_location = "";
+    nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
+    face_recognizer = cv::face::createEigenFaceRecognizer();
+    face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);
 

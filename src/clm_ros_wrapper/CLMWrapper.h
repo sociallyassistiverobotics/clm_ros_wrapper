@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include <opencv2/core/core.hpp>
+#include <opencv2/face.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -93,7 +94,6 @@ private:
 
     int64_t t_initial;
     double time_stamp;
-    double t0;
 
     bool webcam;
     bool use_camera_plane_pose;
@@ -106,13 +106,15 @@ private:
     vector<std::string> params_output_files;
     vector<std::string> gaze_output_files;
 
-    CLMTracker::CLM clm_model;
+    // CLMTracker::CLM clm_model;
     vector<CLMTracker::CLMParameters> clm_parameters;
 
     // The modules that are being used for tracking
     vector<CLMTracker::CLM> clm_models;
     vector<bool> active_models;
     vector<FaceAnalysis::FaceAnalyser> face_analysers;
+    int child_confidence_threshold;
+    int parent_confidence_threshold;
 
     std::ofstream hog_output_file;
 
@@ -136,6 +138,11 @@ private:
     geometry_msgs::Vector3 hfv_cf_msg;
     geometry_msgs::Vector3 headposition_cf_msg;
 
+    // parameters needed for face recognition
+    vector<Mat> faces_train;
+    vector<int> labels_train;
+    Ptr<cv::face::FaceRecognizer> face_recognizer;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
     bool publishImage(cv::Mat &mat, const std::string encoding);
@@ -155,6 +162,9 @@ private:
     * @param msgIn an RGB image
     */
     void callback(const sensor_msgs::ImageConstPtr& msgIn);
+
+    // get face image
+    void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model);
 
 public:
     ClmWrapper(std::string _name, std::string _loc);

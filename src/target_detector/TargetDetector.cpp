@@ -355,20 +355,20 @@ void matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_wra
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target >= 0) && (shortest_target <= 11)){
-                std::cout << "..SCREEN" << std::endl;
+                // std::cout << "..SCREEN" << std::endl;
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 12) || (shortest_target == 13)){
-                std::cout << "...ROBOT" << std::endl;
+                // std::cout << "...ROBOT" << std::endl;
                 estimated_region = detected_target.ROBOT;
             }
             else if((shortest_target == 14) || (shortest_target == 15)){
-                std::cout << "...PARENT" << std::endl;
+                // std::cout << "...PARENT" << std::endl;
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
-            std::cout << "...OTHERS" << std::endl;
+            // std::cout << "...OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
         }
 

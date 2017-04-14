@@ -113,8 +113,6 @@ private:
     vector<CLMTracker::CLM> clm_models;
     vector<bool> active_models;
     vector<FaceAnalysis::FaceAnalyser> face_analysers;
-    int child_confidence_threshold;
-    int parent_confidence_threshold;
 
     std::ofstream hog_output_file;
 
@@ -141,7 +139,10 @@ private:
     // parameters needed for face recognition
     vector<Mat> faces_train;
     vector<int> labels_train;
+    bool is_face_recognizer_set;
     Ptr<cv::face::FaceRecognizer> face_recognizer;
+    int child_confidence_threshold;
+    int parent_confidence_threshold;
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);

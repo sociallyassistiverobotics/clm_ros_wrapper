@@ -694,9 +694,11 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             } else {
                 role = "OTHER: ";
             }
-            summary_st = role;
-            summary_st += " " +  confidence_st + confidence_C;
-            summary_st += " " + certainty_st + certainty_C;
+            if (is_face_recognizer_set) {
+                summary_st = role;
+                summary_st += " " +  confidence_st + confidence_C + " ";
+            }
+            summary_st += certainty_st + certainty_C;
             cv::Point certainty_pos;
             vector<std::pair<Point,Point>> certainty_pos_vec = CLMTracker::CalculateBox(pose_estimate_CLM, fx, fy, cx, cy);
             if (12 == certainty_pos_vec.size()) {
@@ -880,6 +882,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
 void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model)
 {
+    // std::cout << "in retrieve face image" << std::endl;
     int idx = clm_model.patch_experts.GetViewIdx(clm_model.params_global, 0);
     int n = clm_model.detected_landmarks.rows/2;
 
@@ -934,14 +937,16 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
             cv::resize(face, rescaled_face, size);
             cv::cvtColor(rescaled_face, rescaled_face, CV_RGB2GRAY); // the method needs grey scale
 
-            face_recognizer->predict(rescaled_face, label, confidence);
-            // cout << "predict: " << label << " with confidence: " << confidence << endl;
-            if (label <= num_stages && confidence <= child_confidence_threshold) {
-                label = child;
-            } else if (label > num_stages && confidence <=parent_confidence_threshold) {
-                label = parent;
-            } else {
-                label = other;
+            if (is_face_recognizer_set) {
+                face_recognizer->predict(rescaled_face, label, confidence);
+                // cout << "predict: " << label << " with confidence: " << confidence << endl;
+                if (label <= num_stages && confidence <= child_confidence_threshold) {
+                    label = child;
+                } else if (label > num_stages && confidence <=parent_confidence_threshold) {
+                    label = parent;
+                } else {
+                    label = other;
+                }
             }
             // if (confidence > confidence_threshold) {
             //     label = other;
@@ -958,7 +963,7 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
     }
 }
 
-ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle)
+ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle), is_face_recognizer_set(false)
 {
     ROS_INFO("Called constructor...");
 
@@ -971,7 +976,10 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
     string face_recognizer_file_location = "";
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
     face_recognizer = cv::face::createEigenFaceRecognizer();
-    face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+    if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
+        is_face_recognizer_set = true;
+        face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+    }
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);

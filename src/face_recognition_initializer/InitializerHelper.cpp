@@ -276,6 +276,13 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     char fpsC[255];
     int fps_tracker;
 
+    if(frame_count % 10 == 0)
+    {
+       double t1 = cv::getTickCount();
+       fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
+       t0 = t1;
+    }
+
     sprintf(fpsC, "%d", (int)fps_tracker);
 
     string fpsSt("FPS:");

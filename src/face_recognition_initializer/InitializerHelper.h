@@ -75,6 +75,8 @@ private:
     vector<CLMTracker::CLM> clm_models;
     vector<bool> active_models;
 
+    double t0;
+
     bool video_input;
     bool images_as_video;
 

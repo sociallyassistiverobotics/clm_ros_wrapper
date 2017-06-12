@@ -90,6 +90,8 @@ private:
     int total_frames;
     int reported_completion;
 
+    double t0;
+
     cv::Mat captured_image;
 
     int64_t t_initial;

@@ -4,6 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "InitializerHelper.h"
+#include <ctime>
 
 using namespace std;
 using namespace cv;
@@ -35,7 +36,13 @@ static void mouse_callback(int event, int x, int y, int flags, void* userdata)
         if (helper->is_training()) {
             helper->stopTraining();
         } else if (helper->is_training_done()) {
-            helper->train();
+            if (helper->is_trained()) {
+                if (helper->to_assess() && !helper->is_assessment_done()) {
+                    helper->start_assessment();
+                }
+            } else {
+                helper->train();
+            }
         } else {
             helper->startNewTraining();
         }
@@ -52,6 +59,11 @@ bool InitializerHelper::is_training_done()
     return !is_train && num_stages * 2 == train_stage;
 }
 
+bool InitializerHelper::is_trained()
+{
+    return is_model_trained;
+}
+
 void InitializerHelper::stopTraining()
 {
     is_train = false;
@@ -62,6 +74,22 @@ void InitializerHelper::stopTraining()
 void InitializerHelper::startNewTraining()
 {
     is_train = true;
+}
+
+bool InitializerHelper::to_assess()
+{
+    return is_assessment;
+}
+
+bool InitializerHelper::is_assessment_done()
+{
+    return is_child_assessment_done && is_parent_assessment_done;
+}
+
+void InitializerHelper::start_assessment()
+{
+    is_assessing = true;
+    start_assessment_time = std::clock();
 }
 
 void InitializerHelper::publishImage(cv::Mat &mat)
@@ -270,6 +298,34 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             cv::Point certainty_pos;
             certainty_pos = cv::Point(10, 100); // default position on the left top corner
             cv::putText(disp_image, certainty_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(0,255,0));
+
+            if (is_assessing) {
+                if (!is_child_assessment_done) {
+                    child_assessment_tracking_file << 1 << endl;
+                } else {
+                    parent_assessment_tracking_file << 1 << endl;
+                }
+            }
+        } else {
+            if (is_assessing) {
+                if (!is_child_assessment_done) {
+                    child_assessment_tracking_file << 0 << endl;
+                } else {
+                    parent_assessment_tracking_file << 0 << endl;
+                }
+            }
+        }
+
+        if (is_assessing) {
+            double assessing_time = double(std::clock() - start_assessment_time) / CLOCKS_PER_SEC;
+            if (assessing_time > assessment_length * 60) {
+                is_assessing = false;
+                if (!is_child_assessment_done) {
+                    is_child_assessment_done = true;
+                } else {
+                    is_parent_assessment_done = true;
+                }
+            }
         }
     }
     // Write out the framerate on the image before displaying it
@@ -443,7 +499,30 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
                     role = "PARENT";
                 }
 
-                string result = "predict: " + role + " with confidence: " + to_string(predicted_confidence);
+                string result = "";
+
+                if (!is_assessing && is_assessment && !is_assessment_done()) {
+                    result += "Click on the image to start assessment for ";
+                    if (!is_child_assessment_done) {
+                        result += "CHILD";
+                    } else {
+                        result += "PARENT";
+                    }
+                } else {
+                    if (is_assessing) {
+                        result += "[ASSESSING ";
+                        if (!is_child_assessment_done) {
+                            child_assessment_label_file << role << endl;
+                            result += "CHILD";
+                        } else {
+                            parent_assessment_label_file << role << endl;
+                            result += "PARENT";
+                        }
+                        result += "] ";
+                    }
+                    result += "predict: " + role + " with confidence: " + to_string(predicted_confidence);
+                }
+
                 cv::putText(img, result, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
 
             }
@@ -455,6 +534,9 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
     executable_location(_loc), 
     imageTransport(nodeHandle),
     is_train(false),
+    is_assessing(false),
+    is_child_assessment_done(false),
+    is_parent_assessment_done(false),
     is_model_trained(false),
     train_stage(0),
     num_train_samples(0),
@@ -465,12 +547,12 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
     string _cam = "/usb_cam";
     nodeHandle.getParam("cam", _cam);
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
+    nodeHandle.getParam("single_face_recognizer_assessment_file_location", face_assessment_file_location);
 
-    bool is_get_data;
     nodeHandle.getParam("is_get_data", is_get_data);
-
-    bool is_to_train;
     nodeHandle.getParam("is_train", is_to_train);
+    nodeHandle.getParam("is_assessment", is_assessment);
+    nodeHandle.getParam("assessment_length", assessment_length);
 
     if (is_get_data) {
         if (exists(face_recognizer_file_location + "train_images")) {
@@ -487,7 +569,18 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
             face_recognizer = cv::face::createEigenFaceRecognizer();
             face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
         }
-    } 
+    }
+
+    if (is_assessment) {
+        if (exists(face_assessment_file_location)) {
+            remove_all(face_assessment_file_location);
+        }
+        create_directories(face_assessment_file_location);
+        child_assessment_label_file.open(face_assessment_file_location + "child_label.txt", std::ios_base::app);
+        parent_assessment_label_file.open(face_assessment_file_location + "parent_label.txt", std::ios_base::app);
+        child_assessment_tracking_file.open(face_assessment_file_location + "child_tracking.txt", std::ios_base::app);
+        parent_assessment_tracking_file.open(face_assessment_file_location + "parent_tracking.txt", std::ios_base::app);
+    }
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&InitializerHelper::callback, this);

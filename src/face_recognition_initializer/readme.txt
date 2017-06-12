@@ -69,14 +69,23 @@ To create a new launch file, here is the template:
     <param name="ns" type="string" value="clm_ros_wrapper_2"/>
     <param name="cam" type="string" value="usb_cam_2"/>
 
+    <!-- face_recognizer_file_location: the location of where the images and the model is stored. -->
+    <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
+
+    <!-- single_face_recognizer_assessment_file_location: the file location where the assessment results are saved.>
+    <param name="single_face_recognizer_assessment_file_location" type="string" value="/home/sar/face_analyzer_assessment/single_face.txt"/>
+
     <!-- is_get_data: whether to get new images for training. All existing images and model will be deleted -->
     <param name="is_get_data" type="boolean" value="true"/>
 
     <!-- is_train: whether to train a new model with the existing images. There must be images available if the model needs to be trained. If is_get_data is true, then regardless what the value for is_train, a new model will be trained. -->
     <param name="is_train" type="boolean" value="false"/>
 
-    <!-- face_recognizer_file_location: the location of where the images and the model is stored. -->
-    <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
+    <!-- is_assessment: whether to do an assessment in the end. This one does only the single face assessment -->
+    <param name="is_assessment" type="boolean" value="true">
+
+    <!-- assessment_length: how long the assessment is. The unit is in minutese. -->
+    <param name="assessment_length" type="double" value="3"/>
 
     <!-- the value should be the same as the setting as in the clm_ros_wrapper -->
     <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >

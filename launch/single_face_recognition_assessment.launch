@@ -29,10 +29,9 @@
     <param name="cam" type="string" value="usb_cam_2"/>
 
     <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>
-    <param name="is_get_data" type="boolean" value="false"/>
-    <param name="is_train" type="boolean" value="true"/>
-
     <param name="single_face_recognizer_assessment_file_location" type="string" value="/home/sar/face_analyzer_assessment/single_face/"/>
+    <param name="is_get_data" type="boolean" value="false"/>
+    <param name="is_train" type="boolean" value="false"/>
     <param name="is_assessment" type="boolean" value="true"/>
     <param name="assessment_length" type="double" value="0.25"/>
 

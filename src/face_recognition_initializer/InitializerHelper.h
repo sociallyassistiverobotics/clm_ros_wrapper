@@ -49,6 +49,22 @@ class InitializerHelper
 {
 private:
     std::string face_recognizer_file_location;
+    std::string face_assessment_file_location;
+
+    bool is_get_data;
+    bool is_to_train;
+    bool is_assessment;
+    bool is_assessing;
+    bool is_child_assessment_done;
+    bool is_parent_assessment_done;
+    double assessment_length;
+    clock_t start_assessment_time;
+
+    std::ofstream child_assessment_label_file;
+    std::ofstream child_assessment_tracking_file;
+    std::ofstream parent_assessment_label_file;
+    std::ofstream parent_assessment_tracking_file;
+
     std::string executable_location;
 
     ros::NodeHandle nodeHandle;
@@ -110,7 +126,11 @@ public:
     ~InitializerHelper() {};
     bool is_training();
     bool is_training_done();
+    bool is_trained();
     void stopTraining();
     void startNewTraining();
     void train();
+    bool to_assess();
+    bool is_assessment_done();
+    void start_assessment();
 };

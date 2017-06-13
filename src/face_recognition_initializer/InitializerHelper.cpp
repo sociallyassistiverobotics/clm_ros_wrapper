@@ -322,8 +322,12 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 is_assessing = false;
                 if (!is_child_assessment_done) {
                     is_child_assessment_done = true;
+                    child_assessment_tracking_file.close();
+                    child_assessment_label_file.close();
                 } else {
                     is_parent_assessment_done = true;
+                    parent_assessment_tracking_file.close();
+                    parent_assessment_label_file.close();
                 }
             }
         }

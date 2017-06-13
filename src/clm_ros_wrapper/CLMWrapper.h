@@ -35,12 +35,17 @@
 #include <clm_ros_wrapper/VectorsWithCertainty.h>
 #include <clm_ros_wrapper/ClmHeadVectors.h>
 
+#include <clm_ros_wrapper/Assessment.h>
+
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
 
 #include <math.h>
 
 #include <tf/transform_datatypes.h>
+
+// call back on the mouse click event on the image
+static void mouse_callback(int event, int x, int y, int flags, void* userdata);
 
 class ClmWrapper
 {
@@ -69,6 +74,9 @@ private:
     ros::Publisher eye_gaze_publisher;
 
     ros::Publisher gaze_direction_publisher;
+
+    // it sent is_assessing message with the length
+    ros::Publisher assessment_publisher;
 
     // Gaze tracking, absolute gaze direction
     Point3f gazeDirection0;
@@ -146,6 +154,16 @@ private:
     int child_confidence_threshold;
     int parent_confidence_threshold;
 
+    bool is_assessment;
+    bool is_identification_assessment_done;
+    bool is_target_screen_assessment_done;
+    bool is_target_robot_assessment_done;
+    bool is_target_human_assessment_done;
+    bool is_target_other_assessment_done;
+    float assessment_length; // in minutes
+    bool is_assessing;
+    clock_t start_assessment_time;
+
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);
     bool publishImage(cv::Mat &mat, const std::string encoding);
@@ -173,4 +191,13 @@ public:
     ClmWrapper(std::string _name, std::string _loc);
 
     ~ClmWrapper() {};
+
+    bool is_assessing_both_face();
+    bool is_assessing_identification_done();
+    bool is_assessing_screen_done();
+    bool is_assessing_robot_done();
+    bool is_assessing_human_done();
+    bool is_assessing_other_done();
+    void set_is_accessing();
+    void send_assessment_message(int task, int state);
 };

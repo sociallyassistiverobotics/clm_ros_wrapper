@@ -97,7 +97,7 @@
         <param name="child_confidence_threshold" type="int" value="3000"/>
         <param name="parent_confidence_threshold" type="int" value="3000"/>
 
-        <param name="is_assessment" type="bool" value="false" />
+        <param name="is_assessment" type="bool" value="true" />
         <param name="assessment_length" type="double" value="0.25" />
 
         <!-- calibration -->
@@ -123,8 +123,8 @@
             <param name="device_test" type="int" value="0"/>
         </node> -->
 
-        <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen">
-            <param name ="device_test" type ="int" value="0"/> 
+        <node pkg="clm_ros_wrapper" type="clm_ros_wrapper" name="clm_ros_wrapper" output="screen"> 
+            <param name ="device_test" type ="int" value="0"/>
         </node>
 
         <!-- DO NOT SHOW IMAGE: tracking view -->

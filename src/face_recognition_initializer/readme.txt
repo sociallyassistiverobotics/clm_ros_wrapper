@@ -125,3 +125,15 @@ int static const parent = 2;
 int static const other = -1; (this is used in user_tracking_fusion.py in sar_core)
 child and parent is defined in the same way as the ones in the message.
 other, in the message, is defined as 3, rather than -1.
+
+***********************************3. Assess Both faces**************************************************
+
+The file should be launched from sar core. The flag in clm launch file is:
+
+        <param name="is_assessment" type="bool" value="false" />
+        <param name="assessment_length" type="double" value="0.25" />
+
+is_assessment is whether this is an assessment.
+assessment_length is the length of assessment, which is in minutes.
+
+The modified version is called face_recognition_two_faces_assessment.launch

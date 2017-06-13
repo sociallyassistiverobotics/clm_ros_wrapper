@@ -19,6 +19,33 @@ int static const other = -1;
 int static const num_stages = 14;
 // int static confidence_threshold = 3000; // need to be customized for each setting.
 
+static void mouse_callback(int event, int x, int y, int flags, void* userdata)
+{
+    ClmWrapper * wrapper = (ClmWrapper*)userdata;
+    if (event == EVENT_LBUTTONUP)
+    {
+        if (!wrapper->is_assessing_both_face()) {
+            int task = 0;
+            if (!wrapper->is_assessing_identification_done()) {
+                task = 1;
+            } else if (!wrapper->is_assessing_screen_done()) {
+                task = 2;
+            } else if (!wrapper->is_assessing_robot_done()) {
+                task = 3;
+            } else if (!wrapper->is_assessing_human_done()) {
+                task = 4;
+            } else if (!wrapper->is_assessing_other_done()) {
+                task = 5;
+            }
+
+            if (0 != task) {
+                wrapper->send_assessment_message(task, 0); // 0 represents start message
+                wrapper->set_is_accessing();
+            }
+        }
+    }
+}
+
 // Useful utility for creating directories for storing the output files
 void ClmWrapper::create_directory_from_file(string output_path)
 {
@@ -36,11 +63,16 @@ void ClmWrapper::create_directory_from_file(string output_path)
 
 bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
 {
-    cv_bridge::CvImage msgOut;
-    msgOut.encoding = encoding;
-    msgOut.image    = mat;
+    if (!is_assessment) {
+        cv_bridge::CvImage msgOut;
+        msgOut.encoding = encoding;
+        msgOut.image    = mat;
 
-    imagePublisher.publish(msgOut.toImageMsg());
+        imagePublisher.publish(msgOut.toImageMsg());
+    } else {
+        imshow("Face Recognition Assessment", mat);
+        waitKey(1);
+    }
     return true;
 }
 
@@ -706,7 +738,71 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             } else {
                 certainty_pos = cv::Point(10, 100); // default position on the left top corner
             }
+
+            string assessment_st = "";
+            if (is_assessment) {
+                if (!is_identification_assessment_done) {
+                    if (!is_assessing) {
+                        assessment_st = "Please click the image to start IDENTIFICATION assessment";
+                    } else {
+                        assessment_st = "[ASSESSING IDENTIFICATION]";
+                    }
+                } else if (!is_target_screen_assessment_done){
+                    if (!is_assessing) {
+                        assessment_st = "Please click the image to start TARGET assessment: SCREEN";
+                    } else {
+                        assessment_st = "[ASSESSING TARGET - SCREEN]";
+                    }
+                } else if (!is_target_robot_assessment_done) {
+                    if (!is_assessing) {
+                        assessment_st = "Please click the image to start TARGET assessment: ROBOT";
+                    } else {
+                        assessment_st = "[ASSESSING TARGET - ROBOT]";
+                    }
+                } else if (!is_target_human_assessment_done) {
+                    if (!is_assessing) {
+                        assessment_st = "Please click the image to start TARGET assessment: EACH OTHER";
+                    } else {
+                        assessment_st = "[ASSESSING TARGET - EACH OTHER]";
+                    }
+                } else if (!is_target_other_assessment_done) {
+                    if (!is_assessing) {
+                        assessment_st = "Please click the image to start TARGET assessment: OTHER";
+                    } else {
+                        assessment_st = "[ASSESSING TARGET - OTHER]";
+                    }
+                } else {
+                    assessment_st = "Assessment Finished";
+                }
+            }
+
+            cv::putText(disp_image, assessment_st, cv::Point(10,100), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(0,255,0));
             cv::putText(disp_image, summary_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
+
+            if (is_assessing) {
+                double assessing_time = double(std::clock() - start_assessment_time) / CLOCKS_PER_SEC;
+                if (assessing_time > assessment_length * 60) {
+                    is_assessing = false;
+                    int task = 0;
+                    if (!is_identification_assessment_done) {
+                        is_identification_assessment_done = true;
+                        task = 1;
+                    } else if (!is_target_screen_assessment_done) {
+                        is_target_screen_assessment_done = true;
+                        task = 2;
+                    } else if (!is_target_robot_assessment_done) {
+                        is_target_robot_assessment_done = true;
+                        task = 3;
+                    } else if (!is_target_human_assessment_done) {
+                        is_target_human_assessment_done = true;
+                        task = 4;
+                    } else if (!is_target_other_assessment_done) {
+                        is_target_other_assessment_done = true;
+                        task = 5;
+                    }
+                    send_assessment_message(task, 1); // 1 represents end message
+                }
+            }
 
             // cout << model << " "<< fx << " " << fy << " " << cx << " " << cy << " " << detection_certainty << " " << thickness
             // << " " << pose_estimate_CLM[0] << " " << pose_estimate_CLM[1] << " " << pose_estimate_CLM[2]
@@ -970,7 +1066,87 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
     }
 }
 
-ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_location(_loc), imageTransport(nodeHandle), is_face_recognizer_set(false)
+bool ClmWrapper::is_assessing_both_face()
+{
+    return is_assessing;
+}
+
+bool ClmWrapper::is_assessing_identification_done()
+{
+    return is_identification_assessment_done;
+}
+
+bool ClmWrapper::is_assessing_screen_done()
+{
+    return is_target_screen_assessment_done;
+}
+
+bool ClmWrapper::is_assessing_robot_done()
+{
+    return is_target_robot_assessment_done;
+}
+
+bool ClmWrapper::is_assessing_human_done()
+{
+    return is_target_human_assessment_done;
+}
+
+bool ClmWrapper::is_assessing_other_done()
+{
+    return is_target_other_assessment_done;
+}
+
+void ClmWrapper::set_is_accessing()
+{
+    is_assessing = true;
+    start_assessment_time = std::clock();
+}
+
+void ClmWrapper::send_assessment_message(int task, int state)
+{
+    typedef clm_ros_wrapper::Assessment AssessmentMsg;
+    AssessmentMsg ros_assessment_msg;
+    if (0 == state) {
+        ros_assessment_msg.state = ros_assessment_msg.START;
+    } else {
+        ros_assessment_msg.state = ros_assessment_msg.END;
+    }
+
+    if (1 == task) { // idenditication
+        ros_assessment_msg.task = ros_assessment_msg.IDENTIFICATION;
+    } else if (2 == task) { // target:screen
+        ros_assessment_msg.task = ros_assessment_msg.TARGET;
+        ros_assessment_msg.task_content = ros_assessment_msg.SCREEN;
+    } else if (3 == task) { // robot
+        ros_assessment_msg.task = ros_assessment_msg.TARGET;
+        ros_assessment_msg.task_content = ros_assessment_msg.ROBOT;
+    } else if (4 == task) { // human
+        ros_assessment_msg.task = ros_assessment_msg.TARGET;
+        ros_assessment_msg.task_content = ros_assessment_msg.HUMAN;
+    } else if (5 == task) { // other
+        ros_assessment_msg.task = ros_assessment_msg.TARGET;
+        ros_assessment_msg.task_content = ros_assessment_msg.OTHER;
+    }
+
+    if (0 != task) {
+        assessment_publisher.publish(ros_assessment_msg);
+    }
+}
+
+ClmWrapper::ClmWrapper(string _name, string _loc) : 
+    name(_name), 
+    executable_location(_loc), 
+    imageTransport(nodeHandle), 
+    is_face_recognizer_set(false), 
+    is_identification_assessment_done(false), 
+    is_assessing(false),
+    is_assessment(false),
+    assessment_length(0.25),
+    is_target_screen_assessment_done(false),
+    is_target_robot_assessment_done(false),
+    is_target_human_assessment_done(false),
+    is_target_other_assessment_done(false),
+    start_assessment_time(0)
 {
     ROS_INFO("Called constructor...");
 
@@ -979,6 +1155,14 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     nodeHandle.getParam("child_confidence_threshold", child_confidence_threshold);
     nodeHandle.getParam("parent_confidence_threshold", parent_confidence_threshold);
+
+    nodeHandle.getParam("is_assessment", is_assessment);
+    nodeHandle.getParam("assessment_length", assessment_length);
+
+    if (is_assessment) {
+        namedWindow("Face Recognition Assessment");
+        setMouseCallback("Face Recognition Assessment", mouse_callback, this);
+    }
 
     string face_recognizer_file_location = "";
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
@@ -1013,6 +1197,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) : name(_name), executable_loca
 
     //gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirection>(_name+"/gaze_direction", 1);
     gaze_direction_publisher = nodeHandle.advertise<clm_ros_wrapper::GazeDirections>(_name+"/gaze_directions", 1);
+
+    assessment_publisher = nodeHandle.advertise<clm_ros_wrapper::Assessment>(_name+"/assessment", 1);
 
     init = true;
 

@@ -77,6 +77,7 @@ add_message_files(
    GazeDirections.msg
    GazePointsAndDirections.msg
    VectorsWithCertaintyWithGazePointsAndDirections.msg
+   Assessment.msg
 )
 
 ## Generate services in the 'srv' folder

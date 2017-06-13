@@ -59,6 +59,11 @@ private:
     bool is_parent_assessment_done;
     double assessment_length;
     clock_t start_assessment_time;
+    int assessment_tracking_total_num;
+    int assessment_label_total_num;
+    string assessment_label_correct_answer;
+    int assessment_tracking_correct_num;
+    int assessment_label_correct_num;
 
     std::ofstream child_assessment_label_file;
     std::ofstream child_assessment_tracking_file;

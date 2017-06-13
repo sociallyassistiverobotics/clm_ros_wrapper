@@ -88,6 +88,15 @@ bool InitializerHelper::is_assessment_done()
 
 void InitializerHelper::start_assessment()
 {
+    assessment_tracking_total_num = 0;
+    assessment_tracking_correct_num = 0;
+    assessment_label_total_num = 0;
+    assessment_label_correct_num = 0;
+    if (!is_child_assessment_done) {
+        assessment_label_correct_answer = "CHILD";
+    } else {
+        assessment_label_correct_answer = "PARENT";
+    }
     is_assessing = true;
     start_assessment_time = std::clock();
 }
@@ -305,6 +314,8 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 } else {
                     parent_assessment_tracking_file << 1 << endl;
                 }
+                assessment_tracking_total_num++;
+                assessment_tracking_correct_num++;
             }
         } else {
             if (is_assessing) {
@@ -313,6 +324,7 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 } else {
                     parent_assessment_tracking_file << 0 << endl;
                 }
+                assessment_tracking_total_num++;
             }
         }
 
@@ -322,11 +334,39 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 is_assessing = false;
                 if (!is_child_assessment_done) {
                     is_child_assessment_done = true;
+                    child_assessment_tracking_file << "accuracy" << endl;
+                    child_assessment_label_file << "accuracy" << endl;
+
+                    if (assessment_tracking_total_num == 0) {
+                        child_assessment_tracking_file << 0 << endl;
+                    } else {
+                        child_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                    }
                     child_assessment_tracking_file.close();
+
+                    if (assessment_label_total_num == 0) {
+                        child_assessment_label_file << 0 << endl;
+                    } else {
+                        child_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                    }
                     child_assessment_label_file.close();
                 } else {
                     is_parent_assessment_done = true;
+                    parent_assessment_tracking_file << "accuracy" << endl;
+                    parent_assessment_label_file << "accuracy" << endl;
+
+                    if (assessment_tracking_total_num == 0) {
+                        parent_assessment_tracking_file << 0 << endl;
+                    } else {
+                        parent_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                    }
                     parent_assessment_tracking_file.close();
+
+                    if (assessment_label_total_num == 0) {
+                        parent_assessment_label_file << 0 << endl;
+                    } else {
+                        parent_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                    }
                     parent_assessment_label_file.close();
                 }
             }
@@ -523,6 +563,10 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
                             result += "PARENT";
                         }
                         result += "] ";
+                        if (role == assessment_label_correct_answer) {
+                            assessment_label_correct_num++;
+                        }
+                        assessment_label_total_num++;
                     }
                     result += "predict: " + role + " with confidence: " + to_string(predicted_confidence);
                 }
@@ -544,7 +588,12 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
     is_model_trained(false),
     train_stage(0),
     num_train_samples(0),
-    face_recognizer(cv::face::createEigenFaceRecognizer())
+    face_recognizer(cv::face::createEigenFaceRecognizer()),
+    assessment_tracking_total_num(0),
+    assessment_tracking_correct_num(0),
+    assessment_label_correct_answer(""),
+    assessment_label_total_num(0),
+    assessment_label_correct_num(0)
 {
     ROS_INFO("Called constructor...");
 

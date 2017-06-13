@@ -58,6 +58,12 @@ float screenGap;
 string _namespace;
 std::ofstream assessment_child_file;
 std::ofstream assessment_parent_file;
+int assessment_child_total_num;
+int assessment_child_correct_num;
+string assessment_child_correct_answer;
+int assessment_parent_total_num;
+int assessment_parent_correct_num;
+string assessment_parent_correct_answer;
 
 bool is_assessing;
 
@@ -402,20 +408,32 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
     }
 
     if (msg->state == msg->START) {
+        assessment_child_total_num = 0;
+        assessment_child_correct_num = 0;
+        assessment_parent_total_num = 0;
+        assessment_parent_correct_num = 0;
         string child_file_name = "child_";
         string parent_file_name = "parent_";
         if (msg->task_content == msg->SCREEN) {
             child_file_name += "screen.txt";
             parent_file_name += "screen.txt";
+            assessment_child_correct_answer = "screen";
+            assessment_parent_correct_answer = "screen";
         } else if (msg->task_content == msg->ROBOT) {
             child_file_name += "robot.txt";
             parent_file_name += "robot.txt";
+            assessment_child_correct_answer = "robot";
+            assessment_parent_correct_answer = "robot";
         } else if (msg->task_content == msg->HUMAN) {
             child_file_name += "human.txt";
             parent_file_name += "human.txt";
+            assessment_child_correct_answer = "parent";
+            assessment_parent_correct_answer = "child";
         } else if (msg->task_content == msg->OTHER) {
             child_file_name += "other.txt";
             parent_file_name += "other.txt";
+            assessment_child_correct_answer = "other";
+            assessment_parent_correct_answer = "other";
         }
 
         assessment_child_file.open("/home/sar/face_analyzer_assessment/both_faces/" + child_file_name);
@@ -423,6 +441,20 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
         is_assessing = true;
     } else if (msg->state == msg->END) {
         is_assessing = false;
+        assessment_child_file << "accuracy" << endl;
+        assessment_parent_file << "accuracy" << endl;
+        if (0 == assessment_child_total_num) {
+            assessment_child_file << 0 << endl;
+        } else {
+            assessment_child_file << (double) assessment_child_correct_num / (double)assessment_child_total_num << endl;
+        }
+        if(0 == assessment_parent_total_num) {
+            assessment_parent_file << 0 << endl;
+        } else {
+            assessment_parent_file << (double)assessment_parent_correct_num / (double)assessment_parent_total_num << endl;
+        }
+
+
         assessment_child_file.close();
         assessment_parent_file.close();
     }
@@ -447,9 +479,17 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
 
         if (is_assessing) {
             if (detected_target.role = detected_target.CHILD_ROLE) {
+                assessment_child_total_num++;
                 assessment_child_file << target << endl;
+                if (assessment_child_correct_answer == target) {
+                    assessment_child_correct_num++;
+                }
             } else if (detected_target.role = detected_target.PARENT_ROLE) {
+                assessment_parent_total_num++;
                 assessment_parent_file << target << endl;
+                if (assessment_parent_correct_answer == target) {
+                    assessment_parent_correct_num++;
+                }
             }
         }
 

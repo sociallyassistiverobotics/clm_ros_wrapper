@@ -31,6 +31,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <clm_ros_wrapper/DetectedTargets.h>
 #include <clm_ros_wrapper/GazePointAndDirection.h>
 #include <clm_ros_wrapper/GazePointsAndDirections.h>
+#include <clm_ros_wrapper/Assessment.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -45,13 +46,20 @@ gaze point falls into. It then publishes this information with publisher topic "
 
 #define max_num_objects 20
 
+
+using namespace std;
+using namespace boost::filesystem;
+
 int screenAngleInDegrees;
 float screenWidth;
 float screenHeight;
 float screenAngle;
 float screenGap;
 string _namespace;
+std::ofstream assessment_child_file;
+std::ofstream assessment_parent_file;
 
+bool is_assessing;
 
 int num_objects_on_screen, num_free_objects;
 
@@ -310,8 +318,9 @@ void gazepoint_callback(const clm_ros_wrapper::GazePointAndDirection::ConstPtr& 
 }
 */
 
-void matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_wrapper::DetectedTarget & detected_target)
+String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_wrapper::DetectedTarget & detected_target)
 {
+    string target = "";
     detected_target.certainty = msg.certainty;
     detected_target.match_distance = msg.role_confidence;
 
@@ -352,27 +361,70 @@ void matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_wra
 
         }
 
+
         if(found_a_match){
             //cout << "shortest distance = " << shortest_dist << endl;
             if((shortest_target >= 0) && (shortest_target <= 11)){
                 // std::cout << "..SCREEN" << std::endl;
+                target = "screen";
                 estimated_region = detected_target.SCREEN;
             }
             else if((shortest_target == 12) || (shortest_target == 13)){
                 // std::cout << "...ROBOT" << std::endl;
+                target = "robot";
                 estimated_region = detected_target.ROBOT;
             }
             else if((shortest_target == 14) || (shortest_target == 15)){
                 // std::cout << "...PARENT" << std::endl;
+                target = "parent";
                 estimated_region = detected_target.PARENT;
             }
         }
         else{
             // std::cout << "...OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
+            target = "other";
         }
 
         detected_target.region = estimated_region;
+    }
+    return target;
+}
+
+void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
+{
+    if (msg->task != msg->TARGET) {
+        return;
+    }
+
+    if (!exists("/home/sar/face_analyzer_assessment/both_faces/")) {
+        create_directories("/home/sar/face_analyzer_assessment/both_faces/");
+    }
+
+    if (msg->state == msg->START) {
+        string child_file_name = "child_";
+        string parent_file_name = "parent_";
+        if (msg->task_content == msg->SCREEN) {
+            child_file_name += "screen.txt";
+            parent_file_name += "screen.txt";
+        } else if (msg->task_content == msg->ROBOT) {
+            child_file_name += "robot.txt";
+            parent_file_name += "robot.txt";
+        } else if (msg->task_content == msg->HUMAN) {
+            child_file_name += "human.txt";
+            parent_file_name += "human.txt";
+        } else if (msg->task_content == msg->OTHER) {
+            child_file_name += "other.txt";
+            parent_file_name += "other.txt";
+        }
+
+        assessment_child_file.open("/home/sar/face_analyzer_assessment/both_faces/" + child_file_name);
+        assessment_parent_file.open("/home/sar/face_analyzer_assessment/both_faces/" + parent_file_name);
+        is_assessing = true;
+    } else if (msg->state == msg->END) {
+        is_assessing = false;
+        assessment_child_file.close();
+        assessment_parent_file.close();
     }
 }
 
@@ -391,7 +443,16 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
         } else {
             detected_target.role = detected_target.OTHER_ROLE;
         }
-        matchTarget(msg->gazes[loop], detected_target);
+        string target = matchTarget(msg->gazes[loop], detected_target);
+
+        if (is_assessing) {
+            if (detected_target.role = detected_target.CHILD_ROLE) {
+                assessment_child_file << target << endl;
+            } else if (detected_target.role = detected_target.PARENT_ROLE) {
+                assessment_parent_file << target << endl;
+            }
+        }
+
         detected_targets.targets[loop] = detected_target;
 
         if (msg->gazes[loop].CHILD_ROLE == msg->gazes[loop].role) {
@@ -615,6 +676,9 @@ int main(int argc, char **argv)
     ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 
     ros::Subscriber gazepoint_sub = nh.subscribe("/sar/perception/gaze_point_and_direction_wf", 1, &gazepoint_callback2);
+
+    is_assessing = false;
+    ros::Subscriber assessment_sub = nh.subscribe("/sar/perception/left_cam/clm_ros_wrapper_0/assessment", 1, &assessment_callback);
 
     // ros::Subscriber parent_gazepoint_sub = nh.subscribe("/sar/perception/parent_gaze_point_and_direction_wf", 1, &parent_gazepoint_callback2);
 

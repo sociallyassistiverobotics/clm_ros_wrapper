@@ -59,9 +59,11 @@ string _namespace;
 std::ofstream assessment_child_file;
 std::ofstream assessment_parent_file;
 int assessment_child_total_num;
+int assessment_child_total_detected_num;
 int assessment_child_correct_num;
 string assessment_child_correct_answer;
 int assessment_parent_total_num;
+int assessment_parent_total_detected_num;
 int assessment_parent_correct_num;
 string assessment_parent_correct_answer;
 
@@ -342,6 +344,7 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
         //means no detection
         detected_target.distance = 0;
         detected_target.region = detected_target.NONE;
+        target = "no detection";
 
         // cout << "no detection" << endl;
     }
@@ -384,6 +387,9 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
                 // std::cout << "...PARENT" << std::endl;
                 target = "parent";
                 estimated_region = detected_target.PARENT;
+            } else {
+                target = "child";
+                estimated_region = detected_target.CHILD;
             }
         }
         else{
@@ -409,8 +415,10 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
 
     if (msg->state == msg->START) {
         assessment_child_total_num = 0;
+        assessment_child_total_detected_num = 0;
         assessment_child_correct_num = 0;
         assessment_parent_total_num = 0;
+        assessment_parent_total_detected_num = 0;
         assessment_parent_correct_num = 0;
         string child_file_name = "child_";
         string parent_file_name = "parent_";
@@ -441,21 +449,33 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
         is_assessing = true;
     } else if (msg->state == msg->END) {
         is_assessing = false;
+
         assessment_child_file << "accuracy" << endl;
-        assessment_parent_file << "accuracy" << endl;
         if (0 == assessment_child_total_num) {
             assessment_child_file << 0 << endl;
         } else {
             assessment_child_file << (double) assessment_child_correct_num / (double)assessment_child_total_num << endl;
         }
+        assessment_child_file << "accuracy without no detection" << endl;
+        if (0 == assessment_child_total_detected_num) {
+            assessment_child_file << 0 << endl;
+        } else {
+            assessment_child_file << (double) assessment_child_correct_num / (double)assessment_child_total_detected_num << endl;
+        }
+        assessment_child_file.close();
+
+        assessment_parent_file << "accuracy" << endl;
         if(0 == assessment_parent_total_num) {
             assessment_parent_file << 0 << endl;
         } else {
             assessment_parent_file << (double)assessment_parent_correct_num / (double)assessment_parent_total_num << endl;
         }
-
-
-        assessment_child_file.close();
+        assessment_parent_file << "accuracy without no detection" << endl;
+        if (0 == assessment_parent_total_detected_num) {
+            assessment_parent_file << 0 << endl;
+        } else {
+            assessment_parent_file << (double) assessment_parent_correct_num / (double)assessment_parent_total_detected_num << endl;
+        }
         assessment_parent_file.close();
     }
 }
@@ -484,11 +504,16 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
                 if (assessment_child_correct_answer == target) {
                     assessment_child_correct_num++;
                 }
+                if ("no detection" != target) {
+                    assessment_child_total_detected_num++;                }
             } else if (detected_target.role = detected_target.PARENT_ROLE) {
                 assessment_parent_total_num++;
                 assessment_parent_file << target << endl;
                 if (assessment_parent_correct_answer == target) {
                     assessment_parent_correct_num++;
+                }
+                if ("no detection" != target) {
+                    assessment_parent_total_detected_num++;
                 }
             }
         }

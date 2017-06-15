@@ -62,17 +62,17 @@ void ClmWrapper::create_directory_from_file(string output_path)
 }
 
 bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
-{
-    if (!is_assessment) {
-        cv_bridge::CvImage msgOut;
-        msgOut.encoding = encoding;
-        msgOut.image    = mat;
+{ 
+    // if (!is_assessment) {
+    //     cv_bridge::CvImage msgOut;
+    //     msgOut.encoding = encoding;
+    //     msgOut.image    = mat;
 
-        imagePublisher.publish(msgOut.toImageMsg());
-    } else {
-        imshow("Face Recognition Assessment", mat);
-        waitKey(1);
-    }
+    //     imagePublisher.publish(msgOut.toImageMsg());
+    // } else {
+    //     imshow("Face Recognition Assessment", mat);
+    //     waitKey(1);
+    // }
     return true;
 }
 

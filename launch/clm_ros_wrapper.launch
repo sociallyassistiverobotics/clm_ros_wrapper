@@ -10,9 +10,9 @@
     <param name="robot_y_wf" type="double" value="-100"/> <!-- mm -->
     <param name="robot_z_wf" type="double" value="225"/> <!-- mm -->
 
-    <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
+<!--     <node pkg="clm_ros_wrapper" type="scene_publisher" name="scene_publisher" output="screen"> 
         <param name="device_test" type="int" value="0"/>
-    </node>
+    </node> -->
 
     <group ns="/sar/perception/right_cam" if="false">
 
@@ -60,10 +60,10 @@
             <param name ="device_test" type ="int" value="0"/>
         </node>
 
-        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+<!--         <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
             <remap from="image" to="clm_ros_wrapper_1/face_image"/>
             <param name="autosize" value="true" />
-        </node>
+        </node> -->
 
         <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
             <param name="device_test" type="int" value="0"/>
@@ -128,10 +128,10 @@
         </node>
 
         <!-- DO NOT SHOW IMAGE: tracking view -->
-        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+<!--         <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
             <remap from="image" to="clm_ros_wrapper_0/face_image"/>
             <param name="autosize" value="true" />
-        </node>
+        </node> -->
         
 
         <node pkg="clm_ros_wrapper" type="find_gazepoint" name="find_gazepoint" output="screen"> 
@@ -158,10 +158,10 @@
             <param name="io_method" value="mmap"/>
         </node>
         <!-- DO NOT SHOW IMAGE: recording cam -->
-        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+<!--         <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
             <remap from="image" to="/usb_cam_1/image_raw"/>
             <param name="autosize" value="true" />
-        </node>
+        </node> -->
         
     </group>
 

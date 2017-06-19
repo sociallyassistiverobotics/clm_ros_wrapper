@@ -73,6 +73,10 @@ bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
     //     imshow("Face Recognition Assessment", mat);
     //     waitKey(1);
     // }
+    if (is_assessment) {
+        imshow("Face Recognition Assessment", mat);
+        waitKey(1);
+    }
     return true;
 }
 

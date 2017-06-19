@@ -383,13 +383,27 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
                 target = "robot";
                 estimated_region = detected_target.ROBOT;
             }
-            else if((shortest_target == 14) || (shortest_target == 15)){
-                // std::cout << "...PARENT" << std::endl;
-                target = "parent";
-                estimated_region = detected_target.PARENT;
+            else if((shortest_target >= 14) && (shortest_target <= 17)){
+                if (msg.PARENT_ROLE == msg.role) {
+                    // std::cout << "...OTHERS" << std::endl;
+                    target = "other";
+                    estimated_region = detected_target.OUTSIDE;
+                } else {
+                    // std::cout << "...PARENT" << std::endl;
+                    target = "parent";
+                    estimated_region = detected_target.PARENT;
+                }
             } else {
                 target = "child";
-                estimated_region = detected_target.CHILD;
+                if (msg.CHILD_ROLE == msg.role) {
+                    // std::cout << "...OTHERS" << std::endl;
+                    target = "other";
+                    estimated_region = detected_target.OUTSIDE;
+                } else {
+                    // std::cout << "...CHILD" << std::endl;
+                    target = "child";
+                    estimated_region = detected_target.CHILD;
+                }
             }
         }
         else{
@@ -498,17 +512,20 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
         string target = matchTarget(msg->gazes[loop], detected_target);
 
         if (is_assessing) {
-            if (detected_target.role = detected_target.CHILD_ROLE) {
+            if (detected_target.role == detected_target.CHILD_ROLE) {
                 assessment_child_total_num++;
                 assessment_child_file << target << endl;
+                // cout << "child: " << target << endl;
                 if (assessment_child_correct_answer == target) {
                     assessment_child_correct_num++;
                 }
                 if ("no detection" != target) {
-                    assessment_child_total_detected_num++;                }
-            } else if (detected_target.role = detected_target.PARENT_ROLE) {
+                    assessment_child_total_detected_num++;
+                }
+            } else if (detected_target.role == detected_target.PARENT_ROLE) {
                 assessment_parent_total_num++;
                 assessment_parent_file << target << endl;
+                // cout << "parent: " << target << endl;
                 if (assessment_parent_correct_answer == target) {
                     assessment_parent_correct_num++;
                 }
@@ -749,21 +766,39 @@ int main(int argc, char **argv)
 
     // initialize virtual targets
     // tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
-    tf::Vector3 virtual_screen_r1_c1 = tf::Vector3(30,190,260);
-    tf::Vector3 virtual_screen_r2_c1 = tf::Vector3(60,135,175);
-    tf::Vector3 virtual_screen_r3_c1 = tf::Vector3(90,80,90);
+    // tf::Vector3 virtual_screen_r1_c1 = tf::Vector3(-9,200,284);
+    // tf::Vector3 virtual_screen_r2_c1 = tf::Vector3(21,125,167);
+    // tf::Vector3 virtual_screen_r3_c1 = tf::Vector3(50,50,50);
 
-    tf::Vector3 virtual_screen_r1_c2 = tf::Vector3(140,245,260);
-    tf::Vector3 virtual_screen_r2_c2 = tf::Vector3(175,195,175);
-    tf::Vector3 virtual_screen_r3_c2 = tf::Vector3(210,145,90);
+    // tf::Vector3 virtual_screen_r1_c2 = tf::Vector3(96,256,284);
+    // tf::Vector3 virtual_screen_r2_c2 = tf::Vector3(126,181,167);
+    // tf::Vector3 virtual_screen_r3_c2 = tf::Vector3(155,106,50);
 
-    tf::Vector3 virtual_screen_r1_c3 = tf::Vector3(250,300,260);
-    tf::Vector3 virtual_screen_r2_c3 = tf::Vector3(290,255,175);
-    tf::Vector3 virtual_screen_r3_c3 = tf::Vector3(330,210,90);
+    // tf::Vector3 virtual_screen_r1_c3 = tf::Vector3(308,370,284);
+    // tf::Vector3 virtual_screen_r2_c3 = tf::Vector3(338,295,167);
+    // tf::Vector3 virtual_screen_r3_c3 = tf::Vector3(367,220,50);
 
-    tf::Vector3 virtual_screen_r1_c4 = tf::Vector3(360,360,260);
-    tf::Vector3 virtual_screen_r2_c4 = tf::Vector3(405,320,175);
-    tf::Vector3 virtual_screen_r3_c4 = tf::Vector3(450,280,90);
+    // tf::Vector3 virtual_screen_r1_c4 = tf::Vector3(413,427,284);
+    // tf::Vector3 virtual_screen_r2_c4 = tf::Vector3(443,352,167);
+    // tf::Vector3 virtual_screen_r3_c4 = tf::Vector3(472,277,50);
+
+    // tf::Vector3 virtual_screen_center = tf::Vector3(270,250,240);
+    tf::Vector3 virtual_screen_r1_c1 = tf::Vector3(64,190,251);
+    tf::Vector3 virtual_screen_r2_c1 = tf::Vector3(82,145,180);
+    tf::Vector3 virtual_screen_r3_c1 = tf::Vector3(100,100,110);
+
+    tf::Vector3 virtual_screen_r1_c2 = tf::Vector3(169,246,251);
+    tf::Vector3 virtual_screen_r2_c2 = tf::Vector3(187,201,180);
+    tf::Vector3 virtual_screen_r3_c2 = tf::Vector3(205,156,110);
+
+    tf::Vector3 virtual_screen_r1_c3 = tf::Vector3(275,303,251);
+    tf::Vector3 virtual_screen_r2_c3 = tf::Vector3(293,258,180);
+    tf::Vector3 virtual_screen_r3_c3 = tf::Vector3(311,213,110);
+
+    tf::Vector3 virtual_screen_r1_c4 = tf::Vector3(381,360,251);
+    tf::Vector3 virtual_screen_r2_c4 = tf::Vector3(399,315,180);
+    tf::Vector3 virtual_screen_r3_c4 = tf::Vector3(417,270,110);
+
 
     //tf::Vector3 virtual_screen_top_left = tf::Vector3(50,200,340);
     // tf::Vector3 virtual_screen_top_right = tf::Vector3(400,380,260);
@@ -772,12 +807,14 @@ int main(int argc, char **argv)
     //tf::Vector3 virtual_screen_bottom_left = tf::Vector3(50,140,130);
     // tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
     //tf::Vector3 virtual_screen_bottom_right = tf::Vector3(420,310,150);
-    tf::Vector3 virtual_robot_top = tf::Vector3(640,170,300);
-    tf::Vector3 virtual_robot_bottom = tf::Vector3(640,170,100);
-    tf::Vector3 virtual_parent_1 = tf::Vector3(750,-100,300);
-    tf::Vector3 virtual_parent_2 = tf::Vector3(750, 0,300);
-    tf::Vector3 virtual_child_1 = tf::Vector3(250,-100,300);
-    tf::Vector3 virtual_child_2 = tf::Vector3(250,-100,200);
+    tf::Vector3 virtual_robot_top = tf::Vector3(630,250,50);
+    tf::Vector3 virtual_robot_bottom = tf::Vector3(630,250,330);
+    tf::Vector3 virtual_parent_1 = tf::Vector3(900,-100,300);
+    tf::Vector3 virtual_parent_2 = tf::Vector3(900,0,300);
+    tf::Vector3 virtual_parent_3 = tf::Vector3(900,-100,150);
+    tf::Vector3 virtual_parent_4 = tf::Vector3(900,0,150);
+    tf::Vector3 virtual_child_1 = tf::Vector3(305,-160,430);
+    tf::Vector3 virtual_child_2 = tf::Vector3(305,-160,150);
 
     // virtual_targets.push_back(virtual_screen_center);
     // virtual_targets.push_back(virtual_screen_top_left);
@@ -800,6 +837,8 @@ int main(int argc, char **argv)
     virtual_targets.push_back(virtual_robot_bottom);
     virtual_targets.push_back(virtual_parent_1);
     virtual_targets.push_back(virtual_parent_2);
+    virtual_targets.push_back(virtual_parent_3);
+    virtual_targets.push_back(virtual_parent_4);    
     virtual_targets.push_back(virtual_child_1);
     virtual_targets.push_back(virtual_child_2);
 

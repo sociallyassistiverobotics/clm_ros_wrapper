@@ -6,6 +6,7 @@ this script is used to transform the coordinates in the screen frame to the worl
 the origin in the screen frame is the bottom left corner
 """
 def origin():
+	# child\
 	return (100, 100, 110)
 
 """
@@ -38,6 +39,12 @@ def length_change(coordinate):
 	return result
 
 if __name__ == '__main__':
+	# child
+	# for x in [0, 120, 240, 360]:
+	# 	for y in [160, 80, 0]:
+	# 		print "(" + str(x) + ", " + str(y) + "): " + str(add(length_change((x, y)), origin()))
+
+	# parent
 	for x in [0, 120, 240, 360]:
-		for y in [160, 80, 0]:
+		for y in [300, 150, 0]:
 			print "(" + str(x) + ", " + str(y) + "): " + str(add(length_change((x, y)), origin()))

@@ -80,7 +80,7 @@
         
         <rosparam param = "transformation_intermediate_frame2wf">[-1,0,0,0.0,0,0,-1,0.0,0,-1,0,0.0,0,0,0,1]</rosparam>
 
-        <rosparam param = "transformation_cf2intermediate_frame">[1,0,0,400, 0,1,0, 450, 0,0,1, 410,0,0,0,1]</rosparam>
+        <rosparam param = "transformation_cf2intermediate_frame">[1,0,0,405, 0,1,0, 450, 0,0,1, 410,0,0,0,1]</rosparam>
 
         <!-- world frame to robot frame transformation matrix row-major representation-->
         <!-- <rosparam param = "transformation_wf2rf">[-0.7041, 0.7100, 0, 340, -0.7100, -0.7041, 0, -100, 0, 0, 1, 0, 0,0 , 0, 1]</rosparam> -->

@@ -58,6 +58,9 @@ private:
     image_transport::ImageTransport imageTransport;
     image_transport::Subscriber     imageSubscriber;
 
+    // subscriber for the parent role
+    ros::Subscriber parentRoleSubscriber;
+
     // publisher for the detected face images
     image_transport::Publisher imagePublisher;
 
@@ -184,6 +187,8 @@ private:
     * @param msgIn an RGB image
     */
     void callback(const sensor_msgs::ImageConstPtr& msgIn);
+
+    void parentRoleCallback(const std_msgs::String& msg);
 
     // get face image
     void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model);

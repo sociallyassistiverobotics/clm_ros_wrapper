@@ -56,7 +56,9 @@ private:
     bool is_assessment;
     bool is_assessing;
     bool is_child_assessment_done;
-    bool is_parent_assessment_done;
+    bool is_mom_assessment_done;
+    bool is_dad_assessment_done;
+    bool is_using_mom_model;
     double assessment_length;
     clock_t start_assessment_time;
     int assessment_tracking_total_num;
@@ -65,10 +67,21 @@ private:
     int assessment_tracking_correct_num;
     int assessment_label_correct_num;
 
-    std::ofstream child_assessment_label_file;
-    std::ofstream child_assessment_tracking_file;
-    std::ofstream parent_assessment_label_file;
-    std::ofstream parent_assessment_tracking_file;
+    int assessment2_label_correct_num;
+
+    // std::ofstream child_assessment_label_file;
+    // std::ofstream child_assessment_tracking_file;
+    // std::ofstream parent_assessment_label_file;
+    // std::ofstream parent_assessment_tracking_file;
+
+    std::ofstream mom_child_assessment_label_file;
+    std::ofstream mom_child_assessment_tracking_file;
+    std::ofstream mom_assessment_label_file;
+    std::ofstream mom_assessment_tracking_file;
+    std::ofstream dad_child_assessment_label_file;
+    std::ofstream dad_child_assessment_tracking_file;
+    std::ofstream dad_assessment_label_file;
+    std::ofstream dad_assessment_tracking_file;
 
     std::string executable_location;
 
@@ -102,9 +115,13 @@ private:
     bool images_as_video;
 
     // parameters needed for face recognition
-    vector<Mat> faces_train;
-    vector<int> labels_train;
-    Ptr<cv::face::FaceRecognizer> face_recognizer;
+    vector<Mat> mom_faces_train;
+    vector<int> mom_labels_train;
+    vector<Mat> dad_faces_train;
+    vector<int> dad_labels_train;
+    Ptr<cv::face::FaceRecognizer> face_recognizer; 
+    Ptr<cv::face::FaceRecognizer> face_recognizer_mom;
+    Ptr<cv::face::FaceRecognizer> face_recognizer_dad;
     bool is_train;
     bool is_model_trained;
     int train_stage;
@@ -138,4 +155,5 @@ public:
     bool to_assess();
     bool is_assessment_done();
     void start_assessment();
+    void switch_role();
 };

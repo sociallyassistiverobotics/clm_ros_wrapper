@@ -26,6 +26,7 @@ vector<string> const tasks = {"STRAIGHT FORWARD",
                               "ROBOT",
                               "PARENT/CHILD"};
 int static const num_stages = tasks.size();
+int static const num_role = 3;
 
 
 static void mouse_callback(int event, int x, int y, int flags, void* userdata)
@@ -39,6 +40,8 @@ static void mouse_callback(int event, int x, int y, int flags, void* userdata)
             if (helper->is_trained()) {
                 if (helper->to_assess() && !helper->is_assessment_done()) {
                     helper->start_assessment();
+                } else {
+                    helper->switch_role();
                 }
             } else {
                 helper->train();
@@ -56,7 +59,7 @@ bool InitializerHelper::is_training()
 
 bool InitializerHelper::is_training_done()
 {
-    return !is_train && num_stages * 2 == train_stage;
+    return !is_train && num_stages * num_role == train_stage;
 }
 
 bool InitializerHelper::is_trained()
@@ -83,7 +86,7 @@ bool InitializerHelper::to_assess()
 
 bool InitializerHelper::is_assessment_done()
 {
-    return is_child_assessment_done && is_parent_assessment_done;
+    return is_child_assessment_done && is_mom_assessment_done && is_dad_assessment_done;
 }
 
 void InitializerHelper::start_assessment()
@@ -92,11 +95,17 @@ void InitializerHelper::start_assessment()
     assessment_tracking_correct_num = 0;
     assessment_label_total_num = 0;
     assessment_label_correct_num = 0;
+    assessment2_label_correct_num = 0;
+
     if (!is_child_assessment_done) {
         assessment_label_correct_answer = "CHILD";
-    } else {
-        assessment_label_correct_answer = "PARENT";
+    } else if (!is_mom_assessment_done) {
+        assessment_label_correct_answer = "MOM";
+    } else if (!is_dad_assessment_done) {
+        switch_role();
+        assessment_label_correct_answer = "DAD";
     }
+
     is_assessing = true;
     start_assessment_time = std::clock();
 }
@@ -115,13 +124,31 @@ void InitializerHelper::train()
         string parent_path = folder.path().parent_path().string();
         string current_path = folder.path().string();
         int label = std::stoi(current_path.substr(parent_path.length() + 1, current_path.length()));
-        for (auto & image : boost::make_iterator_range(directory_iterator(folder), {})) {
-            faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
-            labels_train.push_back(label);
+        if (label <= num_stages) {
+            for (auto & image : boost::make_iterator_range(directory_iterator(folder), {})) {
+                mom_faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
+                mom_labels_train.push_back(label);
+            }
+        } else if (label <= 2 * num_stages) {
+            for (auto & image : boost::make_iterator_range(directory_iterator(folder), {})) {
+                dad_faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
+                dad_labels_train.push_back(label);
+            }            
+        } else {
+            for (auto & image : boost::make_iterator_range(directory_iterator(folder), {})) {
+                mom_faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
+                mom_labels_train.push_back(label);
+                dad_faces_train.push_back(cv::imread(image.path().string(), CV_LOAD_IMAGE_GRAYSCALE));
+                dad_labels_train.push_back(label);                
+            }
         }
     }
-    face_recognizer->train(faces_train, labels_train);
-    face_recognizer->save(face_recognizer_file_location + "face_recognizer_model.xml");
+    face_recognizer_mom->train(mom_faces_train, mom_labels_train);
+    face_recognizer_mom->save(face_recognizer_file_location + "face_recognizer_model_mom.xml");
+
+    face_recognizer_dad->train(dad_faces_train, dad_labels_train);
+    face_recognizer_dad->save(face_recognizer_file_location + "face_recognizer_model_dad.xml");
+
     is_model_trained = true;
 }
 
@@ -310,9 +337,12 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
             if (is_assessing) {
                 if (!is_child_assessment_done) {
-                    child_assessment_tracking_file << 1 << endl;
+                    mom_child_assessment_tracking_file << 1 << endl;
+                    dad_child_assessment_tracking_file << 1 << endl;
+                } else if (!is_mom_assessment_done) {
+                    mom_assessment_tracking_file << 1 << endl;
                 } else {
-                    parent_assessment_tracking_file << 1 << endl;
+                    dad_assessment_tracking_file << 1 << endl;
                 }
                 assessment_tracking_total_num++;
                 assessment_tracking_correct_num++;
@@ -320,9 +350,12 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         } else {
             if (is_assessing) {
                 if (!is_child_assessment_done) {
-                    child_assessment_tracking_file << 0 << endl;
+                    mom_child_assessment_tracking_file << 0 << endl;
+                    dad_child_assessment_tracking_file << 0 << endl;
+                } else if (!is_mom_assessment_done) {
+                    mom_assessment_tracking_file << 0 << endl;
                 } else {
-                    parent_assessment_tracking_file << 0 << endl;
+                    dad_assessment_tracking_file << 0 << endl;
                 }
                 assessment_tracking_total_num++;
             }
@@ -334,40 +367,67 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
                 is_assessing = false;
                 if (!is_child_assessment_done) {
                     is_child_assessment_done = true;
-                    child_assessment_tracking_file << "accuracy" << endl;
-                    child_assessment_label_file << "accuracy" << endl;
+                    mom_child_assessment_tracking_file << "accuracy" << endl;
+                    mom_child_assessment_label_file << "accuracy" << endl;
+                    dad_child_assessment_tracking_file << "accuracy" << endl;
+                    dad_child_assessment_label_file << "accuracy" << endl;
 
                     if (assessment_tracking_total_num == 0) {
-                        child_assessment_tracking_file << 0 << endl;
+                        mom_child_assessment_tracking_file << 0 << endl;
+                        dad_child_assessment_tracking_file << 0 << endl;
                     } else {
-                        child_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                        mom_child_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                        dad_child_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
                     }
-                    child_assessment_tracking_file.close();
+                    mom_child_assessment_tracking_file.close();
+                    dad_child_assessment_tracking_file.close();
 
                     if (assessment_label_total_num == 0) {
-                        child_assessment_label_file << 0 << endl;
+                        mom_child_assessment_label_file << 0 << endl;
+                        dad_child_assessment_label_file << 0 << endl;
                     } else {
-                        child_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                        mom_child_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                        dad_child_assessment_label_file << (double)assessment2_label_correct_num / (double)assessment_label_total_num << endl;
                     }
-                    child_assessment_label_file.close();
+                    mom_child_assessment_label_file.close();
+                    dad_child_assessment_label_file.close();
+                } else if (!is_mom_assessment_done) {
+                    is_mom_assessment_done = true;
+                    mom_assessment_tracking_file << "accuracy" << endl;
+                    mom_assessment_label_file << "accuracy" << endl;
+
+                    if (assessment_tracking_total_num == 0) {
+                        mom_assessment_tracking_file << 0 << endl;
+                    } else {
+                        mom_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                    }
+                    mom_assessment_tracking_file.close();
+
+                    if (assessment_label_total_num == 0) {
+                        mom_assessment_label_file << 0 << endl;
+                    } else {
+                        mom_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                    }
+                    mom_assessment_label_file.close();
                 } else {
-                    is_parent_assessment_done = true;
-                    parent_assessment_tracking_file << "accuracy" << endl;
-                    parent_assessment_label_file << "accuracy" << endl;
+                    is_dad_assessment_done = true;
+                    dad_assessment_tracking_file << "accuracy" << endl;
+                    dad_assessment_label_file << "accuracy" << endl;
 
                     if (assessment_tracking_total_num == 0) {
-                        parent_assessment_tracking_file << 0 << endl;
+                        dad_assessment_tracking_file << 0 << endl;
                     } else {
-                        parent_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
+                        dad_assessment_tracking_file << (double)assessment_tracking_correct_num / (double)assessment_tracking_total_num << endl;
                     }
-                    parent_assessment_tracking_file.close();
+                    dad_assessment_tracking_file.close();
 
                     if (assessment_label_total_num == 0) {
-                        parent_assessment_label_file << 0 << endl;
+                        dad_assessment_label_file << 0 << endl;
                     } else {
-                        parent_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
+                        dad_assessment_label_file << (double)assessment_label_correct_num / (double)assessment_label_total_num << endl;
                     }
-                    parent_assessment_label_file.close();
+                    dad_assessment_label_file.close();
+
                 }
             }
         }
@@ -402,13 +462,27 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     string training_text = "";
     if (is_training()) {
-        string target = train_stage < num_stages ? "CHILD" : "PARENT";
+        string target = "";
+        if (train_stage <= num_stages) {
+            target = "MOM";
+        } else if (train_stage <= 2 * num_stages) {
+            target = "DAD";
+        } else {
+            target = "CHILD";
+        }
         training_text = target + " training at stage " + to_string(train_stage) + " (" + get_stage_task(train_stage) + "): " + to_string(num_train_samples);
     } else if (!is_model_trained) {
         if (is_training_done()) { // finish training
             training_text = "Click on the image to start training the model";
         } else {
-            string target = train_stage < num_stages ? "CHILD" : "PARENT";
+            string target = "";
+            if (train_stage <= num_stages) {
+                target = "MOM";
+            } else if (train_stage <= 2 * num_stages) {
+                target = "DAD";
+            } else {
+                target = "CHILD";
+            }
             training_text = "Click on the image to start training for " + target + " at stage " + to_string(train_stage) + ": " + get_stage_task(train_stage);
         }
     }
@@ -538,9 +612,11 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
 
                 string role;
                 if (predicted_label <= num_stages) {
-                    role = "CHILD";
+                    role = "MOM";
+                } else if (predicted_label <= 2* num_stages) {
+                    role = "DAD";
                 } else {
-                    role = "PARENT";
+                    role = "CHILD";
                 }
 
                 string result = "";
@@ -549,26 +625,53 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
                     result += "Click on the image to start assessment for ";
                     if (!is_child_assessment_done) {
                         result += "CHILD";
+                    } else if (!is_mom_assessment_done){
+                        result += "MOM";
                     } else {
-                        result += "PARENT";
+                        result += "DAD";
                     }
                 } else {
                     if (is_assessing) {
+                        face_recognizer_dad->predict(rescaled_face, predicted_label, predicted_confidence);
+                        string dad_model_role;
+                        if (predicted_label <= num_stages) {
+                            dad_model_role = "MOM";
+                        } else if (predicted_label <= 2* num_stages) {
+                            dad_model_role = "DAD";
+                        } else {
+                             dad_model_role = "CHILD";
+                        }
+
                         result += "[ASSESSING ";
                         if (!is_child_assessment_done) {
-                            child_assessment_label_file << role << endl;
+                            mom_child_assessment_label_file << role << endl;
+                            dad_child_assessment_label_file << dad_model_role << endl;
                             result += "CHILD";
+                        } else if (!is_mom_assessment_done) {
+                            mom_assessment_label_file << role << endl;
+                            result += "MOM";
                         } else {
-                            parent_assessment_label_file << role << endl;
-                            result += "PARENT";
+                            dad_assessment_label_file << role << endl;
+                            result += "DAD";
                         }
                         result += "] ";
+
                         if (role == assessment_label_correct_answer) {
                             assessment_label_correct_num++;
                         }
+                        if (dad_model_role == assessment_label_correct_answer) {
+                            assessment2_label_correct_num++;
+                        }
+
                         assessment_label_total_num++;
                     }
-                    result += "predict: " + role + " with confidence: " + to_string(predicted_confidence);
+                    result += "using ";
+                    if (is_using_mom_model) {
+                        result += "MOM ";
+                    } else {
+                        result += "DAD ";
+                    }
+                    result += "model to predict: " + role + " with confidence: " + to_string(predicted_confidence);
                 }
 
                 cv::putText(img, result, cv::Point(10,60), CV_FONT_HERSHEY_SIMPLEX, 1.0, CV_RGB(255,0,0));
@@ -578,22 +681,39 @@ void InitializerHelper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& cl
     }
 }
 
+void InitializerHelper::switch_role()
+{
+    if (is_using_mom_model) {
+        face_recognizer = face_recognizer_dad;
+        is_using_mom_model = false;
+        std::cout << "switch to DAD" << std::endl;
+    } else {
+        face_recognizer = face_recognizer_mom;
+        is_using_mom_model = true;
+        std::cout << "switch to MOM" << std::endl;
+    }
+}
+
 InitializerHelper::InitializerHelper(string _name, string _loc) : 
     executable_location(_loc), 
     imageTransport(nodeHandle),
     is_train(false),
     is_assessing(false),
     is_child_assessment_done(false),
-    is_parent_assessment_done(false),
+    is_mom_assessment_done(false),
+    is_dad_assessment_done(false),
     is_model_trained(false),
     train_stage(0),
     num_train_samples(0),
-    face_recognizer(cv::face::createEigenFaceRecognizer()),
+    face_recognizer_mom(cv::face::createEigenFaceRecognizer()),
+    face_recognizer_dad(cv::face::createEigenFaceRecognizer()),
     assessment_tracking_total_num(0),
     assessment_tracking_correct_num(0),
     assessment_label_correct_answer(""),
     assessment_label_total_num(0),
-    assessment_label_correct_num(0)
+    assessment_label_correct_num(0),
+    assessment2_label_correct_num(0),
+    is_using_mom_model(false)
 {
     ROS_INFO("Called constructor...");
 
@@ -611,16 +731,21 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
         if (exists(face_recognizer_file_location + "train_images")) {
             remove_all(face_recognizer_file_location + "train_images");
         }
-        if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
-            remove(face_recognizer_file_location + "face_recognizer_model.xml");
+        if (exists(face_recognizer_file_location + "face_recognizer_model_mom.xml")) {
+            remove(face_recognizer_file_location + "face_recognizer_model_mom.xml");
+        }
+        if (exists(face_recognizer_file_location + "face_recognizer_model_dad.xml")) {
+            remove(face_recognizer_file_location + "face_recognizer_model_dad.xml");
         }
     } else {
         is_train = false;
-        train_stage = num_stages * 2;
+        train_stage = num_stages * num_role;
         is_model_trained = !is_to_train;
         if (is_model_trained) {
-            face_recognizer = cv::face::createEigenFaceRecognizer();
-            face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+            face_recognizer_mom = cv::face::createEigenFaceRecognizer();
+            face_recognizer_mom->load(face_recognizer_file_location + "face_recognizer_model_mom.xml");
+            face_recognizer_dad = cv::face::createEigenFaceRecognizer();
+            face_recognizer_dad->load(face_recognizer_file_location + "face_recognizer_model_dad.xml");
         }
     }
 
@@ -628,12 +753,28 @@ InitializerHelper::InitializerHelper(string _name, string _loc) :
         if (exists(face_assessment_file_location)) {
             remove_all(face_assessment_file_location);
         }
+        if (exists(face_assessment_file_location + "mom/")) {
+            remove_all(face_assessment_file_location + "mom/");
+        }
+        if (exists(face_assessment_file_location + "dad/")) {
+            remove_all(face_assessment_file_location + "dad/");
+        }
         create_directories(face_assessment_file_location);
-        child_assessment_label_file.open(face_assessment_file_location + "child_label.txt", std::ios_base::app);
-        parent_assessment_label_file.open(face_assessment_file_location + "parent_label.txt", std::ios_base::app);
-        child_assessment_tracking_file.open(face_assessment_file_location + "child_tracking.txt", std::ios_base::app);
-        parent_assessment_tracking_file.open(face_assessment_file_location + "parent_tracking.txt", std::ios_base::app);
+        create_directories(face_assessment_file_location + "mom/");
+        create_directories(face_assessment_file_location + "dad/");
+
+        mom_child_assessment_label_file.open(face_assessment_file_location + "mom/" + "child_label.txt", std::ios_base::app);
+        mom_child_assessment_tracking_file.open(face_assessment_file_location + "mom/" + "child_tracking.txt", std::ios_base::app);
+        mom_assessment_label_file.open(face_assessment_file_location + "mom/" + "parent_label.txt", std::ios_base::app);
+        mom_assessment_tracking_file.open(face_assessment_file_location + "mom/" + "parent_tracking.txt", std::ios_base::app);
+
+        dad_child_assessment_label_file.open(face_assessment_file_location + "dad/" + "child_label.txt", std::ios_base::app);
+        dad_child_assessment_tracking_file.open(face_assessment_file_location + "dad/" + "child_tracking.txt", std::ios_base::app);
+        dad_assessment_label_file.open(face_assessment_file_location + "dad/" + "parent_label.txt", std::ios_base::app);
+        dad_assessment_tracking_file.open(face_assessment_file_location + "dad/" + "parent_tracking.txt", std::ios_base::app);
     }
+
+    switch_role(); // initially is mom
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&InitializerHelper::callback, this);

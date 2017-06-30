@@ -1143,6 +1143,44 @@ void ClmWrapper::send_assessment_message(int task, int state)
     }
 }
 
+void ClmWrapper::parentRoleCallback(const std_msgs::String& msg)
+{
+    string content = msg.data;
+    // std::cout << "=======================in clm_wrapper: " <<  content << std::endl;
+
+    std::string dad_name = "";
+    std::string mom_name = "";
+    nodeHandle.getParam("/sar/global/_guardian1_name", dad_name);
+    nodeHandle.getParam("/sar/global/_guardian2_name", mom_name);
+
+    string face_recognizer_file_location = "";
+    nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
+    face_recognizer = cv::face::createEigenFaceRecognizer();
+    std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
+    if (exists(file_name)) {
+        is_face_recognizer_set = true;
+        face_recognizer->load(file_name);
+    }
+
+    if (content.find("105") != std::string::npos) {
+        is_face_recognizer_set = false;
+        string parent_role = "";
+
+        if (content.find("mom") != std::string::npos || content.find(mom_name) != std::string::npos) {
+            parent_role = "mom";
+        } else if (content.find("dad") != std::string::npos || content.find(dad_name)  != std::string::npos) {
+            parent_role = "dad";
+        }
+
+        face_recognizer = cv::face::createEigenFaceRecognizer();
+        std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
+        if (exists(file_name)) {
+            is_face_recognizer_set = true;
+            face_recognizer->load(file_name);
+        }
+    }
+}
+
 ClmWrapper::ClmWrapper(string _name, string _loc) : 
     name(_name), 
     executable_location(_loc), 
@@ -1196,6 +1234,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
         is_face_recognizer_set = true;
         face_recognizer->load(file_name);
     }
+
+    parentRoleSubscriber = nodeHandle.subscribe("/sar/vs", 100, &ClmWrapper::parentRoleCallback, this);
 
     // raw camera image
     imageSubscriber = imageTransport.subscribe(_cam+"/image_raw",1,&ClmWrapper::callback, this);

@@ -163,6 +163,7 @@ private:
     float assessment_length; // in minutes
     bool is_assessing;
     clock_t start_assessment_time;
+    std::string parent_role;
 
     // Useful utility for creating directories for storing the output files
     void create_directory_from_file(std::string output_path);

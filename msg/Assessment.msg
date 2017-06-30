@@ -9,6 +9,10 @@ uint8 ROBOT = 2
 uint8 HUMAN = 3
 uint8 OTHER = 4
 
+uint8 PARENT_MOM = 1
+uint8 PARENT_DAD = 2
+
 uint8 task
 uint8 state
 uint8 task_content
+uint8 parent_role

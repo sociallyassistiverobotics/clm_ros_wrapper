@@ -99,6 +99,7 @@
 
         <param name="is_assessment" type="bool" value="true" />
         <param name="assessment_length" type="double" value="0.25" />
+        <param name="parent_role" type="string" value="mom" />
 
         <!-- calibration -->
         <param name="offset_hfv_wf_z" type="double" value="0"/> <!-- "-0.1"-->

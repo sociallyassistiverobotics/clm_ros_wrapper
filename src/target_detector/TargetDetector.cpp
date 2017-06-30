@@ -426,8 +426,16 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
         return;
     }
 
-    if (!exists("/home/sar/face_analyzer_assessment/both_faces/")) {
-        create_directories("/home/sar/face_analyzer_assessment/both_faces/");
+    std::string parent_role = "";
+    if (msg->PARENT_MOM == msg->parent_role) {
+        parent_role = "mom/";
+    } else if (msg->PARENT_DAD == msg->parent_role) {
+        parent_role = "dad/";
+    }
+
+    std::string file_name = "/home/sar/face_analyzer_assessment/both_faces/" + parent_role;
+    if (!exists(file_name)) {
+        create_directories(file_name);
     }
 
     if (msg->state == msg->START) {
@@ -461,8 +469,8 @@ void assessment_callback(const clm_ros_wrapper::Assessment::ConstPtr& msg)
             assessment_parent_correct_answer = "other";
         }
 
-        assessment_child_file.open("/home/sar/face_analyzer_assessment/both_faces/" + child_file_name);
-        assessment_parent_file.open("/home/sar/face_analyzer_assessment/both_faces/" + parent_file_name);
+        assessment_child_file.open(file_name + child_file_name);
+        assessment_parent_file.open(file_name + parent_file_name);
         is_assessing = true;
     } else if (msg->state == msg->END) {
         is_assessing = false;

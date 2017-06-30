@@ -1132,6 +1132,12 @@ void ClmWrapper::send_assessment_message(int task, int state)
         ros_assessment_msg.task_content = ros_assessment_msg.OTHER;
     }
 
+    if ("mom" == parent_role) {
+    	ros_assessment_msg.parent_role = ros_assessment_msg.PARENT_MOM;
+    } else if ("dad" == parent_role) {
+    	ros_assessment_msg.parent_role = ros_assessment_msg.PARENT_DAD;
+    }
+
     if (0 != task) {
         assessment_publisher.publish(ros_assessment_msg);
     }
@@ -1150,7 +1156,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
     is_target_robot_assessment_done(false),
     is_target_human_assessment_done(false),
     is_target_other_assessment_done(false),
-    start_assessment_time(0)
+    start_assessment_time(0),
+    parent_role("")
 {
     ROS_INFO("Called constructor...");
 
@@ -1166,14 +1173,28 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
     if (is_assessment) {
         namedWindow("Face Recognition Assessment");
         setMouseCallback("Face Recognition Assessment", mouse_callback, this);
+        nodeHandle.getParam("parent_role", parent_role);
+    } else {
+    	std::string current_role_name = "";
+    	std::string dad_name = "";
+    	std::string mom_name = "";
+    	nodeHandle.getParam("/sar/global/_guardian_name", current_role_name);
+    	nodeHandle.getParam("/sar/global/_guardian1_name", dad_name);
+    	nodeHandle.getParam("/sar/global/_guardian2_name", mom_name);
+    	if (current_role_name == dad_name) {
+    		parent_role = "dad";
+    	} else if (current_role_name == mom_name) {
+    		parent_role = "mom";
+    	}
     }
 
     string face_recognizer_file_location = "";
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
     face_recognizer = cv::face::createEigenFaceRecognizer();
-    if (exists(face_recognizer_file_location + "face_recognizer_model.xml")) {
+    std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
+    if (exists(file_name)) {
         is_face_recognizer_set = true;
-        face_recognizer->load(face_recognizer_file_location + "face_recognizer_model.xml");
+        face_recognizer->load(file_name);
     }
 
     // raw camera image

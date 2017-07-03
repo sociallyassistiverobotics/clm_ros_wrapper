@@ -1047,9 +1047,9 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
             if (is_face_recognizer_set) {
                 face_recognizer->predict(rescaled_face, label, confidence);
                 // cout << "predict: " << label << " with confidence: " << confidence << endl;
-                if (label <= num_stages && confidence <= child_confidence_threshold) {
+                if (label > 2 * num_stages && confidence <= child_confidence_threshold) {
                     label = child;
-                } else if (label > num_stages && confidence <=parent_confidence_threshold) {
+                } else if (label <= 2 * num_stages && confidence <=parent_confidence_threshold) {
                     label = parent;
                 } else {
                     label = other;
@@ -1155,12 +1155,6 @@ void ClmWrapper::parentRoleCallback(const std_msgs::String& msg)
 
     string face_recognizer_file_location = "";
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
-    face_recognizer = cv::face::createEigenFaceRecognizer();
-    std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
-    if (exists(file_name)) {
-        is_face_recognizer_set = true;
-        face_recognizer->load(file_name);
-    }
 
     if (content.find("105") != std::string::npos) {
         is_face_recognizer_set = false;
@@ -1175,8 +1169,8 @@ void ClmWrapper::parentRoleCallback(const std_msgs::String& msg)
         face_recognizer = cv::face::createEigenFaceRecognizer();
         std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
         if (exists(file_name)) {
-            is_face_recognizer_set = true;
             face_recognizer->load(file_name);
+            is_face_recognizer_set = true;
         }
     }
 }
@@ -1212,27 +1206,15 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
         namedWindow("Face Recognition Assessment");
         setMouseCallback("Face Recognition Assessment", mouse_callback, this);
         nodeHandle.getParam("parent_role", parent_role);
-    } else {
-    	std::string current_role_name = "";
-    	std::string dad_name = "";
-    	std::string mom_name = "";
-    	nodeHandle.getParam("/sar/global/_guardian_name", current_role_name);
-    	nodeHandle.getParam("/sar/global/_guardian1_name", dad_name);
-    	nodeHandle.getParam("/sar/global/_guardian2_name", mom_name);
-    	if (current_role_name == dad_name) {
-    		parent_role = "dad";
-    	} else if (current_role_name == mom_name) {
-    		parent_role = "mom";
-    	}
     }
 
     string face_recognizer_file_location = "";
     nodeHandle.getParam("face_recognizer_file_location", face_recognizer_file_location);
     face_recognizer = cv::face::createEigenFaceRecognizer();
-    std::string file_name = face_recognizer_file_location + "face_recognizer_model_" + parent_role + ".xml";
-    if (exists(file_name)) {
+    std::string file_mom_name = face_recognizer_file_location + "face_recognizer_model_mom.xml";
+    if (exists(file_mom_name)) {
+        face_recognizer->load(file_mom_name);
         is_face_recognizer_set = true;
-        face_recognizer->load(file_name);
     }
 
     parentRoleSubscriber = nodeHandle.subscribe("/sar/vs", 100, &ClmWrapper::parentRoleCallback, this);

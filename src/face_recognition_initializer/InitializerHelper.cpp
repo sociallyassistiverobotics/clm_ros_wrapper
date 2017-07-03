@@ -463,9 +463,9 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     string training_text = "";
     if (is_training()) {
         string target = "";
-        if (train_stage <= num_stages) {
+        if (train_stage < num_stages) {
             target = "MOM";
-        } else if (train_stage <= 2 * num_stages) {
+        } else if (train_stage < 2 * num_stages) {
             target = "DAD";
         } else {
             target = "CHILD";
@@ -476,9 +476,9 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             training_text = "Click on the image to start training the model";
         } else {
             string target = "";
-            if (train_stage <= num_stages) {
+            if (train_stage < num_stages) {
                 target = "MOM";
-            } else if (train_stage <= 2 * num_stages) {
+            } else if (train_stage < 2 * num_stages) {
                 target = "DAD";
             } else {
                 target = "CHILD";

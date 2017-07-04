@@ -392,7 +392,7 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
                 target = "screen";
                 estimated_region = detected_target.SCREEN;
             }
-            else if((shortest_target == 12) || (shortest_target == 13)){
+            else if((shortest_target >= 12) && (shortest_target <= 23)){
                 // std::cout << "...ROBOT " << shortest_target << std::endl;
                 target = "robot";
                 estimated_region = detected_target.ROBOT;
@@ -410,7 +410,7 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
             }
         }
         else{
-            // std::cout << "...OTHERS" << std::endl;
+            std::cout << "...OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
             target = "other";
         }
@@ -816,15 +816,28 @@ int main(int argc, char **argv)
     //tf::Vector3 virtual_screen_bottom_left = tf::Vector3(50,140,130);
     // tf::Vector3 virtual_screen_bottom_right = tf::Vector3(450,280,100);
     //tf::Vector3 virtual_screen_bottom_right = tf::Vector3(420,310,150);
-    tf::Vector3 child_virtual_robot_top = tf::Vector3(630,250,50);
-    tf::Vector3 child_virtual_robot_bottom = tf::Vector3(630,250,330);
 
-    tf::Vector3 child_virtual_parent_1 = tf::Vector3(730,-100,400);
-    tf::Vector3 child_virtual_parent_2 = tf::Vector3(730,0,400);
-    tf::Vector3 child_virtual_parent_3 = tf::Vector3(730,-100,150);
-    tf::Vector3 child_virtual_parent_4 = tf::Vector3(730,0,150);
-    tf::Vector3 child_virtual_parent_5 = tf::Vector3(730,-100,50);
-    tf::Vector3 child_virtual_parent_6 = tf::Vector3(730,0,550);
+    // tf::Vector3 child_virtual_robot_1 = tf::Vector3(630,250,50);
+    // tf::Vector3 child_virtual_robot_2 = tf::Vector3(630,250,330);
+    tf::Vector3 child_virtual_robot_1 = tf::Vector3(560,180,0);
+    tf::Vector3 child_virtual_robot_2 = tf::Vector3(560,180,100);
+    tf::Vector3 child_virtual_robot_3 = tf::Vector3(560,180,250);
+    tf::Vector3 child_virtual_robot_4 = tf::Vector3(560,180,330);
+    tf::Vector3 child_virtual_robot_5 = tf::Vector3(635,100,0);
+    tf::Vector3 child_virtual_robot_6 = tf::Vector3(635,100,100);
+    tf::Vector3 child_virtual_robot_7 = tf::Vector3(635,100,250);
+    tf::Vector3 child_virtual_robot_8 = tf::Vector3(635,100,330);
+    tf::Vector3 child_virtual_robot_9 = tf::Vector3(695,130,0);
+    tf::Vector3 child_virtual_robot_10 = tf::Vector3(695,130,100);
+    tf::Vector3 child_virtual_robot_11 = tf::Vector3(695,130,250);
+    tf::Vector3 child_virtual_robot_12 = tf::Vector3(695,130,330);
+
+    // tf::Vector3 child_virtual_parent_1 = tf::Vector3(730,-100,400);
+    // tf::Vector3 child_virtual_parent_2 = tf::Vector3(730,0,400);
+    // tf::Vector3 child_virtual_parent_3 = tf::Vector3(730,-100,150);
+    // tf::Vector3 child_virtual_parent_4 = tf::Vector3(730,0,150);
+    // tf::Vector3 child_virtual_parent_5 = tf::Vector3(730,-100,50);
+    // tf::Vector3 child_virtual_parent_6 = tf::Vector3(730,0,550);
 
     // virtual_targets.push_back(virtual_screen_center);
     // virtual_targets.push_back(virtual_screen_top_left);
@@ -844,15 +857,34 @@ int main(int argc, char **argv)
     child_virtual_targets.push_back(child_virtual_screen_r2_c4);
     child_virtual_targets.push_back(child_virtual_screen_r3_c4);
 
-    child_virtual_targets.push_back(child_virtual_robot_top);
-    child_virtual_targets.push_back(child_virtual_robot_bottom);
+    child_virtual_targets.push_back(child_virtual_robot_1);
+    child_virtual_targets.push_back(child_virtual_robot_2);
+    child_virtual_targets.push_back(child_virtual_robot_3);
+    child_virtual_targets.push_back(child_virtual_robot_4);
+    child_virtual_targets.push_back(child_virtual_robot_5);
+    child_virtual_targets.push_back(child_virtual_robot_6);
+    child_virtual_targets.push_back(child_virtual_robot_7);
+    child_virtual_targets.push_back(child_virtual_robot_8);
+    child_virtual_targets.push_back(child_virtual_robot_9);
+    child_virtual_targets.push_back(child_virtual_robot_10);
+    child_virtual_targets.push_back(child_virtual_robot_11);
+    child_virtual_targets.push_back(child_virtual_robot_12);
 
-    child_virtual_targets.push_back(child_virtual_parent_1);
-    child_virtual_targets.push_back(child_virtual_parent_2);
-    child_virtual_targets.push_back(child_virtual_parent_3);
-    child_virtual_targets.push_back(child_virtual_parent_4);
-    child_virtual_targets.push_back(child_virtual_parent_5);
-    child_virtual_targets.push_back(child_virtual_parent_6);
+    // child_virtual_targets.push_back(child_virtual_parent_1);
+    // child_virtual_targets.push_back(child_virtual_parent_2);
+    // child_virtual_targets.push_back(child_virtual_parent_3);
+    // child_virtual_targets.push_back(child_virtual_parent_4);
+    // child_virtual_targets.push_back(child_virtual_parent_5);
+    // child_virtual_targets.push_back(child_virtual_parent_6);
+
+    // push in parent point
+    for (int x = 650; x <= 1150; x += 100) {
+        for (int y = -200; y >= -700; y -= 100) {
+            for (int z = 100; z <= 800; z += 100) {
+                child_virtual_targets.push_back(tf::Vector3(x, y, z));
+            }
+        }
+    }
 
     tf::Vector3 parent_virtual_screen_r1_c1 = tf::Vector3(33,380,374);
     tf::Vector3 parent_virtual_screen_r2_c1 = tf::Vector3(66,295,242);
@@ -872,15 +904,25 @@ int main(int argc, char **argv)
 
     // tf::Vector3 parent_virtual_robot_top = tf::Vector3(700,170,50);
     // tf::Vector3 parent_virtual_robot_bottom = tf::Vector3(700,170,330);
-    tf::Vector3 parent_virtual_robot_left = tf::Vector3(660,240,250);
-    tf::Vector3 parent_virtual_robot_right = tf::Vector3(690,240,250);
+    tf::Vector3 parent_virtual_robot_1 = tf::Vector3(560,170,0);
+    tf::Vector3 parent_virtual_robot_2 = tf::Vector3(560,170,140);
+    tf::Vector3 parent_virtual_robot_3 = tf::Vector3(560,170,280);
+    tf::Vector3 parent_virtual_robot_4 = tf::Vector3(560,170,335);
+    tf::Vector3 parent_virtual_robot_5 = tf::Vector3(680,110,0);
+    tf::Vector3 parent_virtual_robot_6 = tf::Vector3(680,110,140);
+    tf::Vector3 parent_virtual_robot_7 = tf::Vector3(680,110,280);
+    tf::Vector3 parent_virtual_robot_8 = tf::Vector3(680,110,335);
+    tf::Vector3 parent_virtual_robot_9 = tf::Vector3(700,190,0);
+    tf::Vector3 parent_virtual_robot_10 = tf::Vector3(700,190,140);
+    tf::Vector3 parent_virtual_robot_11 = tf::Vector3(700,190,280);
+    tf::Vector3 parent_virtual_robot_12 = tf::Vector3(700,190,335);
 
-    tf::Vector3 parent_virtual_child_1 = tf::Vector3(305,-60,430);
-    tf::Vector3 parent_virtual_child_2 = tf::Vector3(305,-60,150);
-    tf::Vector3 parent_virtual_child_3 = tf::Vector3(305,-60,0);
-    tf::Vector3 parent_virtual_child_4 = tf::Vector3(305,0,430);
-    tf::Vector3 parent_virtual_child_5 = tf::Vector3(305,0,150);
-    tf::Vector3 parent_virtual_child_6 = tf::Vector3(305,0,0);
+    // tf::Vector3 parent_virtual_child_1 = tf::Vector3(305,-60,430);
+    // tf::Vector3 parent_virtual_child_2 = tf::Vector3(305,-60,150);
+    // tf::Vector3 parent_virtual_child_3 = tf::Vector3(305,-60,0);
+    // tf::Vector3 parent_virtual_child_4 = tf::Vector3(305,0,430);
+    // tf::Vector3 parent_virtual_child_5 = tf::Vector3(305,0,150);
+    // tf::Vector3 parent_virtual_child_6 = tf::Vector3(305,0,0);
 
     parent_virtual_targets.push_back(parent_virtual_screen_r1_c1);
     parent_virtual_targets.push_back(parent_virtual_screen_r2_c1);
@@ -895,15 +937,34 @@ int main(int argc, char **argv)
     parent_virtual_targets.push_back(parent_virtual_screen_r2_c4);
     parent_virtual_targets.push_back(parent_virtual_screen_r3_c4);
 
-    parent_virtual_targets.push_back(parent_virtual_robot_left);
-    parent_virtual_targets.push_back(parent_virtual_robot_right);
+    parent_virtual_targets.push_back(parent_virtual_robot_1);
+    parent_virtual_targets.push_back(parent_virtual_robot_2);
+    parent_virtual_targets.push_back(parent_virtual_robot_3);
+    parent_virtual_targets.push_back(parent_virtual_robot_4);
+    parent_virtual_targets.push_back(parent_virtual_robot_5);
+    parent_virtual_targets.push_back(parent_virtual_robot_6);
+    parent_virtual_targets.push_back(parent_virtual_robot_7);
+    parent_virtual_targets.push_back(parent_virtual_robot_8);
+    parent_virtual_targets.push_back(parent_virtual_robot_9);
+    parent_virtual_targets.push_back(parent_virtual_robot_10);
+    parent_virtual_targets.push_back(parent_virtual_robot_11);
+    parent_virtual_targets.push_back(parent_virtual_robot_12);
 
-    parent_virtual_targets.push_back(parent_virtual_child_1);
-    parent_virtual_targets.push_back(parent_virtual_child_2);
-    parent_virtual_targets.push_back(parent_virtual_child_3);
-    parent_virtual_targets.push_back(parent_virtual_child_4);
-    parent_virtual_targets.push_back(parent_virtual_child_5);
-    parent_virtual_targets.push_back(parent_virtual_child_6);
+    // parent_virtual_targets.push_back(parent_virtual_child_1);
+    // parent_virtual_targets.push_back(parent_virtual_child_2);
+    // parent_virtual_targets.push_back(parent_virtual_child_3);
+    // parent_virtual_targets.push_back(parent_virtual_child_4);
+    // parent_virtual_targets.push_back(parent_virtual_child_5);
+    // parent_virtual_targets.push_back(parent_virtual_child_6);
+
+    // push in child point
+    for (int x = 0; x <= 600; x += 100) {
+        for (int y = -200; y >= -700; y -= 100) {
+            for (int z = 100; z <= 400; z += 100) {
+                parent_virtual_targets.push_back(tf::Vector3(x, y, z));
+            }
+        }
+    }
 
 
     ros::spin();

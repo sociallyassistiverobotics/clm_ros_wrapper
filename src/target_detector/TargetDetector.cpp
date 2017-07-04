@@ -410,7 +410,7 @@ String matchTarget(const clm_ros_wrapper::GazePointAndDirection & msg, clm_ros_w
             }
         }
         else{
-            std::cout << "...OTHERS" << std::endl;
+            // std::cout << "...OTHERS" << std::endl;
             estimated_region = detected_target.OUTSIDE;
             target = "other";
         }

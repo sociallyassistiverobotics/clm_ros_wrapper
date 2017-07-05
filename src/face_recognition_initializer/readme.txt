@@ -105,7 +105,7 @@ To create a new launch file, here is the template:
 
 ************************************2. use the model******************************************************
 
-To use clm_ros_wrapper, the model should already be trained. Otherwise there will be an error. Some parameter in the launch file that is related to this functionality:
+To use clm_ros_wrapper, the model should already be trained. Otherwise there the tracking will only use the position information. Some parameter in the launch file that is related to this functionality:
 
 <!-- face recognition parameters-->
 <param name="face_recognizer_file_location" type="string" value="/home/sar/face_analyzer_data/"/>

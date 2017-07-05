@@ -906,16 +906,16 @@ int main(int argc, char **argv)
     // tf::Vector3 parent_virtual_robot_bottom = tf::Vector3(700,170,330);
     tf::Vector3 parent_virtual_robot_1 = tf::Vector3(560,170,0);
     tf::Vector3 parent_virtual_robot_2 = tf::Vector3(560,170,140);
-    tf::Vector3 parent_virtual_robot_3 = tf::Vector3(560,170,280);
-    tf::Vector3 parent_virtual_robot_4 = tf::Vector3(560,170,335);
+    tf::Vector3 parent_virtual_robot_3 = tf::Vector3(560,260,280);
+    tf::Vector3 parent_virtual_robot_4 = tf::Vector3(560,260,450);
     tf::Vector3 parent_virtual_robot_5 = tf::Vector3(680,110,0);
     tf::Vector3 parent_virtual_robot_6 = tf::Vector3(680,110,140);
     tf::Vector3 parent_virtual_robot_7 = tf::Vector3(680,110,280);
-    tf::Vector3 parent_virtual_robot_8 = tf::Vector3(680,110,335);
+    tf::Vector3 parent_virtual_robot_8 = tf::Vector3(680,110,450);
     tf::Vector3 parent_virtual_robot_9 = tf::Vector3(700,190,0);
     tf::Vector3 parent_virtual_robot_10 = tf::Vector3(700,190,140);
-    tf::Vector3 parent_virtual_robot_11 = tf::Vector3(700,190,280);
-    tf::Vector3 parent_virtual_robot_12 = tf::Vector3(700,190,335);
+    tf::Vector3 parent_virtual_robot_11 = tf::Vector3(700,190,340);
+    tf::Vector3 parent_virtual_robot_12 = tf::Vector3(700,190,450);
 
     // tf::Vector3 parent_virtual_child_1 = tf::Vector3(305,-60,430);
     // tf::Vector3 parent_virtual_child_2 = tf::Vector3(305,-60,150);
@@ -958,8 +958,33 @@ int main(int argc, char **argv)
     // parent_virtual_targets.push_back(parent_virtual_child_6);
 
     // push in child point
-    for (int x = 0; x <= 600; x += 100) {
+    for (int x = 0; x <= 100; x += 100) {
         for (int y = -200; y >= -700; y -= 100) {
+            for (int z = 100; z <= 400; z += 100) {
+                parent_virtual_targets.push_back(tf::Vector3(x, y, z));
+            }
+        }
+    }
+
+    for (int x = 200; x <= 300; x += 100) {
+        for (int y = -300; y >= -700; y -= 100) {
+            for (int z = 100; z <= 400; z += 100) {
+                parent_virtual_targets.push_back(tf::Vector3(x, y, z));
+            }
+        }
+    }
+
+    for (int x = 400; x <= 500; x += 100) {
+        for (int y = -400; y >= -700; y -= 100) {
+            for (int z = 100; z <= 400; z += 100) {
+                parent_virtual_targets.push_back(tf::Vector3(x, y, z));
+            }
+        }
+    }
+
+
+    for (int x = 500; x <= 600; x += 100) {
+        for (int y = -400; y >= -700; y -= 100) {
             for (int z = 100; z <= 400; z += 100) {
                 parent_virtual_targets.push_back(tf::Vector3(x, y, z));
             }

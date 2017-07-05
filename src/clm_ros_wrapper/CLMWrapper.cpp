@@ -92,7 +92,8 @@ void ClmWrapper::get_output_feature_params(vector<string> &output_similarity_ali
     output_hog_aligned_files.clear();
     output_model_param_files.clear();
 
-    bool* valid = new bool[arguments.size()];
+    // bool* valid = new bool[arguments.size()];
+    bool valid[arguments.size()];
 
     for(size_t i = 0; i < arguments.size(); ++i)
     {

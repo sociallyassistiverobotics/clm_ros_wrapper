@@ -95,6 +95,9 @@ private:
     //the total number of frames displayed
     int frame_count;
 
+    // the total number of sessions
+    int num_frame_this_session;
+
     //the number of frames with a face detected
     int num_detected_frames;
 

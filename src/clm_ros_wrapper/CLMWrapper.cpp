@@ -249,6 +249,23 @@ void ClmWrapper::NonOverlappingDetections(const vector<CLMTracker::CLM>& clm_mod
 
 void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 {
+    int fps_regular_tracker;
+
+    double t1_current = cv::getTickCount();
+    fps_regular_tracker = num_frame_this_session / (double(t1_current - t0) / cv::getTickFrequency());
+
+    // cout << "t1 - t0 = " << t1 << " - " << t0 << " = " << t1 - t0 << endl;
+    // cout << "num_frame_this_session = " << num_frame_this_session << endl; 
+
+    // cout << fps_regular_tracker << endl;
+
+    if (fps_regular_tracker >= 12) {
+        // cout << "sleep" << endl;
+        usleep(10);
+        return;
+    }
+
+    
     m.lock();
     // Convert the ROS image to OpenCV image format
     // BUG : For CLM, OpenCV 3.* is needed, but cv_bridge segfaults with openCV 3.0
@@ -823,6 +840,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
        double t1 = cv::getTickCount();
        fps_tracker = 10.0 / (double(t1 - t0) / cv::getTickFrequency());
        t0 = t1;
+       num_frame_this_session = 0;
     }
 
     sprintf(fpsC, "%d", (int)fps_tracker);
@@ -952,6 +970,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
        // Update the frame count
     frame_count++;
+    num_frame_this_session++;
 
     if(total_frames != -1)
     {
@@ -1421,6 +1440,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
     webcam = true;
 
     frame_count = 0;
+    num_frame_this_session = 0;
     num_detected_frames = 0;
 
         // This is useful for a second pass run (if want AU predictions)

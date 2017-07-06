@@ -43,6 +43,7 @@
 #include <math.h>
 
 #include <tf/transform_datatypes.h>
+#include <sar_core/SystemState.h>
 
 // call back on the mouse click event on the image
 static void mouse_callback(int event, int x, int y, int flags, void* userdata);
@@ -60,6 +61,8 @@ private:
 
     // subscriber for the parent role
     ros::Subscriber parentRoleSubscriber;
+
+    ros::Subscriber system_sub;
 
     // publisher for the detected face images
     image_transport::Publisher imagePublisher;
@@ -195,6 +198,8 @@ private:
 
     // get face image
     void retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model, int & label, double & confidence, int model);
+
+    void system_callback(const sar_core::SystemState::ConstPtr& msg);
 
 public:
     ClmWrapper(std::string _name, std::string _loc);

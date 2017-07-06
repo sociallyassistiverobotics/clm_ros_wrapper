@@ -32,6 +32,7 @@ gaze point falls into. It then publishes this information with publisher topic "
 #include <clm_ros_wrapper/GazePointAndDirection.h>
 #include <clm_ros_wrapper/GazePointsAndDirections.h>
 #include <clm_ros_wrapper/Assessment.h>
+#include <sar_core/SystemState.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -588,7 +589,7 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
     //     detected_target.role = detected_target.CHILD_ROLE;
     //     float _height = 1000;
     //     float _radian = 0.523599; //30 degree in radian
-        
+
     //     double current_dist = 100000000.0;
     //     int estimated_region = detected_target.NONE;
     //     double shortest_dist = 100000000.0;
@@ -663,7 +664,7 @@ void parent_gazepoint_callback2(const clm_ros_wrapper::GazePointAndDirection::Co
         detected_target.role = detected_target.PARENT_ROLE;
         float _height = 1000;
         float _radian = 0.523599; //30 degree in radian
-        
+
         double current_dist = 100000000.0;
         int estimated_region = detected_target.NONE;
         double shortest_dist = 100000000.0;
@@ -736,9 +737,20 @@ void scene_callback(const clm_ros_wrapper::Scene::ConstPtr& msg)
     free_objects_names[(*msg).num_free_objects] =  "OUTSIDE";
 }
 
+
+void system_callback(const sar_core::SystemState::ConstPtr& msg)
+{
+    int _state = (*msg).system_state;
+
+    if(_state == (*msg).SYSTEM_DOWN){//7: SYSTEM_DOWN
+        ros::shutdown();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "target_detector");
+
 
     ros::NodeHandle nh;
 
@@ -766,6 +778,8 @@ int main(int argc, char **argv)
     // target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
     // parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
+
+    ros::Subscriber system_sub = nh.subscribe("/sar/system/state", 1, &system_callback);
 
     ros::Subscriber scene = nh.subscribe("/sar/perception/scene", 1, &scene_callback);
 

@@ -62,7 +62,7 @@ void ClmWrapper::create_directory_from_file(string output_path)
 }
 
 bool ClmWrapper::publishImage(cv::Mat &mat, const std::string encoding)
-{ 
+{
     // if (!is_assessment) {
     //     cv_bridge::CvImage msgOut;
     //     msgOut.encoding = encoding;
@@ -255,7 +255,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
     fps_regular_tracker = num_frame_this_session / (double(t1_current - t0) / cv::getTickFrequency());
 
     // cout << "t1 - t0 = " << t1 << " - " << t0 << " = " << t1 - t0 << endl;
-    // cout << "num_frame_this_session = " << num_frame_this_session << endl; 
+    // cout << "num_frame_this_session = " << num_frame_this_session << endl;
 
     // cout << fps_regular_tracker << endl;
 
@@ -265,7 +265,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         return;
     }
 
-    
+
     m.lock();
     // Convert the ROS image to OpenCV image format
     // BUG : For CLM, OpenCV 3.* is needed, but cv_bridge segfaults with openCV 3.0
@@ -1020,16 +1020,16 @@ void ClmWrapper::retrieveFaceImage(cv::Mat img, const CLMTracker::CLM& clm_model
         int y_max = (int)clm_model.detected_landmarks.at<double>(n);
 
         for( int i = 0; i < n; ++i)
-        {       
+        {
             if(clm_model.patch_experts.visibilities[0][idx].at<int>(i))
             {
                 int x = (int)clm_model.detected_landmarks.at<double>(i);
                 int y = (int)clm_model.detected_landmarks.at<double>(i + n);
-                
+
                 x_min = (x_min > x) ? x : x_min;
                 x_max = (x_max < x) ? x : x_max;
                 y_min = (y_min > y) ? y : y_min;
-                y_max = (y_max < y) ? y : y_max;        
+                y_max = (y_max < y) ? y : y_max;
             }
         }
 
@@ -1195,12 +1195,21 @@ void ClmWrapper::parentRoleCallback(const std_msgs::String& msg)
     }
 }
 
-ClmWrapper::ClmWrapper(string _name, string _loc) : 
-    name(_name), 
-    executable_location(_loc), 
-    imageTransport(nodeHandle), 
-    is_face_recognizer_set(false), 
-    is_identification_assessment_done(false), 
+void ClmWrapper::system_callback(const sar_core::SystemState::ConstPtr& msg)
+{
+    int _state = (*msg).system_state;
+
+    if(_state == (*msg).SYSTEM_DOWN){//7: SYSTEM_DOWN
+        ros::shutdown();
+    }
+}
+
+ClmWrapper::ClmWrapper(string _name, string _loc) :
+    name(_name),
+    executable_location(_loc),
+    imageTransport(nodeHandle),
+    is_face_recognizer_set(false),
+    is_identification_assessment_done(false),
     is_assessing(false),
     is_assessment(false),
     assessment_length(0.25),
@@ -1247,6 +1256,8 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
 
     // publisher for the image when a face is detected
     imagePublisher = imageTransport.advertise(_name+"/face_image", 1);
+
+    system_sub = nodeHandle.subscribe("/sar/system/state", 1, &ClmWrapper::system_callback, this);
 
     // publishing head direction in cf
     //hfv_publisher = nodeHandle.advertise<geometry_msgs::Vector3>(_name+"/head_vector", 1);

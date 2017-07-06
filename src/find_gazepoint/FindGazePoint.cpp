@@ -34,6 +34,7 @@ Yunus
 #include <clm_ros_wrapper/VectorsWithCertainty.h>
 #include <clm_ros_wrapper/ClmHeadVectors.h>
 #include <clm_ros_wrapper/VectorsWithCertaintyWithGazePointsAndDirections.h>
+#include <sar_core/SystemState.h>
 
 #include <filesystem.hpp>
 #include <filesystem/fstream.hpp>
@@ -469,6 +470,15 @@ void gaze_direction_callback(const clm_ros_wrapper::GazeDirections::ConstPtr& ms
     gaze_direction_wf_pub.publish(ros_gaze_direction_msg);
 }**/
 
+void system_callback(const sar_core::SystemState::ConstPtr& msg)
+{
+    int _state = (*msg).system_state;
+
+    if(_state == (*msg).SYSTEM_DOWN){//sar_core::SystemState.SYSTEM_DOWN){//7: SYSTEM_DOWN
+        ros::shutdown();
+    }
+}
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "find_gazepoint");
@@ -550,5 +560,6 @@ int main(int argc, char **argv)
     headposition_sub = nh.subscribe(_namespace+"/head_positions", 1, &headposition_callback);
     vector_sub = nh.subscribe(_namespace+"/head_vectors", 1, &vector_callback);
     gaze_direction_sub = nh.subscribe(_namespace+"/gaze_directions", 1, &gaze_direction_callback);
+    ros::Subscriber system_sub = nh.subscribe("/sar/system/state", 1, &system_callback);
     ros::spin();
 }

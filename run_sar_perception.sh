@@ -6,7 +6,7 @@ echo "Running SAR perception"
 
 source /home/sar/catkin_ws/devel/setup.bash
 # publish own ip
-export ROS_IP=192.168.2.105
+export ROS_IP=192.168.2.5
 # set the master ip
 export ROS_MASTER_URI=http://192.168.2.3:11311
 

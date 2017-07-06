@@ -6,7 +6,7 @@ echo "Running SAR perception"
 
 source /home/sar/catkin_ws/devel/setup.bash
 # change to the master ip
-export ROS_MASTER_URI=http://192.168.2.103:11311
+export ROS_MASTER_URI=http://192.168.2.3:11311
 
 ros_master_ready=false
 # rosnode_output=$(rosnode list 2>&1)
@@ -36,7 +36,9 @@ do
 done
 
 echo "connected to ros master"
-# roslaunch clm_ros_wrapper clm_ros_wrapper.launch
+roslaunch clm_ros_wrapper clm_ros_wrapper.launch
+
+roslaunch clm_ros_wrapper clm_ros_wrapper_record.launch
 
 # https://askubuntu.com/questions/187071/how-do-i-shut-down-or-reboot-from-a-terminal/187080
 # sleep 2s

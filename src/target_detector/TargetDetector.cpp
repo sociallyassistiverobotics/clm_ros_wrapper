@@ -86,8 +86,7 @@ float free_object_radius;
 float robot_position_wf_x, robot_position_wf_y, robot_position_wf_z;
 
 ros::Publisher targets_publisher;
-ros::Publisher target_publisher;
-
+// ros::Publisher target_publisher;
 // ros::Publisher parent_target_publisher;
 
 using namespace std;
@@ -548,9 +547,11 @@ void gazepoint_callback2(const clm_ros_wrapper::GazePointsAndDirections::ConstPt
 
         detected_targets.targets[loop] = detected_target;
 
-        if (msg->gazes[loop].CHILD_ROLE == msg->gazes[loop].role) {
-            target_publisher.publish(detected_target);
-        }
+        // if (msg->gazes[loop].CHILD_ROLE == msg->gazes[loop].role) {
+        //     target_publisher.publish(detected_target);
+        // } else if (msg->gazes[loop].PARENT_ROLE == msg->gazes[loop].role) {
+        // 	parent_target_publisher.publish(detected_target);
+        // }
     }
 
     targets_publisher.publish(detected_targets);
@@ -762,7 +763,7 @@ int main(int argc, char **argv)
     screenAngle = screenAngleInDegrees * M_PI_2 / 90;
 
     targets_publisher = nh.advertise<clm_ros_wrapper::DetectedTargets>("/sar/perception/detect_targets", 1);
-    target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
+    // target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/detect_target", 1);
 
     // parent_target_publisher = nh.advertise<clm_ros_wrapper::DetectedTarget>("/sar/perception/parent_detect_target", 1);
 

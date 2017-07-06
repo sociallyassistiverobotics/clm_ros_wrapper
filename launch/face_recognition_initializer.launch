@@ -39,8 +39,8 @@
 
     <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
         <param name="video_device" value="/dev/video1" />
-        <param name="image_width" value="1024" /> <!-- 1280 -->
-        <param name="image_height" value="576" /> <!-- 720-->
+        <param name="image_width" value="1280" /> <!-- 1280 -->
+        <param name="image_height" value="720" /> <!-- 720-->
         <param name="pixel_format" value="yuyv" />
         <param name="camera_frame_id" value="usb_cam" />
         <param name="io_method" value="mmap"/>

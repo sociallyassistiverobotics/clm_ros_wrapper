@@ -169,4 +169,12 @@
         
     </group>
 
+    <group if="true"> <!-- recording audio and video -->
+        <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
+            <param name="bitrate" value="128"/>
+        </node>
+        <node pkg="rosbag" type="record" name="rosbag_record_mm"
+           args="--split --duration=10m -o $(find sar_core)/logs/rosbags/rosbag_mm /usb_cam_1/image_raw /audio"/> <!-- /sar/perception/left_cam/usb_cam_2/image_raw -->
+    </group>
+
 </launch>

@@ -259,7 +259,7 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
 
     // cout << fps_regular_tracker << endl;
 
-    if (fps_regular_tracker >= 4) {
+    if (fps_regular_tracker >= 11) {
         // cout << "sleep" << endl;
         usleep(10);
         return;

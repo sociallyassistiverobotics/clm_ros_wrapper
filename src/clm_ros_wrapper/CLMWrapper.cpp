@@ -16,7 +16,7 @@ std::mutex m;
 int static const child = 1;
 int static const parent = 2;
 int static const other = -1;
-int static const num_stages = 14;
+int static const num_stages = 7;
 // int static confidence_threshold = 3000; // need to be customized for each setting.
 
 static void mouse_callback(int event, int x, int y, int flags, void* userdata)

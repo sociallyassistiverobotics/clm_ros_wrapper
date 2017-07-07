@@ -11,13 +11,14 @@ using namespace cv;
 
 using namespace boost::filesystem;
 
-vector<string> const tasks = {"STRAIGHT FORWARD", 
-                              "TURN LEFT", 
-                              "TURN RIGHT", 
-                              "TURN UP", 
-                              "TURN DOWN", 
-                              "LEAN LEFT", 
-                              "LEAN RIGHT", 
+vector<string> const tasks = {
+                              // "STRAIGHT FORWARD", 
+                              // "TURN LEFT", 
+                              // "TURN RIGHT", 
+                              // "TURN UP", 
+                              // "TURN DOWN", 
+                              // "LEAN LEFT", 
+                              // "LEAN RIGHT", 
                               "TOP LEFT CORNER OF SCREEN", 
                               "TOP RIGHT CORNER OF SCREEN",
                               "BOTTOM LEFT CORNER OF SCREEN",

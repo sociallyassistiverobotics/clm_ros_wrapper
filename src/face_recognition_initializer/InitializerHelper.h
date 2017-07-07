@@ -60,7 +60,7 @@ private:
     bool is_dad_assessment_done;
     bool is_using_mom_model;
     double assessment_length;
-    clock_t start_assessment_time;
+    double start_assessment_time;
     int assessment_tracking_total_num;
     int assessment_label_total_num;
     string assessment_label_correct_answer;

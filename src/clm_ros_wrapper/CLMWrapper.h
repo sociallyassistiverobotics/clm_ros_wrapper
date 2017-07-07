@@ -171,7 +171,7 @@ private:
     bool is_target_other_assessment_done;
     float assessment_length; // in minutes
     bool is_assessing;
-    clock_t start_assessment_time;
+    double start_assessment_time;
     std::string parent_role;
 
     // Useful utility for creating directories for storing the output files

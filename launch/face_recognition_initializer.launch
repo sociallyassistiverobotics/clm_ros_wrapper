@@ -35,7 +35,7 @@
 
     <param name="single_face_recognizer_assessment_file_location" type="string" value="/home/sar/face_analyzer_assessment/single_face/"/>
     <param name="is_assessment" type="boolean" value="true"/>
-    <param name="assessment_length" type="double" value="0.25"/>
+    <param name="assessment_length" type="double" value="10"/>
 
     <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
         <param name="video_device" value="/dev/video1" />

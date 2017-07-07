@@ -802,8 +802,8 @@ void ClmWrapper::callback(const sensor_msgs::ImageConstPtr& msgIn)
             cv::putText(disp_image, summary_st, certainty_pos, CV_FONT_HERSHEY_SIMPLEX, 0.5, CV_RGB(255,0,0));
 
             if (is_assessing) {
-                double assessing_time = double(std::clock() - start_assessment_time) / CLOCKS_PER_SEC;
-                if (assessing_time > assessment_length * 60) {
+                double assessing_time = double(cv::getTickCount() - start_assessment_time) / cv::getTickFrequency();
+                if (assessing_time > assessment_length) {
                     is_assessing = false;
                     int task = 0;
                     if (!is_identification_assessment_done) {
@@ -1123,7 +1123,7 @@ bool ClmWrapper::is_assessing_other_done()
 void ClmWrapper::set_is_accessing()
 {
     is_assessing = true;
-    start_assessment_time = std::clock();
+    start_assessment_time = cv::getTickCount();
 }
 
 void ClmWrapper::send_assessment_message(int task, int state)
@@ -1212,7 +1212,7 @@ ClmWrapper::ClmWrapper(string _name, string _loc) :
     is_identification_assessment_done(false),
     is_assessing(false),
     is_assessment(false),
-    assessment_length(0.25),
+    assessment_length(15),
     is_target_screen_assessment_done(false),
     is_target_robot_assessment_done(false),
     is_target_human_assessment_done(false),

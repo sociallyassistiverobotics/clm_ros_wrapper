@@ -108,7 +108,7 @@ void InitializerHelper::start_assessment()
     }
 
     is_assessing = true;
-    start_assessment_time = std::clock();
+    start_assessment_time = cv::getTickCount();
 }
 
 void InitializerHelper::publishImage(cv::Mat &mat)
@@ -363,8 +363,8 @@ void InitializerHelper::callback(const sensor_msgs::ImageConstPtr& msgIn)
         }
 
         if (is_assessing) {
-            double assessing_time = double(std::clock() - start_assessment_time) / CLOCKS_PER_SEC;
-            if (assessing_time > assessment_length * 60) {
+            double assessing_time = double(cv::getTickCount() - start_assessment_time) / cv::getTickFrequency();
+            if (assessing_time > assessment_length) {
                 is_assessing = false;
                 if (!is_child_assessment_done) {
                     is_child_assessment_done = true;

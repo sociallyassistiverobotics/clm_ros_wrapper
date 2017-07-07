@@ -41,7 +41,7 @@
         <param name="robot_radius" type="double" value="220"/> <!-- mm -->
 
         <param name="is_assessment" type="bool" value="false" />
-        <param name="assessment_length" type="double" value="0.25" />
+        <param name="assessment_length" type="double" value="10" />
 
         <param name="ns" type="string" value="clm_ros_wrapper_1"/>
         <param name="cam" type="string" value="usb_cam_1"/>

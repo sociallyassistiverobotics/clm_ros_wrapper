@@ -35,8 +35,8 @@
     <param name="is_assessment" type="boolean" value="true"/>
     <param name="assessment_length" type="double" value="10"/>
 
-    <node name="usb_cam_2" pkg="usb_cam" type="usb_cam_node" output="screen" >
-        <param name="video_device" value="/dev/video1" />
+    <node name="usb_cam_0" pkg="usb_cam" type="usb_cam_node" output="screen" >
+        <param name="video_device" value="/dev/video0" />
         <param name="image_width" value="1280" /> <!-- 1280 -->
         <param name="image_height" value="720" /> <!-- 720-->
         <param name="pixel_format" value="yuyv" />
@@ -46,30 +46,13 @@
 
     <node pkg="clm_ros_wrapper" type="face_recognition_initializer" name="face_recognition_initializer" output="screen" />
 
-    
-    <group if="true"> <!-- recording camera on -->
-        <node name="usb_cam_1" pkg="usb_cam" type="usb_cam_node" output="screen" >
-            <param name="video_device" value="/dev/video0" />
-            <param name="image_width" value="1280" /> <!-- 1024, 640, 1280 -->
-            <param name="image_height" value="720" /> <!-- 576, 480, 720-->
-            <param name="pixel_format" value="yuyv" />
-            <param name="camera_frame_id" value="usb_cam" />
-            <param name="io_method" value="mmap"/>
-        </node>
-        <!-- DO NOT SHOW IMAGE: recording cam -->
-        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-            <remap from="image" to="/usb_cam_1/image_raw"/>
-            <param name="autosize" value="true" />
-        </node>     
-    </group>
-
     <group if="true"> <!-- recording audio and video -->
         <node name="audio_capture" pkg="audio_capture" type="audio_capture" output="screen">
             <param name="bitrate" value="128"/>
         </node>
         <node pkg="rosbag" type="record" name="rosbag_record_mm"
             
-           args="--split --duration=10m -o $(find sar_core)/logs/rosbags/assessment_rosbag_mm /usb_cam_1/image_raw/compressed /audio"/> <!-- /sar/perception/left_cam/usb_cam_2/image_raw -->
+           args="--split --duration=10m -o $(find sar_core)/logs/rosbags/assessment_rosbag_mm /usb_cam_0/image_raw/compressed /audio"/> <!-- /sar/perception/left_cam/usb_cam_2/image_raw -->
     </group>
 
 </launch>

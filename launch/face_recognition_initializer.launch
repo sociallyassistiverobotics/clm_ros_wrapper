@@ -26,7 +26,7 @@
     <param name="robot_radius" type="double" value="220"/> <!-- mm -->
 
     <param name="ns" type="string" value="clm_ros_wrapper_2"/>
-    <param name="cam" type="string" value="usb_cam_2"/>
+    <param name="cam" type="string" value="usb_cam_0"/>
 
     <param name="is_get_data" type="boolean" value="true"/>
     <param name="is_train" type="boolean" value="false"/>

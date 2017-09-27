@@ -43,5 +43,6 @@ roslaunch clm_ros_wrapper clm_ros_wrapper.launch
 # roslaunch clm_ros_wrapper clm_ros_wrapper_record.launch
 
 # https://askubuntu.com/questions/187071/how-do-i-shut-down-or-reboot-from-a-terminal/187080
-sleep 2s
+python /home/sar/catkin_ws/src/sar_core/nodes/online.py down
+sleep 5s
 /usr/bin/dbus-send --system --print-reply --dest="org.freedesktop.ConsoleKit" /org/freedesktop/ConsoleKit/Manager org.freedesktop.ConsoleKit.Manager.Stop
